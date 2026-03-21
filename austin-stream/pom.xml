@@ -57,6 +57,7 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <id>shade-stream-jar</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>

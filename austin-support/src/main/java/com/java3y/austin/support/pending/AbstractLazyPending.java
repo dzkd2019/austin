@@ -3,15 +3,14 @@ package com.java3y.austin.support.pending;
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.java3y.austin.support.config.SupportThreadPoolConfig;
+import com.java3y.austin.support.utils.ThreadPoolUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Semaphore;
 
 /**
  * 延迟消费 阻塞队列-消费者和生产者实现
@@ -42,44 +41,32 @@ public abstract class AbstractLazyPending<T> {
      */
     private volatile Boolean stop = false;
 
+    private final Semaphore inFlightBatches = new Semaphore(100);
     /**
      * 单线程消费 阻塞队列的数据
      */
     @PostConstruct
     public void initConsumePending() {
-        ExecutorService executorService = SupportThreadPoolConfig.getPendingSingleThreadPool();
-        executorService.execute(() -> {
-            while (true) {
-                try {
-                    T obj = pendingParam.getQueue().poll(pendingParam.getTimeThreshold(), TimeUnit.MILLISECONDS);
-                    if (null != obj) {
-                        tasks.add(obj);
+        Thread.ofVirtual().name("Pending Thread").start(() -> {
+            while(!Boolean.TRUE.equals(this.stop) || CollUtil.isNotEmpty(tasks) || !pendingParam.getQueue().isEmpty()) {
+                T obj = pendingParam.getQueue().poll();
+                if (obj != null) {
+                    tasks.add(obj);
+                }
+                if(CollUtil.isNotEmpty(tasks) && dataReady()) {
+                    List<T> taskRef = tasks;
+                    tasks = Lists.newArrayList();
+                    lastHandleTime = System.currentTimeMillis();
+
+                    try {
+                        inFlightBatches.acquire();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
                     }
-
-                    // 判断是否停止当前线程
-                    if (Boolean.TRUE.equals(stop) && CollUtil.isEmpty(tasks)) {
-                        executorService.shutdown();
-                        break;
-                    }
-
-                    // 处理条件：1. 数量超限 2. 时间超限
-                    if (CollUtil.isNotEmpty(tasks) && dataReady()) {
-                        List<T> taskRef = tasks;
-                        tasks = Lists.newArrayList();
-                        lastHandleTime = System.currentTimeMillis();
-
-                        // 具体执行逻辑
-                        pendingParam.getExecutorService().execute(() -> this.handle(taskRef));
-                    }
-
-
-                } catch (Exception e) {
-                    log.error("Pending#initConsumePending failed:{}", Throwables.getStackTraceAsString(e));
-                    Thread.currentThread().interrupt();
+                    ThreadPoolUtils.getVirtualExecutorService().execute(() -> this.handle(taskRef));
                 }
             }
         });
-
     }
 
     /**
