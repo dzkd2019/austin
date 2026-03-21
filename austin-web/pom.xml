@@ -49,16 +49,18 @@
         </dependency>
 
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
         <dependency>
             <groupId>com.alibaba.fastjson2</groupId>
             <artifactId>fastjson2</artifactId>
         </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/com.alibaba.fastjson2/fastjson2-extension-spring6 -->
         <dependency>
             <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2-extension</artifactId>
+            <artifactId>fastjson2-extension-spring6</artifactId>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

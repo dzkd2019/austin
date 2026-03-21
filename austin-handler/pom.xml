@@ -34,10 +34,14 @@
             </exclusions>
         </dependency>
 
-        <!--邮件发送-->
+        <!--邮件发送 (Jakarta Mail)-->
         <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
+            <groupId>jakarta.mail</groupId>
+            <artifactId>jakarta.mail-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-mail</artifactId>
         </dependency>
 
         <!--企业微信发送消息-->

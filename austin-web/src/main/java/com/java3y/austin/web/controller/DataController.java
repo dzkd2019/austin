@@ -8,8 +8,8 @@ import com.java3y.austin.web.vo.DataParam;
 import com.java3y.austin.web.vo.amis.EchartsVo;
 import com.java3y.austin.web.vo.amis.SmsTimeLineVo;
 import com.java3y.austin.web.vo.amis.UserTimeLineVo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.util.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +31,13 @@ import java.util.Objects;
 @AustinResult
 @RestController
 @RequestMapping("/trace")
-@Api("获取数据接口（全链路追踪)")
+@Tag(name = "获取数据接口（全链路追踪)")
 public class DataController {
     @Autowired
     private DataService dataService;
 
     @PostMapping("/message")
-    @ApiOperation("/获取【72小时】发送消息的全链路数据")
+    @Operation(summary = "获取【72小时】发送消息的全链路数据")
     public UserTimeLineVo getMessageData(@RequestBody DataParam dataParam) {
         if (Objects.isNull(dataParam) || CharSequenceUtil.isBlank(dataParam.getMessageId())) {
             return UserTimeLineVo.builder().items(new ArrayList<>()).build();
@@ -46,7 +46,7 @@ public class DataController {
     }
 
     @PostMapping("/user")
-    @ApiOperation("/获取【当天】用户接收消息的全链路数据")
+    @Operation(summary = "获取【当天】用户接收消息的全链路数据")
     public UserTimeLineVo getUserData(@RequestBody DataParam dataParam) {
         if (Objects.isNull(dataParam) || CharSequenceUtil.isBlank(dataParam.getReceiver())) {
             return UserTimeLineVo.builder().items(new ArrayList<>()).build();
@@ -55,7 +55,7 @@ public class DataController {
     }
 
     @PostMapping("/messageTemplate")
-    @ApiOperation("/获取消息模板全链路数据")
+    @Operation(summary = "获取消息模板全链路数据")
     public EchartsVo getMessageTemplateData(@RequestBody DataParam dataParam) {
         EchartsVo echartsVo = EchartsVo.builder().build();
         if (CharSequenceUtil.isNotBlank(dataParam.getBusinessId())) {
@@ -65,7 +65,7 @@ public class DataController {
     }
 
     @PostMapping("/sms")
-    @ApiOperation("/获取短信下发数据")
+    @Operation(summary = "获取短信下发数据")
     public SmsTimeLineVo getSmsData(@RequestBody DataParam dataParam) {
         if (Objects.isNull(dataParam) || Objects.isNull(dataParam.getDateTime()) || CharSequenceUtil.isBlank(dataParam.getReceiver())) {
             return SmsTimeLineVo.builder().items(Lists.newArrayList()).build();

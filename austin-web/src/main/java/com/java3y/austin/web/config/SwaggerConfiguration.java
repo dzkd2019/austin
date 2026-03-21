@@ -1,55 +1,52 @@
 package com.java3y.austin.web.config;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
-import springfox.documentation.builders.ApiInfoBuilder;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.oas.annotations.EnableOpenApi;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.Contact;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
+import org.springframework.context.annotation.Configuration;
 
 
 /**
- * swagger配置类
+ * SpringDoc OpenAPI配置类
+ * 替代Springfox Swagger
  *
  * @author 3y
  */
-@Component
-@EnableOpenApi
-@ApiModel
+@Configuration
 public class SwaggerConfiguration {
+
     /**
-     * 对C端用户的接口文档
-     * <p>
-     * 地址：http://localhost:8080/swagger-ui/index.html
+     * 配置OpenAPI元信息
      *
-     * @return
+     * @return OpenAPI配置
      */
     @Bean
-    public Docket webApiDoc() {
-        return new Docket(DocumentationType.OAS_30)
-                .groupName("用户端接口文档")
-                .pathMapping("/")
-                //定义是否开启Swagger，false是关闭，可以通过变量去控制，线上关闭
-                .enable(true)
-                //配置文档的元信息
-                .apiInfo(apiInfo())
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("com.java3y.austin.web.controller"))
-                //正则匹配请求路径，并分配到当前项目组
-                //.paths(PathSelectors.ant("/api/**"))
-                .build();
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("austin平台")
+                        .description("消息推送接口文档")
+                        .version("v1.0")
+                        .contact(new Contact()
+                                .name("3y")
+                                .url("http://gitee.com/zhongfucheng/austin")
+                                .email("403686131@qq.com")));
     }
 
-    private ApiInfo apiInfo() {
-        return new ApiInfoBuilder()
-                .title("austin平台")
-                .description("消息推送接口接口文档")
-                .contact(new Contact("3y", "http://gitee.com/zhongfucheng/austin", "403686131@qq.com"))
-                .version("v1.0")
+    /**
+     * 用户端接口文档组
+     * 地址：http://localhost:8080/swagger-ui/index.html
+     *
+     * @return GroupedOpenApi配置
+     */
+    @Bean
+    public GroupedOpenApi webApi() {
+        return GroupedOpenApi.builder()
+                .group("用户端接口文档")
+                .pathsToMatch("/**")
+                .packagesToScan("com.java3y.austin.web.controller")
                 .build();
     }
 

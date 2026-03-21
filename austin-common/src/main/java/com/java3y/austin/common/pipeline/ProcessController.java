@@ -29,7 +29,7 @@ public class ProcessController {
      * @param context
      * @return 返回上下文内容
      */
-    public ProcessContext process(ProcessContext context) {
+    public <T extends ProcessModel> ProcessContext<T> process(ProcessContext<T> context) {
 
         /**
          * 前置检查
@@ -43,7 +43,7 @@ public class ProcessController {
         /**
          * 遍历流程节点
          */
-        List<BusinessProcess> processList = templateConfig.get(context.getCode()).getProcessList();
+        List<BusinessProcess<T>> processList = templateConfig.get(context.getCode()).getProcessList();
         for (BusinessProcess businessProcess : processList) {
             businessProcess.process(context);
             if (Boolean.TRUE.equals(context.getNeedBreak())) {

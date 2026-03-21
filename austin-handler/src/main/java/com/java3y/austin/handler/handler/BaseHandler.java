@@ -9,7 +9,7 @@ import com.java3y.austin.support.utils.LogUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 

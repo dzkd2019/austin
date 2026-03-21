@@ -25,8 +25,8 @@ import com.java3y.austin.web.utils.LoginUtils;
 import com.java3y.austin.web.vo.MessageTemplateParam;
 import com.java3y.austin.web.vo.MessageTemplateVo;
 import com.java3y.austin.web.vo.amis.CommonAmisVo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 @AustinResult
 @RestController
 @RequestMapping("/messageTemplate")
-@Api("发送消息")
+@Tag(name = "发送消息")
 public class MessageTemplateController {
 
     @Autowired
@@ -76,7 +76,7 @@ public class MessageTemplateController {
      * 如果Id不存在，则保存
      */
     @PostMapping("/save")
-    @ApiOperation("/保存数据")
+    @Operation(summary = "保存数据")
     public MessageTemplate saveOrUpdate(@RequestBody MessageTemplate messageTemplate) {
         if (loginUtils.needLogin() && CharSequenceUtil.isBlank(messageTemplate.getCreator())) {
             throw new CommonException(RespStatusEnum.NO_LOGIN.getCode(), RespStatusEnum.NO_LOGIN.getMsg());
@@ -88,7 +88,7 @@ public class MessageTemplateController {
      * 列表数据
      */
     @GetMapping("/list")
-    @ApiOperation("/列表页")
+    @Operation(summary = "列表页")
     public MessageTemplateVo queryList(@Validated MessageTemplateParam messageTemplateParam) {
         if (loginUtils.needLogin() && CharSequenceUtil.isBlank(messageTemplateParam.getCreator())) {
             throw new CommonException(RespStatusEnum.NO_LOGIN.getCode(), RespStatusEnum.NO_LOGIN.getMsg());
@@ -102,7 +102,7 @@ public class MessageTemplateController {
      * 根据Id查找
      */
     @GetMapping("query/{id}")
-    @ApiOperation("/根据Id查找")
+    @Operation(summary = "根据Id查找")
     public Map<String, Object> queryById(@PathVariable("id") Long id) {
         return Convert4Amis.flatSingleMap(messageTemplateService.queryById(id));
     }
@@ -111,7 +111,7 @@ public class MessageTemplateController {
      * 根据Id复制
      */
     @PostMapping("copy/{id}")
-    @ApiOperation("/根据Id复制")
+    @Operation(summary = "根据Id复制")
     public void copyById(@PathVariable("id") Long id) {
         messageTemplateService.copy(id);
     }
@@ -122,7 +122,7 @@ public class MessageTemplateController {
      * id多个用逗号分隔开
      */
     @DeleteMapping("delete/{id}")
-    @ApiOperation("/根据Ids删除")
+    @Operation(summary = "根据Ids删除")
     public void deleteByIds(@PathVariable("id") String id) {
         if (CharSequenceUtil.isNotBlank(id)) {
             List<Long> idList = Arrays.stream(id.split(StrPool.COMMA)).map(Long::valueOf).collect(Collectors.toList());
@@ -135,7 +135,7 @@ public class MessageTemplateController {
      * 测试发送接口
      */
     @PostMapping("test")
-    @ApiOperation("/测试发送接口")
+    @Operation(summary = "测试发送接口")
     public SendResponse test(@RequestBody MessageTemplateParam messageTemplateParam) {
 
         Map<String, String> variables = JSON.parseObject(messageTemplateParam.getMsgContent(), new TypeReference<Map<String, String>>() {});
@@ -152,7 +152,7 @@ public class MessageTemplateController {
      * 获取需要测试的模板占位符，透出给Amis
      */
     @PostMapping("test/content")
-    @ApiOperation("/测试发送接口")
+    @Operation(summary = "获取测试模板占位符")
     public CommonAmisVo test(Long id) {
         MessageTemplate messageTemplate = messageTemplateService.queryById(id);
         return Convert4Amis.getTestContent(messageTemplate.getMsgContent());
@@ -163,7 +163,7 @@ public class MessageTemplateController {
      * 撤回接口（根据模板id撤回）
      */
     @PostMapping("recall/{id}")
-    @ApiOperation("/撤回消息接口")
+    @Operation(summary = "撤回消息接口")
     public SendResponse recall(@PathVariable("id") String id) {
         SendRequest sendRequest = SendRequest.builder().code(BusinessCode.RECALL.getCode()).messageTemplateId(Long.valueOf(id)).build();
         SendResponse response = recallService.recall(sendRequest);
@@ -178,7 +178,7 @@ public class MessageTemplateController {
      * 启动模板的定时任务
      */
     @PostMapping("start/{id}")
-    @ApiOperation("/启动模板的定时任务")
+    @Operation(summary = "启动模板的定时任务")
     public BasicResultVO start(@RequestBody @PathVariable("id") Long id) {
         return messageTemplateService.startCronTask(id);
     }
@@ -187,7 +187,7 @@ public class MessageTemplateController {
      * 暂停模板的定时任务
      */
     @PostMapping("stop/{id}")
-    @ApiOperation("/暂停模板的定时任务")
+    @Operation(summary = "暂停模板的定时任务")
     public BasicResultVO stop(@RequestBody @PathVariable("id") Long id) {
         return messageTemplateService.stopCronTask(id);
     }
@@ -196,7 +196,7 @@ public class MessageTemplateController {
      * 上传人群文件
      */
     @PostMapping("upload")
-    @ApiOperation("/上传人群文件")
+    @Operation(summary = "上传人群文件")
     public Map<Object, Object> upload(@RequestParam("file") MultipartFile file) {
         String filePath = dataPath + IdUtil.fastSimpleUUID() + file.getOriginalFilename();
         try {

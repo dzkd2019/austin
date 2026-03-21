@@ -19,7 +19,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.5.6</version>
+        <version>4.0.4</version>
         <relativePath/>
     </parent>
 
@@ -35,38 +35,40 @@
         <revision>0.0.1-SNAPSHOT</revision>
 
         <!--构建配置-->
-        <java.version>1.8</java.version>
-        <target.java.version>1.8</target.java.version>
+        <java.version>25</java.version>
+        <target.java.version>25</target.java.version>
         <maven.compiler.source>${target.java.version}</maven.compiler.source>
         <maven.compiler.target>${target.java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!--依赖库版本-->
-        <mysql-connector-java.version>5.1.35</mysql-connector-java.version>
-        <hutool-all.version>5.7.15</hutool-all.version>
-        <guava.version>31.0.1-jre</guava.version>
-        <okhttp.version>4.9.2</okhttp.version>
-        <fastjson2.version>2.0.60</fastjson2.version>
-        <tencentcloud-sdk-java.version>3.1.510</tencentcloud-sdk-java.version>
-        <nacos-config-spring-boot-starter.version>0.2.12</nacos-config-spring-boot-starter.version>
-        <apollo-client.version>2.1.0</apollo-client.version>
+        <mysql-connector-j.version>9.6.0</mysql-connector-j.version>
+        <hutool-all.version>5.8.44</hutool-all.version>
+        <guava.version>33.5.0-jre</guava.version>
+        <okhttp.version>5.3.2</okhttp.version>
+        <fastjson2.version>2.0.61</fastjson2.version>
+        <tencentcloud-sdk-java.version>3.1.1421</tencentcloud-sdk-java.version>
+        <nacos.version>2.3.0</nacos.version>
+        <apollo-client.version>2.5.0</apollo-client.version>
         <log-record-starter.version>1.0.4.1</log-record-starter.version>
-        <javax.mail.version>1.6.2</javax.mail.version>
-        <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
-        <logback-gelf.version>3.0.0</logback-gelf.version>
-        <xxl-job-core.version>2.3.0</xxl-job-core.version>
-        <scala.binary.version>2.11</scala.binary.version>
-        <flink.version>1.14.3</flink.version>
-        <flink-connector-hive_2.12.version>1.16.0</flink-connector-hive_2.12.version>
-        <flink-table-api-java-bridge.version>1.16.0</flink-table-api-java-bridge.version>
-        <hive-exec.version>2.3.4</hive-exec.version>
-        <weixin-java>4.5.3.B</weixin-java>
+        <jakarta.mail.version>2.1.3</jakarta.mail.version>
+        <springdoc-openapi.version>2.8.16</springdoc-openapi.version>
+        <logback-gelf.version>5.0.0</logback-gelf.version>
+        <xxl-job-core.version>3.0.0</xxl-job-core.version>
+        <scala.binary.version>2.12</scala.binary.version>
+        <flink.kafka.version>4.0.1-2.0</flink.kafka.version>
+        <flink.version>2.2.0</flink.version>
+        <flink-connector-hive.version>3.0.0-1.20</flink-connector-hive.version>
+        <hive-exec.version>4.1.0</hive-exec.version>
+        <weixin-java.version>4.8.2.B</weixin-java.version>
         <dynamic-tp-spring-boot-starter-apollo.version>1.0.2</dynamic-tp-spring-boot-starter-apollo.version>
         <alipay-sdk-java.version>4.39.19.ALL</alipay-sdk-java.version>
         <alibaba-dingtalk-service-sdk.version>2.0.0</alibaba-dingtalk-service-sdk.version>
-        <rocketmq-spring-boot-starter.version>2.2.2</rocketmq-spring-boot-starter.version>
+        <rocketmq-spring-boot-starter.version>2.3.0</rocketmq-spring-boot-starter.version>
         <hades-nacos-starter.version>1.0.4</hades-nacos-starter.version>
-        <spring-boot-configuration-processor.version>2.5.6</spring-boot-configuration-processor.version>
+        <nacos-spring-boot.version>0.3.0-RC</nacos-spring-boot.version>
+        <spring-boot-configuration-processor.version>4.0.4</spring-boot-configuration-processor.version>
+        <lombok.version>1.18.44</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -118,11 +120,11 @@
                 <version>${revision}</version>
             </dependency>
 
-            <!--mysql驱动包-->
+            <!--mysql驱动包 (updated for MySQL 8/9)-->
             <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>${mysql-connector-java.version}</version>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
+                <version>${mysql-connector-j.version}</version>
             </dependency>
 
             <!--hutool工具包-->
@@ -142,20 +144,19 @@
             <!--http库-->
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
+                <artifactId>okhttp-jvm</artifactId>
                 <version>${okhttp.version}</version>
             </dependency>
 
-            <!--fastjson2-->
+            <!--fastjson2 (Spring 6 extension for Spring Boot 3/4)-->
             <dependency>
                 <groupId>com.alibaba.fastjson2</groupId>
                 <artifactId>fastjson2</artifactId>
                 <version>${fastjson2.version}</version>
             </dependency>
-            <!--fastjson2 spring/web 扩展-->
             <dependency>
                 <groupId>com.alibaba.fastjson2</groupId>
-                <artifactId>fastjson2-extension</artifactId>
+                <artifactId>fastjson2-extension-spring6</artifactId>
                 <version>${fastjson2.version}</version>
             </dependency>
 
@@ -166,11 +167,11 @@
                 <version>${tencentcloud-sdk-java.version}</version>
             </dependency>
 
-            <!--nacos-->
+            <!--nacos (Spring Boot 4 compatible)-->
             <dependency>
-                <groupId>com.alibaba.boot</groupId>
-                <artifactId>nacos-config-spring-boot-starter</artifactId>
-                <version>${nacos-config-spring-boot-starter.version}</version>
+                <groupId>com.alibaba.nacos</groupId>
+                <artifactId>nacos-client</artifactId>
+                <version>${nacos.version}</version>
             </dependency>
 
             <!--apollo-->
@@ -187,18 +188,23 @@
                 <version>${log-record-starter.version}</version>
             </dependency>
 
-            <!--邮件发送-->
+            <!--邮件发送 (Jakarta Mail)-->
             <dependency>
-                <groupId>com.sun.mail</groupId>
-                <artifactId>javax.mail</artifactId>
-                <version>${javax.mail.version}</version>
+                <groupId>jakarta.mail</groupId>
+                <artifactId>jakarta.mail-api</artifactId>
+                <version>${jakarta.mail.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.angus</groupId>
+                <artifactId>angus-mail</artifactId>
+                <version>2.0.3</version>
             </dependency>
 
-            <!--swagger-->
+            <!--SpringDoc OpenAPI (replaces Springfox)-->
             <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-boot-starter</artifactId>
-                <version>${springfox-boot-starter.version}</version>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc-openapi.version}</version>
             </dependency>
 
             <!--graylog-->
@@ -215,38 +221,38 @@
                 <version>${xxl-job-core.version}</version>
             </dependency>
 
-            <!--flink相关依赖-->
+            <!--flink相关依赖 (Java 17+ compatible)-->
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-walkthrough-common_${scala.binary.version}</artifactId>
+                <artifactId>flink-walkthrough-common</artifactId>
                 <version>${flink.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
+                <artifactId>flink-streaming-java</artifactId>
                 <version>${flink.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-clients_${scala.binary.version}</artifactId>
+                <artifactId>flink-clients</artifactId>
                 <version>${flink.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
-                <artifactId>flink-connector-kafka_${scala.binary.version}</artifactId>
-                <version>${flink.version}</version>
+                <artifactId>flink-connector-kafka</artifactId>
+                <version>${flink.kafka.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-connector-hive_2.12</artifactId>
-                <version>${flink-connector-hive_2.12.version}</version>
+                <version>${flink-connector-hive.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-table-api-java-bridge</artifactId>
-                <version>${flink-table-api-java-bridge.version}</version>
+                <version>${flink.version}</version>
             </dependency>
 
             <!--Hive exec-->
@@ -260,21 +266,21 @@
             <dependency>
                 <groupId>com.github.binarywang</groupId>
                 <artifactId>weixin-java-mp</artifactId>
-                <version>${weixin-java}</version>
+                <version>${weixin-java.version}</version>
             </dependency>
 
             <!--微信小程序第三方SDK-->
             <dependency>
                 <groupId>com.github.binarywang</groupId>
                 <artifactId>weixin-java-miniapp</artifactId>
-                <version>${weixin-java}</version>
+                <version>${weixin-java.version}</version>
             </dependency>
 
             <!--企业微信第三方SDK-->
             <dependency>
                 <groupId>com.github.binarywang</groupId>
                 <artifactId>weixin-java-cp</artifactId>
-                <version>${weixin-java}</version>
+                <version>${weixin-java.version}</version>
             </dependency>
 
             <!--动态线程池引入-->
@@ -298,28 +304,57 @@
                 <version>${alibaba-dingtalk-service-sdk.version}</version>
             </dependency>
 
-            <!--rocketmq-->
+            <!--rocketmq (Spring Boot 4 compatible)-->
             <dependency>
                 <groupId>org.apache.rocketmq</groupId>
                 <artifactId>rocketmq-spring-boot-starter</artifactId>
                 <version>${rocketmq-spring-boot-starter.version}</version>
             </dependency>
 
-            <!--hades规则引擎：https://github.com/ZhongFuCheng3y/hades -->
+            <!--hades规则引擎-->
             <dependency>
                 <groupId>io.github.ZhongFuCheng3y</groupId>
                 <artifactId>hades-nacos-starter</artifactId>
                 <version>${hades-nacos-starter.version}</version>
             </dependency>
 
-            <!--Configuration Processor-->
+            <!-- Source: https://mvnrepository.com/artifact/com.alibaba.boot/nacos-config-spring-boot-starter -->
+            <dependency>
+                <groupId>com.alibaba.boot</groupId>
+                <artifactId>nacos-config-spring-boot-starter</artifactId>
+                <version>${nacos-spring-boot.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <!--Configuration Processor (managed by Spring Boot parent)-->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-configuration-processor</artifactId>
+                <scope>compile</scope>
                 <version>${spring-boot-configuration-processor.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
 
+                    <!-- 核心：启用 annotation processor -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

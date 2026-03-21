@@ -7,7 +7,7 @@ import com.java3y.austin.handler.deduplication.DeduplicationHolder;
 import com.java3y.austin.handler.deduplication.DeduplicationParam;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Objects;
 
 /**

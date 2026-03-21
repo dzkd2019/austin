@@ -19,8 +19,8 @@ import com.java3y.austin.web.exception.CommonException;
 import com.java3y.austin.web.utils.Convert4Amis;
 import com.java3y.austin.web.utils.LoginUtils;
 import com.java3y.austin.web.vo.amis.CommonAmisVo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.mp.api.WxMpService;
 import me.chanjar.weixin.mp.bean.message.WxMpXmlMessage;
@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -47,7 +47,7 @@ import java.util.*;
 @AustinAspect
 @RequestMapping("/officialAccount")
 @RestController
-@Api("微信服务号")
+@Tag(name = "微信服务号")
 public class OfficialAccountController {
 
     @Autowired
@@ -65,7 +65,7 @@ public class OfficialAccountController {
      * @return
      */
     @GetMapping("/template/list")
-    @ApiOperation("/根据账号Id获取模板列表")
+    @Operation(summary = "根据账号Id获取模板列表")
     @AustinResult
     public List<CommonAmisVo> queryList(Integer id) {
         try {
@@ -91,7 +91,7 @@ public class OfficialAccountController {
      * @return
      */
     @PostMapping("/detailTemplate")
-    @ApiOperation("/根据账号Id和模板ID获取模板列表")
+    @Operation(summary = "根据账号Id和模板ID获取模板列表")
     @AustinResult
     public CommonAmisVo queryDetailList(Integer id, String wxTemplateId) {
         if (Objects.isNull(id) || Objects.isNull(wxTemplateId)) {
@@ -117,7 +117,7 @@ public class OfficialAccountController {
      * @return
      */
     @RequestMapping(value = "/receipt", produces = {CommonConstant.CONTENT_TYPE_XML})
-    @ApiOperation("/接收微信的事件消息")
+    @Operation(summary = "接收微信的事件消息")
     public String receiptMessage(HttpServletRequest request) {
         try {
             WeChatLoginConfig configService = loginUtils.getLoginConfig();
@@ -168,7 +168,7 @@ public class OfficialAccountController {
      * @return
      */
     @PostMapping("/qrCode")
-    @ApiOperation("/生成 服务号 二维码")
+    @Operation(summary = "生成 服务号 二维码")
     @AustinResult
     public CommonAmisVo getQrCode() {
         try {
@@ -193,7 +193,7 @@ public class OfficialAccountController {
      * @return
      */
     @RequestMapping("/check/login")
-    @ApiOperation("/检查是否已经登录")
+    @Operation(summary = "检查是否已经登录")
     @AustinResult
     public WxMpUser checkLogin(String sceneId) {
         String userInfo = redisTemplate.opsForValue().get(sceneId);
@@ -213,7 +213,7 @@ public class OfficialAccountController {
      * @return
      */
     @RequestMapping("/delete/test/user")
-    @ApiOperation("/删除测试号的测试用户")
+    @Operation(summary = "删除测试号的测试用户")
     @AustinResult
     public void deleteTestUser(HttpServletRequest request) {
         try {

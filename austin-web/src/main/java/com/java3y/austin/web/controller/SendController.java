@@ -7,8 +7,8 @@ import com.java3y.austin.service.api.domain.SendResponse;
 import com.java3y.austin.service.api.service.RecallService;
 import com.java3y.austin.service.api.service.SendService;
 import com.java3y.austin.web.annotation.AustinAspect;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author 三歪
  */
 
-@Api(tags = {"发送消息"})
+@Tag(name = "发送消息")
 @RestController
 @AustinAspect
 public class SendController {
@@ -36,7 +36,7 @@ public class SendController {
      * @param sendRequest
      * @return
      */
-    @ApiOperation(value = "下发接口", notes = "多渠道多类型下发消息，目前支持邮件和短信，类型支持：验证码、通知类、营销类。")
+    @Operation(summary = "下发接口", description = "多渠道多类型下发消息，目前支持邮件和短信，类型支持：验证码、通知类、营销类。")
     @PostMapping("/send")
     public SendResponse send(@RequestBody SendRequest sendRequest) {
         return sendService.send(sendRequest);
@@ -48,7 +48,7 @@ public class SendController {
      * @param batchSendRequest
      * @return
      */
-    @ApiOperation(value = "batch下发接口", notes = "多渠道多类型下发消息，目前支持邮件和短信，类型支持：验证码、通知类、营销类。")
+    @Operation(summary = "batch下发接口", description = "多渠道多类型下发消息，目前支持邮件和短信，类型支持：验证码、通知类、营销类。")
     @PostMapping("/batchSend")
     public SendResponse batchSend(@RequestBody BatchSendRequest batchSendRequest) {
         return sendService.batchSend(batchSendRequest);
@@ -60,7 +60,7 @@ public class SendController {
      * @param sendRequest
      * @return
      */
-    @ApiOperation(value = "撤回消息接口", notes = "优先根据messageId撤回消息，如果messageId不存在则根据模板id撤回")
+    @Operation(summary = "撤回消息接口", description = "优先根据messageId撤回消息，如果messageId不存在则根据模板id撤回")
     @PostMapping("/recall")
     public SendResponse recall(@RequestBody SendRequest sendRequest) {
         return recallService.recall(sendRequest);

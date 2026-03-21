@@ -13,8 +13,8 @@ import com.java3y.austin.web.service.ChannelAccountService;
 import com.java3y.austin.web.utils.Convert4Amis;
 import com.java3y.austin.web.utils.LoginUtils;
 import com.java3y.austin.web.vo.amis.CommonAmisVo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @AustinResult
 @RestController
 @RequestMapping("/account")
-@Api("渠道账号管理接口")
+@Tag(name = "渠道账号管理接口")
 public class ChannelAccountController {
 
     @Autowired
@@ -47,7 +47,7 @@ public class ChannelAccountController {
      * 如果Id不存在，则保存
      */
     @PostMapping("/save")
-    @ApiOperation("/保存数据")
+    @Operation(summary = "保存数据")
     public ChannelAccount saveOrUpdate(@RequestBody ChannelAccount channelAccount) {
         if (loginUtils.needLogin() && CharSequenceUtil.isBlank(channelAccount.getCreator())) {
             throw new CommonException(RespStatusEnum.NO_LOGIN.getCode(), RespStatusEnum.NO_LOGIN.getMsg());
@@ -61,7 +61,7 @@ public class ChannelAccountController {
      * 根据渠道标识查询渠道账号相关的信息
      */
     @GetMapping("/queryByChannelType")
-    @ApiOperation("/根据渠道标识查询相关的记录")
+    @Operation(summary = "根据渠道标识查询相关的记录")
     public List<CommonAmisVo> query(Integer channelType, String creator) {
         if (loginUtils.needLogin() && CharSequenceUtil.isBlank(creator)) {
             throw new CommonException(RespStatusEnum.NO_LOGIN.getCode(), RespStatusEnum.NO_LOGIN.getMsg());
@@ -76,7 +76,7 @@ public class ChannelAccountController {
      * 所有的渠道账号信息
      */
     @GetMapping("/list")
-    @ApiOperation("/渠道账号列表信息")
+    @Operation(summary = "渠道账号列表信息")
     public List<ChannelAccount> list(String creator) {
         if (loginUtils.needLogin() && CharSequenceUtil.isBlank(creator)) {
             throw new CommonException(RespStatusEnum.NO_LOGIN.getCode(), RespStatusEnum.NO_LOGIN.getMsg());
@@ -92,7 +92,7 @@ public class ChannelAccountController {
      * id多个用逗号分隔开
      */
     @DeleteMapping("delete/{id}")
-    @ApiOperation("/根据Ids删除")
+    @Operation(summary = "根据Ids删除")
     public void deleteByIds(@PathVariable("id") String id) {
         if (CharSequenceUtil.isNotBlank(id)) {
             List<Long> idList = Arrays.stream(id.split(StrPool.COMMA)).map(Long::valueOf).collect(Collectors.toList());

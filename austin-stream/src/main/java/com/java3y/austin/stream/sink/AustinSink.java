@@ -11,7 +11,7 @@ import com.java3y.austin.common.domain.SimpleAnchorInfo;
 import com.java3y.austin.stream.utils.LettuceRedisUtils;
 import io.lettuce.core.RedisFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.streaming.api.functions.sink.legacy.SinkFunction;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;

@@ -18,8 +18,8 @@ import com.java3y.austin.web.annotation.AustinResult;
 import com.java3y.austin.web.exception.CommonException;
 import com.java3y.austin.web.utils.Convert4Amis;
 import com.java3y.austin.web.vo.amis.CommonAmisVo;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,14 +40,14 @@ import java.util.Objects;
 @AustinAspect
 @RestController
 @RequestMapping("/alipayMiniProgram")
-@Api("支付宝小程序")
+@Tag(name = "支付宝小程序")
 public class AlipayMiniProgramController {
 
     @Autowired
     private AccountUtils accountUtils;
 
     @GetMapping("/template/list")
-    @ApiOperation("/根据账号Id获取模板列表")
+    @Operation(summary = "根据账号Id获取模板列表")
     @AustinResult
     public List<CommonAmisVo> queryList(Integer id) {
         try {
@@ -95,7 +95,7 @@ public class AlipayMiniProgramController {
      * @return
      */
     @PostMapping("/detailTemplate")
-    @ApiOperation("/根据账号Id和模板ID获取模板列表")
+    @Operation(summary = "根据账号Id和模板ID获取模板列表")
     @AustinResult
     public CommonAmisVo queryDetailList(Integer id, String alipayTemplateId) {
         if (Objects.isNull(id) || Objects.isNull(alipayTemplateId)) {
@@ -144,7 +144,7 @@ public class AlipayMiniProgramController {
      * @return
      */
     @GetMapping("/sync/openid")
-    @ApiOperation("登录凭证校验")
+    @Operation(summary = "登录凭证校验")
     public String syncOpenId(String code, String appId, String secret) {
         String url = SendChanelUrlConstant.WE_CHAT_MINI_PROGRAM_OPENID_SYNC
                 .replace("<APPID>", appId).replace("<CODE>", code).replace("<SECRET>", secret);

@@ -7,15 +7,15 @@ import java.util.List;
  *
  * @author 3y
  */
-public class ProcessTemplate {
+public class ProcessTemplate<T extends ProcessModel> {
 
-    private List<BusinessProcess> processList;
+    private List<BusinessProcess<T>> processList;
 
-    public List<BusinessProcess> getProcessList() {
+    public List<BusinessProcess<T>> getProcessList() {
         return processList;
     }
 
-    public void setProcessList(List<BusinessProcess> processList) {
+    public void setProcessList(List<BusinessProcess<T>> processList) {
         this.processList = processList;
     }
 }

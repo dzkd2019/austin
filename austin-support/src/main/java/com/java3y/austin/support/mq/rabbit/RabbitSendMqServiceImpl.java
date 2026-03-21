@@ -44,14 +44,16 @@ public class RabbitSendMqServiceImpl implements SendMqService {
     @Override
     public void send(String topic, String jsonValue, String tagId) {
         CorrelationData correlationData = new CorrelationData(IdUtil.getSnowflake().nextIdStr());
-        correlationData.getFuture().addCallback(result -> {
+        correlationData.getFuture().whenComplete((result, err) -> {
+            if(err != null) {
+                log.error("消息处理异常，{}", Throwables.getStackTraceAsString(err));
+                return;
+            }
             if (result.isAck()) {
                 log.info("消息成功投递到交换机，消息ID：{}", correlationData.getId());
             }else{
                 log.error("消息投递到交换机失败，消息ID：{}", correlationData.getId());
             }
-        }, ex -> {
-            log.error("消息处理异常，{}", Throwables.getStackTraceAsString(ex));
         });
         if (topic.equals(sendMessageTopic)){
             rabbitTemplate.convertAndSend(exchangeName, sendRoutingKey, jsonValue, correlationData);

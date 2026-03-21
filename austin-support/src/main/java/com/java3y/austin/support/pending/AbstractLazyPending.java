@@ -7,7 +7,7 @@ import com.java3y.austin.support.config.SupportThreadPoolConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
