@@ -33,11 +33,15 @@ public class CronTaskHandler {
     @XxlJob("austinJob")
     public void execute() {
         log.info("CronTaskHandler#execute messageTemplateId:{} cron exec!", XxlJobHelper.getJobParam());
-        threadPoolUtils.register(dtpExecutor);
+        //threadPoolUtils.register(dtpExecutor);
 
         Long messageTemplateId = Long.valueOf(XxlJobHelper.getJobParam());
-        dtpExecutor.execute(() -> taskHandler.handle(messageTemplateId));
 
+//        ThreadPoolUtils.getVirtualExecutorService().execute(() -> taskHandler.handle(messageTemplateId));
+//        dtpExecutor.execute(() -> taskHandler.handle(messageTemplateId));
+
+        // 直接同步执行，阻塞 XXL-JOB 线程，直到文件读取并入队完毕！
+        taskHandler.handle(messageTemplateId);
     }
 
 }

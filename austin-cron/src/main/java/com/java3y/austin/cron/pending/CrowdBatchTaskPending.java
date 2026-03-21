@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
 
 /**
  * 延迟批量处理人群信息
@@ -52,26 +53,24 @@ public class CrowdBatchTaskPending extends AbstractLazyPending<CrowdInfoVo> {
     @Override
     public void doHandle(List<CrowdInfoVo> crowdInfoVos) {
 
-        // 1. 如果参数相同，组装成同一个MessageParam发送
-        Map<Map<String, String>, String> paramMap = MapUtil.newHashMap();
-        for (CrowdInfoVo crowdInfoVo : crowdInfoVos) {
-            String receiver = crowdInfoVo.getReceiver();
-            Map<String, String> vars = crowdInfoVo.getParams();
-            if (Objects.isNull(paramMap.get(vars))) {
-                paramMap.put(vars, receiver);
-            } else {
-                String newReceiver = StringUtils.join(new String[]{
-                        paramMap.get(vars), receiver}, StrPool.COMMA);
-                paramMap.put(vars, newReceiver);
-            }
-        }
+        // 1 & 2. 聚合参数相同的 receiver 并直接组装成 MessageParam
+        List<MessageParam> messageParams = crowdInfoVos.stream()
+                // 按 params (Map) 分组，下游提取 receiver 并用逗号拼接
+                .collect(Collectors.groupingBy(
+                        CrowdInfoVo::getParams,
+                        Collectors.mapping(CrowdInfoVo::getReceiver, Collectors.joining(StrPool.COMMA))
+                ))
+                // 将分组后的结果映射为 MessageParam 对象
+                .entrySet().stream()
+                .map(entry -> MessageParam.builder()
+                        .variables(entry.getKey())
+                        .receiver(entry.getValue())
+                        .build()
+                )
+                .toList(); // (如果是 JDK 16+ 直接用 toList(), 否则 collect(Collectors.toList()))
 
-        // 2. 组装参数
-        List<MessageParam> messageParams = Lists.newArrayList();
-        for (Map.Entry<Map<String, String>, String> entry : paramMap.entrySet()) {
-            MessageParam messageParam = MessageParam.builder().receiver(entry.getValue())
-                    .variables(entry.getKey()).build();
-            messageParams.add(messageParam);
+        if (CollUtil.isEmpty(messageParams)) {
+            return;
         }
 
         // 3. 调用批量发送接口发送消息
