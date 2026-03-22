@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.domain.TaskInfo;
@@ -21,6 +20,7 @@ import com.java3y.austin.support.dao.SmsRecordDao;
 import com.java3y.austin.support.domain.SmsRecord;
 import com.java3y.austin.support.service.ConfigService;
 import com.java3y.austin.support.utils.AccountUtils;
+import com.java3y.austin.support.utils.RetryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -37,7 +37,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class SmsHandler extends BaseHandler{
+public class SmsHandler extends BaseHandler {
 
     /**
      * 流量自动分配策略
@@ -73,24 +73,30 @@ public class SmsHandler extends BaseHandler{
                 .content(getSmsContent(taskInfo))
                 .messageTemplateId(taskInfo.getMessageTemplateId())
                 .build();
-        try {
+
             /*
               1、动态配置做流量负载
               2、发送短信
              */
-            List<MessageTypeSmsConfig> messageTypeSmsConfigs = serviceLoadBalancer.selectService(getMessageTypeSmsConfig(taskInfo), loadBalancerStrategy);
-            for (MessageTypeSmsConfig messageTypeSmsConfig : messageTypeSmsConfigs) {
-                smsParam.setScriptName(messageTypeSmsConfig.getScriptName());
-                smsParam.setSendAccountId(messageTypeSmsConfig.getSendAccount());
-                List<SmsRecord> recordList = applicationContext.getBean(messageTypeSmsConfig.getScriptName(), SmsScript.class).send(smsParam);
+        List<MessageTypeSmsConfig> messageTypeSmsConfigs = serviceLoadBalancer.selectService(getMessageTypeSmsConfig(taskInfo), loadBalancerStrategy);
+        for (MessageTypeSmsConfig messageTypeSmsConfig : messageTypeSmsConfigs) {
+            smsParam.setScriptName(messageTypeSmsConfig.getScriptName());
+            smsParam.setSendAccountId(messageTypeSmsConfig.getSendAccount());
+            try {
+                SmsScript smsScript = applicationContext.getBean(messageTypeSmsConfig.getScriptName(), SmsScript.class);
+                List<SmsRecord> recordList = RetryUtils.submitWithRetry(3, 1000, () -> smsScript.send(smsParam));
                 if (CollUtil.isNotEmpty(recordList)) {
                     smsRecordDao.saveAll(recordList);
                     return true;
                 }
+            } catch (Exception e) {
+                log.error("发送短信失败，accountId: {}, phones: {}",
+                        messageTypeSmsConfig.getSendAccount(),
+                        smsParam.getPhones(), e);
             }
-        } catch (Exception e) {
-            log.error("SmsHandler#handler fail:{},params:{}", Throwables.getStackTraceAsString(e), JSON.toJSONString(smsParam));
+
         }
+
         return false;
     }
 
@@ -151,6 +157,7 @@ public class SmsHandler extends BaseHandler{
     /**
      * 短信不支持撤回
      * 腾讯云文档 eg：<a href="https://cloud.tencent.com/document/product/382/52077">...</a>
+     *
      * @param recallTaskInfo
      */
     @Override

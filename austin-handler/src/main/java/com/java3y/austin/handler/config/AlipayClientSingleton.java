@@ -6,8 +6,8 @@ import com.alipay.api.DefaultAlipayClient;
 import com.java3y.austin.common.constant.SendChanelUrlConstant;
 import com.java3y.austin.common.dto.account.AlipayMiniProgramAccount;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 初始化支付宝小程序 单例
@@ -18,27 +18,31 @@ import java.util.Map;
 public class AlipayClientSingleton {
 
 
-    private static final Map<String, DefaultAlipayClient> ALIPAY_CLIENT_MAP = new HashMap<>();
+    private static final Map<String, DefaultAlipayClient> ALIPAY_CLIENT_MAP = new ConcurrentHashMap<>();
 
     private AlipayClientSingleton() {
     }
 
     public static DefaultAlipayClient getSingleton(AlipayMiniProgramAccount alipayMiniProgramAccount) throws AlipayApiException {
-        if (!ALIPAY_CLIENT_MAP.containsKey(alipayMiniProgramAccount.getAppId())) {
-            synchronized (DefaultAlipayClient.class) {
-                if (!ALIPAY_CLIENT_MAP.containsKey(alipayMiniProgramAccount.getAppId())) {
-                    AlipayConfig alipayConfig = new AlipayConfig();
-                    alipayConfig.setServerUrl(SendChanelUrlConstant.ALI_MINI_PROGRAM_GATEWAY_URL);
-                    alipayConfig.setAppId(alipayMiniProgramAccount.getAppId());
-                    alipayConfig.setPrivateKey(alipayMiniProgramAccount.getPrivateKey());
-                    alipayConfig.setFormat("json");
-                    alipayConfig.setAlipayPublicKey(alipayMiniProgramAccount.getAlipayPublicKey());
-                    alipayConfig.setCharset("utf-8");
-                    alipayConfig.setSignType("RSA2");
-                    ALIPAY_CLIENT_MAP.put(alipayMiniProgramAccount.getAppId(), new DefaultAlipayClient(alipayConfig));
-                }
+        return ALIPAY_CLIENT_MAP.computeIfAbsent(alipayMiniProgramAccount.getAppId(), appId -> {
+            AlipayConfig alipayConfig = getAlipayConfig(alipayMiniProgramAccount);
+            try {
+                return new DefaultAlipayClient(alipayConfig);
+            } catch (AlipayApiException e) {
+                throw new RuntimeException("创建 AlipayClient 失败，AppId: " + appId, e);
             }
-        }
-        return ALIPAY_CLIENT_MAP.get(alipayMiniProgramAccount.getAppId());
+        });
+    }
+
+    private static AlipayConfig getAlipayConfig(AlipayMiniProgramAccount alipayMiniProgramAccount) {
+        AlipayConfig alipayConfig = new AlipayConfig();
+        alipayConfig.setServerUrl(SendChanelUrlConstant.ALI_MINI_PROGRAM_GATEWAY_URL);
+        alipayConfig.setAppId(alipayMiniProgramAccount.getAppId());
+        alipayConfig.setPrivateKey(alipayMiniProgramAccount.getPrivateKey());
+        alipayConfig.setFormat("json");
+        alipayConfig.setAlipayPublicKey(alipayMiniProgramAccount.getAlipayPublicKey());
+        alipayConfig.setCharset("utf-8");
+        alipayConfig.setSignType("RSA2");
+        return alipayConfig;
     }
 }

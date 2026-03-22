@@ -50,17 +50,17 @@ public class ConsumeServiceImpl implements ConsumeService {
 
     @Override
     public void consume2Send(List<TaskInfo> taskInfoLists) {
-//        String topicGroupId = GroupIdMappingUtils.getGroupIdByTaskInfo(CollUtil.getFirst(taskInfoLists.iterator()));
         for (TaskInfo taskInfo : taskInfoLists) {
             backPressureManager.awaitDrainIfNeeded();
             logUtils.print(LogParam.builder().bizType(LOG_BIZ_TYPE).object(taskInfo).build(), AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).ids(taskInfo.getReceiver()).businessId(taskInfo.getBusinessId()).state(AnchorState.RECEIVE.getCode()).build());
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
-//            taskPendingHolder.route(topicGroupId).execute(task);
-            try {
-                executor.submit(task);
-            } finally {
-                backPressureManager.decrement();
-            }
+            executor.execute(() -> {
+                try {
+                    task.run();
+                } finally {
+                    backPressureManager.decrement();
+                }
+            });
         }
     }
 

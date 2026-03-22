@@ -12,6 +12,7 @@ import com.java3y.austin.service.api.enums.BusinessCode;
 import com.java3y.austin.service.api.service.SendService;
 import com.java3y.austin.support.pending.AbstractLazyPending;
 import com.java3y.austin.support.pending.PendingParam;
+import com.java3y.austin.support.utils.RetryUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -73,7 +74,11 @@ public class CrowdBatchTaskPending extends AbstractLazyPending<CrowdInfoVo> {
                 .messageParamList(messageParams)
                 .messageTemplateId(CollUtil.getFirst(crowdInfoVos.iterator()).getMessageTemplateId())
                 .build();
-        sendService.batchSend(batchSendRequest);
+        try {
+            RetryUtils.executeWithRetry(3, 1000, () -> sendService.batchSend(batchSendRequest));
+        } catch (Exception e) {
+            log.error("批量发送消息失败，batchSendRequest: {}, error: {}", batchSendRequest, e.getMessage());
+        }
     }
 
 }
