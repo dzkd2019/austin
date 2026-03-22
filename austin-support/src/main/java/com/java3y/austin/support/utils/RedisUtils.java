@@ -196,22 +196,35 @@ public class RedisUtils {
 
         String scriptSha1 = redisScript.getSha1();
         RedisSerializer<String> serializer = redisTemplate.getStringSerializer();
+        final long currentTime = System.currentTimeMillis();
+        byte[] windowBytes = serializer.serialize(String.valueOf(windowSize));
+        byte[] thresholdBytes = serializer.serialize(String.valueOf(threshold));
+        byte[] scoreBytes = serializer.serialize(String.valueOf(currentTime));
 
         List<Object> pipelineResults = redisTemplate.executePipelined((RedisCallback<Long>) connection -> {
             for (String key : keys) {
                 byte[] keyBytes = serializer.serialize(key);
-                byte[] scoreBytes = serializer.serialize(String.valueOf(System.currentTimeMillis()));
-                byte[] windowBytes = serializer.serialize(String.valueOf(windowSize));
-                byte[] thresholdBytes = serializer.serialize(String.valueOf(threshold));
                 byte[] valueBytes = serializer.serialize(String.valueOf(IdUtil.getSnowflake().nextId()));
+
                 connection.scriptingCommands().evalSha(scriptSha1, ReturnType.INTEGER, 1, keyBytes, windowBytes, scoreBytes, thresholdBytes, valueBytes);
             }
             return null;
         });
 
-        List<Boolean> results = new ArrayList<>();
+        List<Boolean> results = new ArrayList<>(keys.size());
         for (int i = 0; i < keys.size(); i++) {
-            results.add(CommonConstant.TRUE.equals(((Long) pipelineResults.get(i)).intValue()));
+            Object result = pipelineResults.get(i);
+            if (result == null) {
+                // Redis 执行失败，保守策略：认为需要去重（过滤掉）
+                results.add(true);
+                log.warn("Pipeline 执行返回 null，key: {}", keys.get(i));
+            } else if (result instanceof Long) {
+                results.add(CommonConstant.TRUE.equals(((Long) result).intValue()));
+            } else {
+                // 异常情况，记录日志
+                log.error("Pipeline 返回类型异常，key: {}, type: {}", keys.get(i), result.getClass());
+                results.add(true); // 保守策略
+            }
         }
 
         return results;

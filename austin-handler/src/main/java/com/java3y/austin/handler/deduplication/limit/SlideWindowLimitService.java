@@ -1,24 +1,26 @@
 package com.java3y.austin.handler.deduplication.limit;
 
-import cn.hutool.core.util.IdUtil;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.handler.deduplication.DeduplicationParam;
 import com.java3y.austin.handler.deduplication.service.AbstractDeduplicationService;
 import com.java3y.austin.support.utils.RedisUtils;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 滑动窗口去重器（内容去重采用基于redis中zset的滑动窗口去重，可以做到严格控制单位时间内的频次。）
  * 业务逻辑：5分钟内相同用户如果收到相同的内容，则应该被过滤掉
  * 技术方案：由lua脚本实现
+ *
  * @author cao
  * @date 2022-04-20 11:34
  */
@@ -32,6 +34,8 @@ public class SlideWindowLimitService extends AbstractLimitService {
 
 
     private DefaultRedisScript<Long> redisScript;
+
+    private static final int BATCH_SIZE = 1000;
 
 
     @PostConstruct
@@ -52,33 +56,25 @@ public class SlideWindowLimitService extends AbstractLimitService {
     public Set<String> limitFilter(AbstractDeduplicationService service, TaskInfo taskInfo, DeduplicationParam param) {
 
         Set<String> filterReceiver = new HashSet<>(taskInfo.getReceiver().size());
-        ArrayList<String> receivers = new ArrayList<>(taskInfo.getReceiver());
+        List<String> receivers = new ArrayList<>(taskInfo.getReceiver());
 
-        List<String> keys = receivers
-                .stream()
-                .map(r -> LIMIT_TAG + deduplicationSingleKey(service, taskInfo, r))
-                .toList();
 
-        List<Boolean> filterList = redisUtils.execLimitLuaPipeline(redisScript, keys, param.getDeduplicationTime() * 1000, param.getCountNum());
+        for (int i = 0; i < receivers.size(); i += BATCH_SIZE) {
+            List<String> batch = receivers.subList(i, Math.min(i + BATCH_SIZE, receivers.size()));
+            List<String> keys = batch
+                    .stream()
+                    .map(r -> LIMIT_TAG + deduplicationSingleKey(service, taskInfo, r))
+                    .toList();
 
-        for (int i = 0; i < keys.size(); i++) {
-            if (filterList.get(i)) {
-                filterReceiver.add(receivers.get(i));
+            List<Boolean> filterResult = redisUtils.execLimitLuaPipeline(redisScript, keys, param.getDeduplicationTime() * 1000, param.getCountNum());
+
+            for (int j = 0; j < batch.size(); j++) {
+                if (filterResult.get(j)) {
+                    filterReceiver.add(batch.get(j));
+                }
             }
         }
 
-//        for (String receiver : taskInfo.getReceiver()) {
-//            String key = LIMIT_TAG + deduplicationSingleKey(service, taskInfo, receiver);
-//            String scoreValue = String.valueOf(IdUtil.getSnowflake().nextId());
-//            String score = String.valueOf(nowTime);
-//
-//            final Boolean result = redisUtils.execLimitLua(redisScript, Collections.singletonList(key),
-//                    String.valueOf(param.getDeduplicationTime() * 1000), score, String.valueOf(param.getCountNum()), scoreValue);
-//            if (Boolean.TRUE.equals(result)) {
-//                filterReceiver.add(receiver);
-//            }
-//
-//        }
         return filterReceiver;
     }
 
