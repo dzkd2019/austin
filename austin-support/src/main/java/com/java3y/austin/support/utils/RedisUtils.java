@@ -1,13 +1,16 @@
 package com.java3y.austin.support.utils;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -186,4 +189,31 @@ public class RedisUtils {
     }
 
 
+    public List<Boolean> execLimitLuaPipeline(RedisScript<Long> redisScript, List<String> keys, Long windowSize, Integer threshold) {
+        if (keys == null || keys.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        String scriptSha1 = redisScript.getSha1();
+        RedisSerializer<String> serializer = redisTemplate.getStringSerializer();
+
+        List<Object> pipelineResults = redisTemplate.executePipelined((RedisCallback<Long>) connection -> {
+            for (String key : keys) {
+                byte[] keyBytes = serializer.serialize(key);
+                byte[] scoreBytes = serializer.serialize(String.valueOf(System.currentTimeMillis()));
+                byte[] windowBytes = serializer.serialize(String.valueOf(windowSize));
+                byte[] thresholdBytes = serializer.serialize(String.valueOf(threshold));
+                byte[] valueBytes = serializer.serialize(String.valueOf(IdUtil.getSnowflake().nextId()));
+                connection.scriptingCommands().evalSha(scriptSha1, ReturnType.INTEGER, 1, keyBytes, windowBytes, scoreBytes, thresholdBytes, valueBytes);
+            }
+            return null;
+        });
+
+        List<Boolean> results = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i++) {
+            results.add(CommonConstant.TRUE.equals(((Long) pipelineResults.get(i)).intValue()));
+        }
+
+        return results;
+    }
 }

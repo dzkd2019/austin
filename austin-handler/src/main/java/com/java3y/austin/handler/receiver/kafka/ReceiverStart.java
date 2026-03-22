@@ -19,6 +19,7 @@ import jakarta.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 启动消费者
@@ -42,7 +43,7 @@ public class ReceiverStart {
     /**
      * 下标(用于迭代groupIds位置)
      */
-    private static Integer index = 0;
+    private static final AtomicInteger index = new AtomicInteger(0);
     @Autowired
     private ApplicationContext context;
     @Autowired
@@ -57,7 +58,7 @@ public class ReceiverStart {
             if (element instanceof Method) {
                 String name = ((Method) element).getDeclaringClass().getSimpleName() + StrPool.DOT + ((Method) element).getName();
                 if (RECEIVER_METHOD_NAME.equals(name)) {
-                    attrs.put("groupId", GROUP_IDS.get(index++));
+                    attrs.put("groupId", GROUP_IDS.get(index.getAndIncrement()));
                 }
             }
             return attrs;

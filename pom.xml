@@ -62,7 +62,7 @@
         <flink-connector-hive.version>3.0.0-1.20</flink-connector-hive.version>
         <hive-exec.version>4.1.0</hive-exec.version>
         <weixin-java.version>4.8.2.B</weixin-java.version>
-        <dynamic-tp-spring-boot-starter-apollo.version>1.0.2</dynamic-tp-spring-boot-starter-apollo.version>
+        <dynamic-tp-spring-boot-starter-apollo.version>1.2.2-x</dynamic-tp-spring-boot-starter-apollo.version>
         <alipay-sdk-java.version>4.39.19.ALL</alipay-sdk-java.version>
         <alibaba-dingtalk-service-sdk.version>2.0.0</alibaba-dingtalk-service-sdk.version>
         <rocketmq-spring-boot-starter.version>2.3.0</rocketmq-spring-boot-starter.version>
@@ -286,7 +286,7 @@
 
             <!--动态线程池引入-->
             <dependency>
-                <groupId>io.github.lyh200</groupId>
+                <groupId>org.dromara.dynamictp</groupId>
                 <artifactId>dynamic-tp-spring-boot-starter-apollo</artifactId>
                 <version>${dynamic-tp-spring-boot-starter-apollo.version}</version>
             </dependency>

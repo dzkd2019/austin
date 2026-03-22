@@ -1,7 +1,5 @@
 package com.java3y.austin.cron.handler;
 
-import com.dtp.core.thread.DtpExecutor;
-import com.java3y.austin.cron.config.CronAsyncThreadPoolConfig;
 import com.java3y.austin.cron.service.TaskHandler;
 import com.java3y.austin.support.utils.ThreadPoolUtils;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -25,7 +23,7 @@ public class CronTaskHandler {
 
     @Autowired
     private ThreadPoolUtils threadPoolUtils;
-    private final DtpExecutor dtpExecutor = CronAsyncThreadPoolConfig.getXxlCronExecutor();
+//    private final DtpExecutor dtpExecutor = CronAsyncThreadPoolConfig.getXxlCronExecutor();
 
     /**
      * 处理后台的 austin 定时任务消息

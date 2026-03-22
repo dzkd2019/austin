@@ -1,10 +1,6 @@
 package com.java3y.austin.cron.config;
 
 import cn.hutool.core.thread.ExecutorBuilder;
-import com.dtp.common.em.QueueTypeEnum;
-import com.dtp.common.em.RejectedTypeEnum;
-import com.dtp.core.thread.DtpExecutor;
-import com.dtp.core.thread.ThreadPoolBuilder;
 import com.java3y.austin.common.constant.ThreadPoolConstant;
 
 import java.util.concurrent.ExecutorService;
@@ -52,17 +48,17 @@ public class CronAsyncThreadPoolConfig {
      *
      * @return
      */
-    public static DtpExecutor getXxlCronExecutor() {
-        return ThreadPoolBuilder.newBuilder()
-                .threadPoolName(EXECUTE_XXL_THREAD_POOL_NAME)
-                .corePoolSize(ThreadPoolConstant.COMMON_CORE_POOL_SIZE)
-                .maximumPoolSize(ThreadPoolConstant.COMMON_MAX_POOL_SIZE)
-                .keepAliveTime(ThreadPoolConstant.COMMON_KEEP_LIVE_TIME)
-                .timeUnit(TimeUnit.SECONDS)
-                .rejectedExecutionHandler(RejectedTypeEnum.CALLER_RUNS_POLICY.getName())
-                .allowCoreThreadTimeOut(false)
-                .workQueue(QueueTypeEnum.VARIABLE_LINKED_BLOCKING_QUEUE.getName(), ThreadPoolConstant.COMMON_QUEUE_SIZE, false)
-                .buildDynamic();
-    }
+//    public static DtpExecutor getXxlCronExecutor() {
+//        return ThreadPoolBuilder.newBuilder()
+//                .threadPoolName(EXECUTE_XXL_THREAD_POOL_NAME)
+//                .corePoolSize(ThreadPoolConstant.COMMON_CORE_POOL_SIZE)
+//                .maximumPoolSize(ThreadPoolConstant.COMMON_MAX_POOL_SIZE)
+//                .keepAliveTime(ThreadPoolConstant.COMMON_KEEP_LIVE_TIME)
+//                .timeUnit(TimeUnit.SECONDS)
+//                .rejectedExecutionHandler(RejectedTypeEnum.CALLER_RUNS_POLICY.getName())
+//                .allowCoreThreadTimeOut(false)
+//                .workQueue(QueueTypeEnum.VARIABLE_LINKED_BLOCKING_QUEUE.getName(), ThreadPoolConstant.COMMON_QUEUE_SIZE, false)
+//                .buildDynamic();
+//    }
 
 }

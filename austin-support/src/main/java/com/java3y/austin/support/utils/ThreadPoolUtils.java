@@ -1,7 +1,5 @@
 package com.java3y.austin.support.utils;
 
-import com.dtp.core.DtpRegistry;
-import com.dtp.core.thread.DtpExecutor;
 import com.java3y.austin.support.config.ThreadPoolExecutorShutdownDefinition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,10 +25,10 @@ public class ThreadPoolUtils {
      * 1. 将当前线程池 加入到 动态线程池内
      * 2. 注册 线程池 被Spring管理，优雅关闭
      */
-    public void register(DtpExecutor dtpExecutor) {
-        DtpRegistry.register(dtpExecutor, SOURCE_NAME);
-        shutdownDefinition.registryExecutor(dtpExecutor);
-    }
+//    public void register(DtpExecutor dtpExecutor) {
+//        DtpRegistry.register(dtpExecutor, SOURCE_NAME);
+//        shutdownDefinition.registryExecutor(dtpExecutor);
+//    }
 
     public static ExecutorService getVirtualExecutorService() {
         return executorService;

@@ -94,7 +94,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.github.lyh200</groupId>
+            <groupId>org.dromara.dynamictp</groupId>
             <artifactId>dynamic-tp-spring-boot-starter-apollo</artifactId>
         </dependency>
 

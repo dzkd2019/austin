@@ -70,6 +70,7 @@ public abstract class AbstractLazyPending<T> {
 
                         // 3. 【修复 Semaphore 失效问题】
                         // 主线程在此处阻塞获取许可。如果下游满了，主线程会卡在这里，从而停止从 queue 中 poll 数据
+                        // todo 当主线程阻塞达到一定时间后，应有报警或其他处理机制，防止死锁。使用 tryAcquire()方法
                         inFlightBatches.acquire();
 
                         // 提交异步任务

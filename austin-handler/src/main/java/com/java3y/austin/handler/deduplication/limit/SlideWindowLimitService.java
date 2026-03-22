@@ -12,9 +12,8 @@ import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+
+import java.util.*;
 
 /**
  * 滑动窗口去重器（内容去重采用基于redis中zset的滑动窗口去重，可以做到严格控制单位时间内的频次。）
@@ -53,19 +52,33 @@ public class SlideWindowLimitService extends AbstractLimitService {
     public Set<String> limitFilter(AbstractDeduplicationService service, TaskInfo taskInfo, DeduplicationParam param) {
 
         Set<String> filterReceiver = new HashSet<>(taskInfo.getReceiver().size());
-        long nowTime = System.currentTimeMillis();
-        for (String receiver : taskInfo.getReceiver()) {
-            String key = LIMIT_TAG + deduplicationSingleKey(service, taskInfo, receiver);
-            String scoreValue = String.valueOf(IdUtil.getSnowflake().nextId());
-            String score = String.valueOf(nowTime);
+        ArrayList<String> receivers = new ArrayList<>(taskInfo.getReceiver());
 
-            final Boolean result = redisUtils.execLimitLua(redisScript, Collections.singletonList(key),
-                    String.valueOf(param.getDeduplicationTime() * 1000), score, String.valueOf(param.getCountNum()), scoreValue);
-            if (Boolean.TRUE.equals(result)) {
-                filterReceiver.add(receiver);
+        List<String> keys = receivers
+                .stream()
+                .map(r -> LIMIT_TAG + deduplicationSingleKey(service, taskInfo, r))
+                .toList();
+
+        List<Boolean> filterList = redisUtils.execLimitLuaPipeline(redisScript, keys, param.getDeduplicationTime() * 1000, param.getCountNum());
+
+        for (int i = 0; i < keys.size(); i++) {
+            if (filterList.get(i)) {
+                filterReceiver.add(receivers.get(i));
             }
-
         }
+
+//        for (String receiver : taskInfo.getReceiver()) {
+//            String key = LIMIT_TAG + deduplicationSingleKey(service, taskInfo, receiver);
+//            String scoreValue = String.valueOf(IdUtil.getSnowflake().nextId());
+//            String score = String.valueOf(nowTime);
+//
+//            final Boolean result = redisUtils.execLimitLua(redisScript, Collections.singletonList(key),
+//                    String.valueOf(param.getDeduplicationTime() * 1000), score, String.valueOf(param.getCountNum()), scoreValue);
+//            if (Boolean.TRUE.equals(result)) {
+//                filterReceiver.add(receiver);
+//            }
+//
+//        }
         return filterReceiver;
     }
 
