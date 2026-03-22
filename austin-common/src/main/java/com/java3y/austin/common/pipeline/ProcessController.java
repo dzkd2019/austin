@@ -20,31 +20,32 @@ public class ProcessController {
     /**
      * 模板映射
      */
-    private Map<String, ProcessTemplate> templateConfig = null;
+    private Map<String, ProcessTemplate<? extends ProcessModel>> templateConfig = null;
 
 
     /**
      * 执行责任链
      *
-     * @param context
      * @return 返回上下文内容
      */
+    @SuppressWarnings("unchecked")
     public <T extends ProcessModel> ProcessContext<T> process(ProcessContext<T> context) {
 
-        /**
-         * 前置检查
+        /*
+          前置检查
          */
         try {
             preCheck(context);
         } catch (ProcessException e) {
-            return e.getProcessContext();
+            return (ProcessContext<T>) e.getProcessContext();
         }
 
-        /**
-         * 遍历流程节点
+        /*
+          遍历流程节点
          */
-        List<BusinessProcess<T>> processList = templateConfig.get(context.getCode()).getProcessList();
-        for (BusinessProcess businessProcess : processList) {
+        ProcessTemplate<T> template = (ProcessTemplate<T>) templateConfig.get(context.getCode());
+        List<BusinessProcess<T>> processList = template.getProcessList();
+        for (BusinessProcess<T> businessProcess : processList) {
             businessProcess.process(context);
             if (Boolean.TRUE.equals(context.getNeedBreak())) {
                 break;
@@ -60,10 +61,11 @@ public class ProcessController {
      * @param context 执行上下文
      * @throws ProcessException 异常信息
      */
-    private void preCheck(ProcessContext context) throws ProcessException {
+    @SuppressWarnings("unchecked")
+    private <T extends ProcessModel> void preCheck(ProcessContext<T> context) throws ProcessException {
         // 上下文
         if (Objects.isNull(context)) {
-            context = new ProcessContext();
+            context = new ProcessContext<>();
             context.setResponse(BasicResultVO.fail(RespStatusEnum.CONTEXT_IS_NULL));
             throw new ProcessException(context);
         }
@@ -76,14 +78,14 @@ public class ProcessController {
         }
 
         // 执行模板
-        ProcessTemplate processTemplate = templateConfig.get(businessCode);
+        ProcessTemplate<T> processTemplate = (ProcessTemplate<T>) templateConfig.get(businessCode);
         if (Objects.isNull(processTemplate)) {
             context.setResponse(BasicResultVO.fail(RespStatusEnum.PROCESS_TEMPLATE_IS_NULL));
             throw new ProcessException(context);
         }
 
         // 执行模板列表
-        List<BusinessProcess> processList = processTemplate.getProcessList();
+        List<BusinessProcess<T>> processList = processTemplate.getProcessList();
         if (Objects.isNull(processList) || processList.isEmpty()) {
             context.setResponse(BasicResultVO.fail(RespStatusEnum.PROCESS_LIST_IS_NULL));
             throw new ProcessException(context);

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
  * 小程序订阅消息参数
  * <p>
  * 参数示例：
- * https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/subscribe-message/subscribeMessage.send.html
+ * <a href="https://developers.weixin.qq.com/miniprogram/dev/api-backend/open-api/subscribe-message/subscribeMessage.send.html">...</a>
  * * @author sunql
  */
 @Data

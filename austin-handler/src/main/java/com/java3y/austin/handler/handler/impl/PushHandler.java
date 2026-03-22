@@ -30,7 +30,7 @@ import java.util.Set;
  * 通知栏消息发送处理
  * <p>
  * (目前具体的实现是个推服务商，安卓端已验证)
- * 个推：https://docs.getui.com/getui/start/devcenter/
+ * 个推：<a href="https://docs.getui.com/getui/start/devcenter/">...</a>
  *
  * @author 3y
  */
@@ -159,7 +159,7 @@ public class PushHandler extends BaseHandler{
     /**
      * 对正处于推送状态 未接收的消息停止下发（只支持批量推和群推任务）
      * 【未实现】
-     * https://docs.getui.com/getui/server/rest_v2/push/
+     * <a href="https://docs.getui.com/getui/server/rest_v2/push/">...</a>
      * @param recallTaskInfo
      */
     @Override

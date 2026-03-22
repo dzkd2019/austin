@@ -2,6 +2,7 @@ package com.java3y.austin.web.service;
 
 
 import com.java3y.austin.common.vo.BasicResultVO;
+import com.java3y.austin.web.vo.UploadResponseVo;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -20,7 +21,7 @@ public interface MaterialService {
      * @param fileType
      * @return
      */
-    BasicResultVO dingDingMaterialUpload(MultipartFile file, String sendAccount, String fileType);
+    BasicResultVO<UploadResponseVo> dingDingMaterialUpload(MultipartFile file, String sendAccount, String fileType);
 
 
     /**
@@ -31,7 +32,7 @@ public interface MaterialService {
      * @param fileType
      * @return
      */
-    BasicResultVO enterpriseWeChatRootMaterialUpload(MultipartFile file, String sendAccount, String fileType);
+    BasicResultVO<UploadResponseVo> enterpriseWeChatRootMaterialUpload(MultipartFile file, String sendAccount, String fileType);
 
     /**
      * 企业微信（应用消息）素材上传
@@ -41,5 +42,5 @@ public interface MaterialService {
      * @param fileType
      * @return
      */
-    BasicResultVO enterpriseWeChatMaterialUpload(MultipartFile file, String sendAccount, String fileType);
+    BasicResultVO<UploadResponseVo> enterpriseWeChatMaterialUpload(MultipartFile file, String sendAccount, String fileType);
 }

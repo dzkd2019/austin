@@ -37,7 +37,7 @@ public class SwaggerConfiguration {
 
     /**
      * 用户端接口文档组
-     * 地址：http://localhost:8080/swagger-ui/index.html
+     * 地址：<a href="http://localhost:8080/swagger-ui/index.html">...</a>
      *
      * @return GroupedOpenApi配置
      */

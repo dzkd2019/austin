@@ -147,8 +147,7 @@ public class SensitiveWordsConfig {
     @PreDestroy
     public void onDestroy() {
         stop = true;
-        if (taskExecutor instanceof ThreadPoolTaskExecutor) {
-            ThreadPoolTaskExecutor threadPoolTaskExecutor = (ThreadPoolTaskExecutor) taskExecutor;
+        if (taskExecutor instanceof ThreadPoolTaskExecutor threadPoolTaskExecutor) {
             threadPoolTaskExecutor.shutdown();
         }
     }

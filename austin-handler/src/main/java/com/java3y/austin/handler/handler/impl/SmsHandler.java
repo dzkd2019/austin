@@ -74,9 +74,9 @@ public class SmsHandler extends BaseHandler{
                 .messageTemplateId(taskInfo.getMessageTemplateId())
                 .build();
         try {
-            /**
-             * 1、动态配置做流量负载
-             * 2、发送短信
+            /*
+              1、动态配置做流量负载
+              2、发送短信
              */
             List<MessageTypeSmsConfig> messageTypeSmsConfigs = serviceLoadBalancer.selectService(getMessageTypeSmsConfig(taskInfo), loadBalancerStrategy);
             for (MessageTypeSmsConfig messageTypeSmsConfig : messageTypeSmsConfigs) {
@@ -111,16 +111,16 @@ public class SmsHandler extends BaseHandler{
      */
     private List<MessageTypeSmsConfig> getMessageTypeSmsConfig(TaskInfo taskInfo) {
 
-        /**
-         * 如果模板指定了账号，则优先使用具体的账号进行发送
+        /*
+          如果模板指定了账号，则优先使用具体的账号进行发送
          */
         if (!taskInfo.getSendAccount().equals(AUTO_FLOW_RULE)) {
             SmsAccount account = accountUtils.getAccountById(taskInfo.getSendAccount(), SmsAccount.class);
             return Collections.singletonList(MessageTypeSmsConfig.builder().sendAccount(taskInfo.getSendAccount()).scriptName(account.getScriptName()).weights(100).build());
         }
 
-        /**
-         * 读取流量配置
+        /*
+          读取流量配置
          */
         String property = config.getProperty(FLOW_KEY, CommonConstant.EMPTY_VALUE_JSON_ARRAY);
         JSONArray jsonArray = JSON.parseArray(property);
@@ -150,7 +150,7 @@ public class SmsHandler extends BaseHandler{
 
     /**
      * 短信不支持撤回
-     * 腾讯云文档 eg：https://cloud.tencent.com/document/product/382/52077
+     * 腾讯云文档 eg：<a href="https://cloud.tencent.com/document/product/382/52077">...</a>
      * @param recallTaskInfo
      */
     @Override

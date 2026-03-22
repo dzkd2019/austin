@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
  * @author 3y
  * 钉钉 工作通知
  * <p>
- * https://open.dingtalk.com/document/orgapp-server/asynchronous-sending-of-enterprise-session-messages
+ * <a href="https://open.dingtalk.com/document/orgapp-server/asynchronous-sending-of-enterprise-session-messages">...</a>
  */
 @Data
 @Builder
@@ -39,7 +39,7 @@ public class DingDingWorkContentModel extends ContentModel {
 
     /**
      * 【ActionCard消息】按钮的文案和跳转链接的json
-     * [{"title":"一个按钮","action_url":"https://www.taobao.com"},{"title":"两个按钮","action_url":"https://www.tmall.com"}]
+     * [{"title":"一个按钮","action_url":"<a href="https://www.taobao.com">...</a>"},{"title":"两个按钮","action_url":"<a href="https://www.tmall.com">...</a>"}]
      */
     private String btns;
 

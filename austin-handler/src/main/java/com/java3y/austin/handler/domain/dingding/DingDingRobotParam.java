@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 钉钉自定义机器人 入参
  * <p>
- * https://open.dingtalk.com/document/group/custom-robot-access
+ * <a href="https://open.dingtalk.com/document/group/custom-robot-access">...</a>
  *
  * @author 3y
  */

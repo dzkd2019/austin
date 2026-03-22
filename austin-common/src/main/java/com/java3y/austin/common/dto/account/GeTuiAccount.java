@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
  * <p>
  * （在调用个推的api时需要用到部分的参数）
  * <p>
- * https://docs.getui.com/getui/start/devcenter/
+ * <a href="https://docs.getui.com/getui/start/devcenter/">...</a>
  */
 @Data
 @Builder

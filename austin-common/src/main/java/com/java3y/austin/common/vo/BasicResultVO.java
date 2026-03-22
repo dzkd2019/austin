@@ -56,7 +56,7 @@ public final class BasicResultVO<T> implements Serializable {
     /**
      * @return 默认成功响应
      */
-    public static BasicResultVO<Void> success() {
+    public static <T> BasicResultVO<T> success() {
         return new BasicResultVO<>(RespStatusEnum.SUCCESS);
     }
 

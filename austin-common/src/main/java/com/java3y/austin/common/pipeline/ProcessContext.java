@@ -35,6 +35,6 @@ public class ProcessContext<T extends ProcessModel> implements Serializable {
     /**
      * 流程处理的结果
      */
-    private BasicResultVO response;
+    private BasicResultVO<?> response;
 
 }

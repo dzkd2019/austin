@@ -48,21 +48,24 @@ public class CronTaskServiceImpl implements CronTaskService {
 
 
     @Override
-    public BasicResultVO saveCronTask(XxlJobInfo xxlJobInfo) {
-        Map<String, Object> params = JSON.parseObject(JSON.toJSONString(xxlJobInfo), new TypeReference<Map<String, Object>>() {});
+    public BasicResultVO<Integer> saveCronTask(XxlJobInfo xxlJobInfo) {
+        Map<String, Object> params = JSON.parseObject(JSON.toJSONString(xxlJobInfo), new TypeReference<>() {
+        });
         String path = Objects.isNull(xxlJobInfo.getId()) ? xxlAddresses + XxlJobConstant.INSERT_URL
                 : xxlAddresses + XxlJobConstant.UPDATE_URL;
 
         HttpResponse response;
-        ReturnT returnT = null;
+        ReturnT<Integer> returnT = null;
         try {
             response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
-            returnT = JSON.parseObject(response.body(), ReturnT.class);
+            returnT = JSON.parseObject(response.body(), new TypeReference<>() {
+            });
 
             // 插入时需要返回Id，而更新时不需要
             if (response.isOk() && ReturnT.SUCCESS_CODE == returnT.getCode()) {
                 if (path.contains(XxlJobConstant.INSERT_URL)) {
-                    Integer taskId = Integer.parseInt(String.valueOf(returnT.getContent()));
+//                    Integer taskId = Integer.parseInt(String.valueOf(returnT.getContent()));
+                    Integer taskId = returnT.getContent();
                     return BasicResultVO.success(taskId);
                 } else if (path.contains(XxlJobConstant.UPDATE_URL)) {
                     return BasicResultVO.success();
@@ -77,14 +80,14 @@ public class CronTaskServiceImpl implements CronTaskService {
     }
 
     @Override
-    public BasicResultVO deleteCronTask(Integer taskId) {
+    public BasicResultVO<Void> deleteCronTask(Integer taskId) {
         String path = xxlAddresses + XxlJobConstant.DELETE_URL;
 
         HashMap<String, Object> params = MapUtil.newHashMap();
         params.put("id", taskId);
 
         HttpResponse response;
-        ReturnT returnT = null;
+        ReturnT<?> returnT = null;
         try {
             response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
             returnT = JSON.parseObject(response.body(), ReturnT.class);
@@ -100,14 +103,14 @@ public class CronTaskServiceImpl implements CronTaskService {
     }
 
     @Override
-    public BasicResultVO startCronTask(Integer taskId) {
+    public BasicResultVO<Void> startCronTask(Integer taskId) {
         String path = xxlAddresses + XxlJobConstant.RUN_URL;
 
         HashMap<String, Object> params = MapUtil.newHashMap();
         params.put("id", taskId);
 
         HttpResponse response;
-        ReturnT returnT = null;
+        ReturnT<?> returnT = null;
         try {
             response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
             returnT = JSON.parseObject(response.body(), ReturnT.class);
@@ -123,14 +126,14 @@ public class CronTaskServiceImpl implements CronTaskService {
     }
 
     @Override
-    public BasicResultVO stopCronTask(Integer taskId) {
+    public BasicResultVO<Void> stopCronTask(Integer taskId) {
         String path = xxlAddresses + XxlJobConstant.STOP_URL;
 
         HashMap<String, Object> params = MapUtil.newHashMap();
         params.put("id", taskId);
 
         HttpResponse response;
-        ReturnT returnT = null;
+        ReturnT<?> returnT = null;
         try {
             response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
             returnT = JSON.parseObject(response.body(), ReturnT.class);
@@ -146,7 +149,7 @@ public class CronTaskServiceImpl implements CronTaskService {
     }
 
     @Override
-    public BasicResultVO getGroupId(String appName, String title) {
+    public BasicResultVO<Integer> getGroupId(String appName, String title) {
         String path = xxlAddresses + XxlJobConstant.JOB_GROUP_PAGE_LIST;
 
         HashMap<String, Object> params = MapUtil.newHashMap();
@@ -174,12 +177,13 @@ public class CronTaskServiceImpl implements CronTaskService {
     }
 
     @Override
-    public BasicResultVO createGroup(XxlJobGroup xxlJobGroup) {
-        Map<String, Object> params = JSON.parseObject(JSON.toJSONString(xxlJobGroup),  new TypeReference<Map<String, Object>>() {});
+    public BasicResultVO<Void> createGroup(XxlJobGroup xxlJobGroup) {
+        Map<String, Object> params = JSON.parseObject(JSON.toJSONString(xxlJobGroup), new TypeReference<>() {
+        });
         String path = xxlAddresses + XxlJobConstant.JOB_GROUP_INSERT_URL;
 
         HttpResponse response;
-        ReturnT returnT = null;
+        ReturnT<?> returnT = null;
 
         try {
             response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();

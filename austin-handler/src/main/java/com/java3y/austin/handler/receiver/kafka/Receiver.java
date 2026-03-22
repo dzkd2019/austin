@@ -47,8 +47,8 @@ public class Receiver implements MessageReceiver {
 
             List<TaskInfo> taskInfoLists = JSON.parseArray(kafkaMessage.get(), TaskInfo.class);
             String messageGroupId = GroupIdMappingUtils.getGroupIdByTaskInfo(CollUtil.getFirst(taskInfoLists.iterator()));
-            /**
-             * 每个消费者组 只消费 他们自身关心的消息
+            /*
+              每个消费者组 只消费 他们自身关心的消息
              */
             if (topicGroupId.equals(messageGroupId)) {
                 consumeService.consume2Send(taskInfoLists);

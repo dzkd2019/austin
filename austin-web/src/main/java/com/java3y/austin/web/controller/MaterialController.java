@@ -5,6 +5,7 @@ import com.java3y.austin.common.enums.ChannelType;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.web.annotation.AustinAspect;
 import com.java3y.austin.web.service.MaterialService;
+import com.java3y.austin.web.vo.UploadResponseVo;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +44,7 @@ public class MaterialController {
      */
     @PostMapping("/upload")
     @Operation(summary = "素材上传接口")
-    public BasicResultVO uploadMaterial(@RequestParam("file") MultipartFile file, String sendAccount, Integer sendChannel, String fileType) {
+    public BasicResultVO<UploadResponseVo> uploadMaterial(@RequestParam("file") MultipartFile file, String sendAccount, Integer sendChannel, String fileType) {
         if (ChannelType.DING_DING_WORK_NOTICE.getCode().equals(sendChannel)) {
             return materialService.dingDingMaterialUpload(file, sendAccount, fileType);
         } else if (ChannelType.ENTERPRISE_WE_CHAT_ROBOT.getCode().equals(sendChannel)) {

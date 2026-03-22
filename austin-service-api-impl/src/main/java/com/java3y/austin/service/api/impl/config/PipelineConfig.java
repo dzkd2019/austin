@@ -2,6 +2,7 @@ package com.java3y.austin.service.api.impl.config;
 
 
 import com.java3y.austin.common.pipeline.ProcessController;
+import com.java3y.austin.common.pipeline.ProcessModel;
 import com.java3y.austin.common.pipeline.ProcessTemplate;
 import com.java3y.austin.service.api.enums.BusinessCode;
 import com.java3y.austin.service.api.impl.action.recall.RecallAssembleAction;
@@ -10,6 +11,8 @@ import com.java3y.austin.service.api.impl.action.send.SendAfterCheckAction;
 import com.java3y.austin.service.api.impl.action.send.SendAssembleAction;
 import com.java3y.austin.service.api.impl.action.send.SendMqAction;
 import com.java3y.austin.service.api.impl.action.send.SendPreCheckAction;
+import com.java3y.austin.service.api.impl.domain.RecallTaskModel;
+import com.java3y.austin.service.api.impl.domain.SendTaskModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,11 +51,10 @@ public class PipelineConfig {
      * 3. 后置参数校验
      * 4. 发送消息至MQ
      *
-     * @return
      */
     @Bean("commonSendTemplate")
-    public ProcessTemplate commonSendTemplate() {
-        ProcessTemplate processTemplate = new ProcessTemplate();
+    public ProcessTemplate<SendTaskModel> commonSendTemplate() {
+        ProcessTemplate<SendTaskModel> processTemplate = new ProcessTemplate<>();
         processTemplate.setProcessList(Arrays.asList(sendPreCheckAction, sendAssembleAction,
                 sendAfterCheckAction, sendMqAction));
         return processTemplate;
@@ -63,11 +65,10 @@ public class PipelineConfig {
      * 1.组装参数
      * 2.发送MQ
      *
-     * @return
      */
     @Bean("recallMessageTemplate")
-    public ProcessTemplate recallMessageTemplate() {
-        ProcessTemplate processTemplate = new ProcessTemplate();
+    public ProcessTemplate<RecallTaskModel> recallMessageTemplate() {
+        ProcessTemplate<RecallTaskModel> processTemplate = new ProcessTemplate<>();
         processTemplate.setProcessList(Arrays.asList(recallAssembleAction, recallMqAction));
         return processTemplate;
     }
@@ -76,12 +77,11 @@ public class PipelineConfig {
      * pipeline流程控制器
      * 后续扩展则加BusinessCode和ProcessTemplate
      *
-     * @return
      */
     @Bean("apiProcessController")
     public ProcessController apiProcessController() {
         ProcessController processController = new ProcessController();
-        Map<String, ProcessTemplate> templateConfig = new HashMap<>(4);
+        Map<String, ProcessTemplate<? extends ProcessModel>> templateConfig = new HashMap<>(4);
         templateConfig.put(BusinessCode.COMMON_SEND.getCode(), commonSendTemplate());
         templateConfig.put(BusinessCode.RECALL.getCode(), recallMessageTemplate());
         processController.setTemplateConfig(templateConfig);

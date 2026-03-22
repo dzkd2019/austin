@@ -3,11 +3,8 @@ package com.java3y.austin.cron.handler;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONWriter;
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.domain.TaskInfo;
-import com.java3y.austin.support.config.SupportThreadPoolConfig;
 import com.java3y.austin.support.utils.RedisUtils;
-import com.java3y.austin.support.utils.ThreadPoolUtils;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +32,7 @@ public class NightShieldLazyPendingHandler {
     private static final String NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY = "night_shield_send";
 
     @Autowired
-    private KafkaTemplate kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
     @Value("${austin.business.topic.name}")
     private String topicName;
     @Autowired

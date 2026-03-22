@@ -10,7 +10,7 @@ import java.util.Objects;
  * 云片账号信息
  * <p>
  * 账号参数示例：
- * {"url":"https://sms.yunpian.com/v2/sms/tpl_batch_send.json","apikey":"caffff8234234231b5cd7","tpl_id":"523333332","supplierId":20,"supplierName":"云片","scriptName":"YunPianSmsScript"}
+ * {"url":"<a href="https://sms.yunpian.com/v2/sms/tpl_batch_send.json">...</a>","apikey":"caffff8234234231b5cd7","tpl_id":"523333332","supplierId":20,"supplierName":"云片","scriptName":"YunPianSmsScript"}
  *
  * @author 3y
  */

@@ -11,8 +11,8 @@ import java.util.List;
 /**
  * @author 3y
  * 图表的Vo
- * https://aisuda.bce.baidu.com/amis/zh-CN/components/chart
- * https://www.runoob.com/echarts/echarts-setup.html
+ * <a href="https://aisuda.bce.baidu.com/amis/zh-CN/components/chart">...</a>
+ * <a href="https://www.runoob.com/echarts/echarts-setup.html">...</a>
  */
 @Data
 @Builder

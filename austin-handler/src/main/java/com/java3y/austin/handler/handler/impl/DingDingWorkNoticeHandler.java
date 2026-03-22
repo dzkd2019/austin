@@ -36,7 +36,7 @@ import org.springframework.stereotype.Service;
 /**
  * 钉钉工作消息 消息处理器
  * <p>
- * https://open.dingtalk.com/document/orgapp/asynchronous-sending-of-enterprise-session-messages
+ * <a href="https://open.dingtalk.com/document/orgapp/asynchronous-sending-of-enterprise-session-messages">...</a>
  *
  * @author 3y
  */

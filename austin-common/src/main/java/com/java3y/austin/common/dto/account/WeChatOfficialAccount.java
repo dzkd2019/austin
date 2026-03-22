@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
  * 模板消息参数
  * <p>
  * 参数示例：
- * https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html
+ * <a href="https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Template_Message_Interface.html">...</a>
  * * @author zyg
  */
 @Data

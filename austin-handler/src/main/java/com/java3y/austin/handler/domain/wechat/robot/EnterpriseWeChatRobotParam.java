@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * 企业微信自定义机器人 入参
- * https://developer.work.weixin.qq.com/document/path/91770#%E6%96%87%E6%9C%AC%E7%B1%BB%E5%9E%8B
+ * <a href="https://developer.work.weixin.qq.com/document/path/91770#%E6%96%87%E6%9C%AC%E7%B1%BB%E5%9E%8B">...</a>
  *
  * @author 3y
  */

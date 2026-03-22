@@ -31,7 +31,7 @@ import java.util.*;
  * 【该类的逻辑不用看，没有什么意义】
  * for Amis!!! amis框架在【表单】回显的时候，不支持嵌套动态语法!!
  * 编写工具类将 List/Object 铺平成 Map 以及相关的格式
- * https://baidu.gitee.io/amis/zh-CN/components/form/index#%E8%A1%A8%E5%8D%95%E9%A1%B9%E6%95%B0%E6%8D%AE%E5%88%9D%E5%A7%8B%E5%8C%96
+ * <a href="https://baidu.gitee.io/amis/zh-CN/components/form/index#%E8%A1%A8%E5%8D%95%E9%A1%B9%E6%95%B0%E6%8D%AE%E5%88%9D%E5%A7%8B%E5%8C%96">...</a>
  *
  * @author 3y
  * @date 2022/1/23
@@ -119,8 +119,8 @@ public class Convert4Amis {
                 String fieldValue = (String) ReflectUtil.getFieldValue(obj, field);
                 JSONObject jsonObject = JSON.parseObject(fieldValue);
                 for (String key : jsonObject.keySet()) {
-                    /**
-                     * 钉钉OA消息回显
+                    /*
+                      钉钉OA消息回显
                      */
                     if (DING_DING_OA_FIELD.contains(key)) {
                         JSONObject object = jsonObject.getJSONObject(key);
@@ -128,13 +128,13 @@ public class Convert4Amis {
                             result.put(DING_DING_OA_NAME_MAPPING.get(objKey), object.getString(objKey));
                         }
                     } else if (PARSE_JSON_ARRAY.contains(key)) {
-                        /**
-                         * 部分字段是直接传入数组，把数组直接返回(用于回显)
+                        /*
+                          部分字段是直接传入数组，把数组直接返回(用于回显)
                          */
                         result.put(key, JSON.parseArray(jsonObject.getString(key)));
                     } else if (PARSE_JSON_OBJ_TO_ARRAY.contains(key)) {
-                        /**
-                         * 部分字段是直接传入Obj，把数组直接返回(用于回显)
+                        /*
+                          部分字段是直接传入Obj，把数组直接返回(用于回显)
                          */
                         String value = "[" + jsonObject.getString(key) + "]";
                         result.put(key, JSON.parseArray(value));
@@ -370,20 +370,22 @@ public class Convert4Amis {
     public static CommonAmisVo getWxMpQrCode(String url, String id) {
         CommonAmisVo image = CommonAmisVo.builder().type("static-image").value(url).originalSrc(url).name("image").label("扫描关注").fixedSize(true).fixedSizeClassName(url).fixedSizeClassName("h-32").build();
 
-        String requestAdaptor = "var openId = localStorage.getItem(\"openId\");\n" +
-                "if (openId != null && openId != 'null' && openId != '' && openId !== undefined) {\n" +
-                "    alert(\"已登录，你的ID是：\" + openId);\n" +
-                "    window.location.href = 'index.html';\n" +
-                "    return api;\n" +
-                "}";
+        String requestAdaptor = """
+                var openId = localStorage.getItem("openId");
+                if (openId != null && openId != 'null' && openId != '' && openId !== undefined) {
+                    alert("已登录，你的ID是：" + openId);
+                    window.location.href = 'index.html';
+                    return api;
+                }""";
 
 
-        String adaptor = "if (payload.data != 'NO_LOGIN' && payload.status == '0') {\n" +
-                "    localStorage.setItem(\"openId\", payload.data.openId);\n" +
-                "    alert(\"扫码已登录成功，你的ID是：\" + payload.data.openId);\n" +
-                "    window.location.href = 'index.html';\n" +
-                "}\n" +
-                "return payload;";
+        String adaptor = """
+                if (payload.data != 'NO_LOGIN' && payload.status == '0') {
+                    localStorage.setItem("openId", payload.data.openId);
+                    alert("扫码已登录成功，你的ID是：" + payload.data.openId);
+                    window.location.href = 'index.html';
+                }
+                return payload;""";
 
 
         CommonAmisVo service = CommonAmisVo.builder().type("service")

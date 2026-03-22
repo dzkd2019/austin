@@ -40,7 +40,7 @@ public class LettuceRedisUtils {
     /**
      * 封装pipeline操作
      */
-    public static void pipeline(RedisPipelineCallBack pipelineCallBack) {
+    public static void pipeline(RedisPipelineCallBack<byte[], byte[]> pipelineCallBack) {
         StatefulRedisConnection<byte[], byte[]> connect = REDIS_CLIENT.connect(new ByteArrayCodec());
         RedisAsyncCommands<byte[], byte[]> commands = connect.async();
 

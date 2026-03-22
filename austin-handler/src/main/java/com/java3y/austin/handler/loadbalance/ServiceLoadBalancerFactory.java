@@ -1,7 +1,9 @@
 package com.java3y.austin.handler.loadbalance;
 
+import com.java3y.austin.handler.domain.sms.MessageTypeSmsConfig;
 import com.java3y.austin.handler.loadbalance.annotations.LoadBalancer;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -27,7 +29,7 @@ public class ServiceLoadBalancerFactory<T>  implements ApplicationContextAware {
     private final Map<String, ServiceLoadBalancer<T>> serviceLoadBalancerMap = new ConcurrentHashMap<>();
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
 
@@ -41,6 +43,7 @@ public class ServiceLoadBalancerFactory<T>  implements ApplicationContextAware {
     }
 
     @PostConstruct
+    @SuppressWarnings("unchecked")
     private void init() {
         Map<String, Object> serviceMap = this.applicationContext.getBeansWithAnnotation(LoadBalancer.class);
         serviceMap.forEach((name, service) -> {
@@ -48,7 +51,7 @@ public class ServiceLoadBalancerFactory<T>  implements ApplicationContextAware {
                 LoadBalancer LoadBalancer = AopUtils.getTargetClass(service).getAnnotation(LoadBalancer.class);
                 String loadbalancerStrategy = LoadBalancer.loadbalancer();
                 //通常情况下 实现的负载均衡service与loadBalanceStrategy一一对应
-                serviceLoadBalancerMap.put(loadbalancerStrategy, (ServiceLoadBalancer) service);
+                serviceLoadBalancerMap.put(loadbalancerStrategy, (ServiceLoadBalancer<T>) service);
             }
         });
     }

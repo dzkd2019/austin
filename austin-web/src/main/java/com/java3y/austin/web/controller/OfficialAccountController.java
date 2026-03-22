@@ -111,7 +111,7 @@ public class OfficialAccountController {
 
     /**
      * 接收微信的事件消息
-     * https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html
+     * <a href="https://developers.weixin.qq.com/doc/offiaccount/Basic_Information/Access_Overview.html">...</a>
      * 临时给微信服务号登录使用，正常消息推送平台不会有此接口
      *
      * @return

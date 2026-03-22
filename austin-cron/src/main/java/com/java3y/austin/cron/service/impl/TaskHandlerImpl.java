@@ -77,7 +77,7 @@ public class TaskHandlerImpl implements TaskHandler {
      * @param crowdBatchTaskPending
      * @param messageTemplateId
      */
-    private void onComplete(CsvRow row, long countCsvRow, AbstractLazyPending crowdBatchTaskPending, Long messageTemplateId) {
+    private void onComplete(CsvRow row, long countCsvRow, AbstractLazyPending<?> crowdBatchTaskPending, Long messageTemplateId) {
         if (row.getOriginalLineNumber() == countCsvRow) {
             crowdBatchTaskPending.setStop(true);
             log.info("messageTemplate:[{}] read csv file complete!", messageTemplateId);

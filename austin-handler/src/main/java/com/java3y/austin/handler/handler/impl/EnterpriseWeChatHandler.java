@@ -2,6 +2,7 @@ package com.java3y.austin.handler.handler.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.AustinConstant;
 import com.java3y.austin.common.constant.CommonConstant;
@@ -36,7 +37,7 @@ import java.util.Map;
 /**
  * @author 3y
  * 企业微信推送处理
- * https://developer.work.weixin.qq.com/document/path/90235
+ * <a href="https://developer.work.weixin.qq.com/document/path/90235">...</a>
  */
 @Component
 @Slf4j
@@ -127,7 +128,8 @@ public class EnterpriseWeChatHandler extends BaseHandler{
         } else if (SendMessageType.MARKDOWN.getCode().equals(contentModel.getSendType())) {
             wxCpMessage = WxCpMessage.MARKDOWN().content(contentModel.getContent()).build();
         } else if (SendMessageType.MINI_PROGRAM_NOTICE.getCode().equals(contentModel.getSendType())) {
-            Map contentItems = JSON.parseObject(contentModel.getContentItems(), Map.class);
+            Map<String, String> contentItems = JSON.parseObject(contentModel.getContentItems(), new TypeReference<>() {
+            });
             wxCpMessage = WxCpMessage.newMiniProgramNoticeBuilder().appId(contentModel.getAppId()).page(contentModel.getPage()).emphasisFirstItem(contentModel.getEmphasisFirstItem()).contentItems(contentItems).title(contentModel.getTitle()).description(contentModel.getDescription()).build();
         } else if (SendMessageType.TEMPLATE_CARD.getCode().equals(contentModel.getSendType())) {
 
@@ -141,7 +143,7 @@ public class EnterpriseWeChatHandler extends BaseHandler{
 
     /**
      * 撤回企业微信应用消息；
-     * https://developer.work.weixin.qq.com/document/path/94867
+     * <a href="https://developer.work.weixin.qq.com/document/path/94867">...</a>
      *
      * @param recallTaskInfo
      */

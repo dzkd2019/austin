@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * @author zyg
  * 微信服务号推送处理
- * https://developers.weixin.qq.com/doc/offiaccount/Subscription_Messages/api.html
+ * <a href="https://developers.weixin.qq.com/doc/offiaccount/Subscription_Messages/api.html">...</a>
  */
 @Component
 @Slf4j
@@ -90,7 +90,7 @@ public class OfficialAccountHandler extends BaseHandler{
 
     /**
      * 微信服务号消息 不支持撤回
-     * https://developers.weixin.qq.com/doc/offiaccount/Subscription_Messages/api.html
+     * <a href="https://developers.weixin.qq.com/doc/offiaccount/Subscription_Messages/api.html">...</a>
      * @param recallTaskInfo
      */
     @Override

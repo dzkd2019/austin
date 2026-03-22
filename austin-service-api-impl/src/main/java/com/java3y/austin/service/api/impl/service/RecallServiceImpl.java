@@ -32,9 +32,14 @@ public class RecallServiceImpl implements RecallService {
             return new SendResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(), RespStatusEnum.CLIENT_BAD_PARAMETERS.getMsg(), null);
         }
         RecallTaskModel recallTaskModel = RecallTaskModel.builder().messageTemplateId(sendRequest.getMessageTemplateId()).recallMessageId(sendRequest.getRecallMessageIds()).build();
-        ProcessContext context = ProcessContext.builder().code(sendRequest.getCode()).processModel(recallTaskModel).needBreak(false).response(BasicResultVO.success()).build();
+        ProcessContext<RecallTaskModel> context = ProcessContext.<RecallTaskModel>builder()
+                .code(sendRequest.getCode())
+                .processModel(recallTaskModel)
+                .needBreak(false)
+                .response(BasicResultVO.success())
+                .build();
 
-        ProcessContext process = processController.process(context);
+        var process = processController.process(context);
         return new SendResponse(process.getResponse().getStatus(), process.getResponse().getMsg(), null);
     }
 }

@@ -70,7 +70,7 @@ public interface MessageTemplateService {
      * @param id
      * @return
      */
-    BasicResultVO startCronTask(Long id);
+    BasicResultVO<Void> startCronTask(Long id);
 
     /**
      * 暂停模板的定时任务
@@ -78,6 +78,6 @@ public interface MessageTemplateService {
      * @param id
      * @return
      */
-    BasicResultVO stopCronTask(Long id);
+    BasicResultVO<Void> stopCronTask(Long id);
 
 }

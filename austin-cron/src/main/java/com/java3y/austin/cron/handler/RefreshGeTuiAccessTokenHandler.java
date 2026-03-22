@@ -5,11 +5,9 @@ import com.alibaba.fastjson2.JSON;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.dto.account.GeTuiAccount;
 import com.java3y.austin.common.enums.ChannelType;
-import com.java3y.austin.support.config.SupportThreadPoolConfig;
 import com.java3y.austin.support.dao.ChannelAccountDao;
 import com.java3y.austin.support.domain.ChannelAccount;
 import com.java3y.austin.support.utils.AccessTokenUtils;
-import com.java3y.austin.support.utils.ThreadPoolUtils;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +16,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 
 /**
  * 刷新个推的token
  * <p>
- * https://docs.getui.com/getui/server/rest_v2/token/
+ * <a href="https://docs.getui.com/getui/server/rest_v2/token/">...</a>
  *
  * @author 3y
  */

@@ -143,9 +143,7 @@ public class SensWordsAction implements BusinessProcess<TaskInfo> {
 
             if (lastMatchEnd != -1) {
                 // 找到敏感词，用'*'替换
-                for (int k = i; k <= lastMatchEnd; k++) {
-                    result.append('*');
-                }
+                result.repeat("*", Math.max(0, lastMatchEnd - i + 1));
                 i = lastMatchEnd + 1;
             } else {
                 result.append(content.charAt(i));

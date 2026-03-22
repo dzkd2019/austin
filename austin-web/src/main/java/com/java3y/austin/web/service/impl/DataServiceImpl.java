@@ -85,10 +85,10 @@ public class DataServiceImpl implements DataService {
             return null;
         }
 
-        /**
-         * 获取redis清洗好的数据
-         * key：state
-         * value:stateCount
+        /*
+          获取redis清洗好的数据
+          key：state
+          value:stateCount
          */
         Map<Object, Object> anchorResult = redisUtils.hGetAll(getRealBusinessId(businessId));
 

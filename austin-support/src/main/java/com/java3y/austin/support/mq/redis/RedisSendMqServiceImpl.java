@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Redis 消息队列实现类
- *
+ * <p>
  * Guava Eventbus 和 Spring EventBus 只适用于单体服务
  * Redis 适合单体、微服务，且无需单独部署三方消息队列，方便开发与简单应用
  *

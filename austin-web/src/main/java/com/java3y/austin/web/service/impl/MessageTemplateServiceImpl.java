@@ -113,7 +113,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     }
 
     @Override
-    public BasicResultVO startCronTask(Long id) {
+    public BasicResultVO<Void> startCronTask(Long id) {
         // 1.获取消息模板的信息
         MessageTemplate messageTemplate = messageTemplateDao.findById(id).orElse(null);
         if (Objects.isNull(messageTemplate)) {
@@ -125,9 +125,9 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
 
         // 3.获取taskId(如果本身存在则复用原有任务，如果不存在则得到新建后任务ID)
         Integer taskId = messageTemplate.getCronTaskId();
-        BasicResultVO basicResultVO = cronTaskService.saveCronTask(xxlJobInfo);
+        BasicResultVO<Integer> basicResultVO = cronTaskService.saveCronTask(xxlJobInfo);
         if (Objects.isNull(taskId) && RespStatusEnum.SUCCESS.getCode().equals(basicResultVO.getStatus()) && Objects.nonNull(basicResultVO.getData())) {
-            taskId = Integer.valueOf(String.valueOf(basicResultVO.getData()));
+            taskId = basicResultVO.getData();
         }
 
         // 4. 启动定时任务
@@ -141,7 +141,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     }
 
     @Override
-    public BasicResultVO stopCronTask(Long id) {
+    public BasicResultVO<Void> stopCronTask(Long id) {
         // 1.修改模板状态
         MessageTemplate messageTemplate = messageTemplateDao.findById(id).orElse(null);
         if (Objects.isNull(messageTemplate)) {

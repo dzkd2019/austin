@@ -42,6 +42,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!--依赖库版本-->
+        <spring-boot.version>4.0.4</spring-boot.version>
         <mysql-connector-j.version>9.6.0</mysql-connector-j.version>
         <hutool-all.version>5.8.44</hutool-all.version>
         <guava.version>33.5.0-jre</guava.version>
@@ -331,6 +332,14 @@
                 <artifactId>spring-boot-configuration-processor</artifactId>
                 <scope>compile</scope>
                 <version>${spring-boot-configuration-processor.version}</version>
+            </dependency>
+
+            <!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-kafka -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-kafka</artifactId>
+                <version>${spring-boot.version}</version>
+                <scope>compile</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -138,7 +138,8 @@ public class MessageTemplateController {
     @Operation(summary = "测试发送接口")
     public SendResponse test(@RequestBody MessageTemplateParam messageTemplateParam) {
 
-        Map<String, String> variables = JSON.parseObject(messageTemplateParam.getMsgContent(), new TypeReference<Map<String, String>>() {});
+        Map<String, String> variables = JSON.parseObject(messageTemplateParam.getMsgContent(), new TypeReference<>() {
+        });
         MessageParam messageParam = MessageParam.builder().receiver(messageTemplateParam.getReceiver()).variables(variables).build();
         SendRequest sendRequest = SendRequest.builder().code(BusinessCode.COMMON_SEND.getCode()).messageTemplateId(messageTemplateParam.getId()).messageParam(messageParam).build();
         SendResponse response = sendService.send(sendRequest);
@@ -179,7 +180,7 @@ public class MessageTemplateController {
      */
     @PostMapping("start/{id}")
     @Operation(summary = "启动模板的定时任务")
-    public BasicResultVO start(@RequestBody @PathVariable("id") Long id) {
+    public BasicResultVO<Void> start(@RequestBody @PathVariable("id") Long id) {
         return messageTemplateService.startCronTask(id);
     }
 
@@ -188,7 +189,7 @@ public class MessageTemplateController {
      */
     @PostMapping("stop/{id}")
     @Operation(summary = "暂停模板的定时任务")
-    public BasicResultVO stop(@RequestBody @PathVariable("id") Long id) {
+    public BasicResultVO<Void> stop(@RequestBody @PathVariable("id") Long id) {
         return messageTemplateService.stopCronTask(id);
     }
 

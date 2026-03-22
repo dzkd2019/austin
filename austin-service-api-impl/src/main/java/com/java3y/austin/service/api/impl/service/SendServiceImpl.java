@@ -43,13 +43,13 @@ public class SendServiceImpl implements SendService {
                 .messageParamList(Collections.singletonList(sendRequest.getMessageParam()))
                 .build();
 
-        ProcessContext context = ProcessContext.builder()
+        ProcessContext<SendTaskModel> context = ProcessContext.<SendTaskModel>builder()
                 .code(sendRequest.getCode())
                 .processModel(sendTaskModel)
                 .needBreak(false)
                 .response(BasicResultVO.success()).build();
 
-        ProcessContext process = processController.process(context);
+        var process = processController.process(context);
 
         return new SendResponse(process.getResponse().getStatus(), process.getResponse().getMsg(), (List<SimpleTaskInfo>) process.getResponse().getData());
     }
@@ -66,13 +66,13 @@ public class SendServiceImpl implements SendService {
                 .messageParamList(batchSendRequest.getMessageParamList())
                 .build();
 
-        ProcessContext context = ProcessContext.builder()
+        ProcessContext<SendTaskModel> context = ProcessContext.<SendTaskModel>builder()
                 .code(batchSendRequest.getCode())
                 .processModel(sendTaskModel)
                 .needBreak(false)
                 .response(BasicResultVO.success()).build();
 
-        ProcessContext process = processController.process(context);
+        var process = processController.process(context);
 
         return new SendResponse(process.getResponse().getStatus(), process.getResponse().getMsg(), (List<SimpleTaskInfo>) process.getResponse().getData());
     }

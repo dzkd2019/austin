@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
  * @author 3y
  * 企业微信群 机器人
  * <p>
- * https://developer.work.weixin.qq.com/document/path/91770#%E6%96%87%E6%9C%AC%E7%B1%BB%E5%9E%8B
+ * <a href="https://developer.work.weixin.qq.com/document/path/91770#%E6%96%87%E6%9C%AC%E7%B1%BB%E5%9E%8B">...</a>
  */
 @Data
 @Builder
@@ -43,7 +43,7 @@ public class EnterpriseWeChatRobotContentModel extends ContentModel {
     private String mediaId;
 
     /**
-     * 图文消息：[{"title":"中秋节礼品领取","description":"今年中秋节公司有豪礼相送","url":"www.qq.com","picurl":"http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png"}]
+     * 图文消息：[{"title":"中秋节礼品领取","description":"今年中秋节公司有豪礼相送","url":"www.qq.com","picurl":"<a href="http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png">...</a>"}]
      */
     private String articles;
 

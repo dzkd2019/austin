@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  * @author 3y
  * @date 2022/5/8
  * <p>
- * https://docs.getui.com/getui/server/rest_v2/token/
+ * <a href="https://docs.getui.com/getui/server/rest_v2/token/">...</a>
  */
 @NoArgsConstructor
 @Data

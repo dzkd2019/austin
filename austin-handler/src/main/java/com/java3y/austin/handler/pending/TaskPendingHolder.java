@@ -9,9 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 
@@ -34,10 +33,10 @@ public class TaskPendingHolder {
      */
     @PostConstruct
     public void init() {
-        /**
-         * example ThreadPoolName:austin.im.notice
-         *
-         * 可以通过apollo配置：dynamic-tp-apollo-dtp.yml  动态修改线程池的信息
+        /*
+          example ThreadPoolName:austin.im.notice
+          <p>
+          可以通过apollo配置：dynamic-tp-apollo-dtp.yml  动态修改线程池的信息
          */
         for (String groupId : groupIds) {
             DtpExecutor executor = HandlerThreadPoolConfig.getExecutor(groupId);

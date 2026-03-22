@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  * 请求token时的参数
  *
  * @author 3y
- * https://docs.getui.com/getui/server/rest_v2/token/
+ * <a href="https://docs.getui.com/getui/server/rest_v2/token/">...</a>
  */
 @NoArgsConstructor
 @Data

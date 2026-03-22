@@ -26,7 +26,7 @@ import java.util.Set;
 /**
  * @author sunql
  * 微信小程序发送订阅消息
- * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/deleteMessageTemplate.html
+ * <a href="https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/deleteMessageTemplate.html">...</a>
  */
 @Component
 @Slf4j
@@ -88,7 +88,7 @@ public class MiniProgramAccountHandler extends BaseHandler{
 
     /**
      * 微信小程序发送订阅消息 不支持撤回
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/deleteMessageTemplate.html
+     * <a href="https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/deleteMessageTemplate.html">...</a>
      * @param recallTaskInfo
      */
     @Override

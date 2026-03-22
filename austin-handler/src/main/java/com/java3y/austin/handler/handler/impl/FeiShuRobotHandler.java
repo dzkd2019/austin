@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * 飞书自定义机器人 消息处理器
- * https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot
+ * <a href="https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot">...</a>
  * @author 3y
  */
 @Slf4j
@@ -98,7 +98,7 @@ public class FeiShuRobotHandler extends BaseHandler{
 
     /**
      * 飞书自定义机器人 不支持撤回消息
-     * https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot
+     * <a href="https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot">...</a>
      * @param recallTaskInfo
      */
     @Override

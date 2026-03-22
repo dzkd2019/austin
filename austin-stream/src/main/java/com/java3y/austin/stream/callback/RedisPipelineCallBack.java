@@ -10,7 +10,7 @@ import java.util.List;
  *
  * @author 3y
  */
-public interface RedisPipelineCallBack {
+public interface RedisPipelineCallBack<K, V> {
 
     /**
      * 具体执行逻辑
@@ -18,6 +18,6 @@ public interface RedisPipelineCallBack {
      * @param redisAsyncCommands
      * @return
      */
-    List<RedisFuture<?>> invoke(RedisAsyncCommands redisAsyncCommands);
+    List<RedisFuture<?>> invoke(RedisAsyncCommands<K, V> redisAsyncCommands);
 
 }

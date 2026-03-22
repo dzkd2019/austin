@@ -32,29 +32,22 @@ public class ContentHolderUtil {
         return PROPERTY_PLACEHOLDER_HELPER.replacePlaceholders(template, new CustomPlaceholderResolver(template, paramMap));
     }
 
-    private static class CustomPlaceholderResolver implements PropertyPlaceholderHelper.PlaceholderResolver {
-        private final String template;
-        private final Map<String, String> paramMap;
-
-        public CustomPlaceholderResolver(String template, Map<String, String> paramMap) {
-            super();
-            this.template = template;
-            this.paramMap = paramMap;
-        }
+    private record CustomPlaceholderResolver(String template,
+                                             Map<String, String> paramMap) implements PropertyPlaceholderHelper.PlaceholderResolver {
 
         @Override
-        public String resolvePlaceholder(String placeholderName) {
-            if (Objects.isNull(paramMap)) {
-                String errorStr = MessageFormat.format("template:{0} require param:{1},but not exist! paramMap:{2}", template, placeholderName, null);
-                throw new IllegalArgumentException(errorStr);
+            public String resolvePlaceholder(String placeholderName) {
+                if (Objects.isNull(paramMap)) {
+                    String errorStr = MessageFormat.format("template:{0} require param:{1},but not exist! paramMap:{2}", template, placeholderName, null);
+                    throw new IllegalArgumentException(errorStr);
+                }
+                String value = paramMap.get(placeholderName);
+                if (StringUtils.isEmpty(value)) {
+                    String errorStr = MessageFormat.format("template:{0} require param:{1},but not exist! paramMap:{2}", template, placeholderName, paramMap);
+                    throw new IllegalArgumentException(errorStr);
+                }
+                return value;
             }
-            String value = paramMap.get(placeholderName);
-            if (StringUtils.isEmpty(value)) {
-                String errorStr = MessageFormat.format("template:{0} require param:{1},but not exist! paramMap:{2}", template, placeholderName, paramMap);
-                throw new IllegalArgumentException(errorStr);
-            }
-            return value;
         }
-    }
 
 }

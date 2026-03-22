@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
 /**
  * 刷新钉钉的access_token
  * <p>
- * https://open.dingtalk.com/document/orgapp-server/obtain-orgapp-token
+ * <a href="https://open.dingtalk.com/document/orgapp-server/obtain-orgapp-token">...</a>
  *
  * @author 3y
  */

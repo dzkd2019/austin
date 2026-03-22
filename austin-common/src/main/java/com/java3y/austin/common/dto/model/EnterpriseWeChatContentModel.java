@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 /**
  * @author 3y
  * 企业微信 应用消息
- * https://developer.work.weixin.qq.com/document/path/90372#%E6%8E%A5%E5%8F%A3%E5%AE%9A%E4%B9%89
+ * <a href="https://developer.work.weixin.qq.com/document/path/90372#%E6%8E%A5%E5%8F%A3%E5%AE%9A%E4%B9%89">...</a>
  */
 @Data
 @Builder
@@ -53,7 +53,7 @@ public class EnterpriseWeChatContentModel extends ContentModel {
 
     /**
      * 图文消息
-     * [{"title":"中秋节礼品领取","description":"今年中秋节公司有豪礼相送","url":"URL","picurl":"http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png","appid":"wx123123123123123","pagepath":"pages/index?userid=zhangsan&orderid=123123123"}]
+     * [{"title":"中秋节礼品领取","description":"今年中秋节公司有豪礼相送","url":"URL","picurl":"<a href="http://res.mail.qq.com/node/ww/wwopenmng/images/independent/doc/test_pic_msg1.png">...</a>","appid":"wx123123123123123","pagepath":"pages/index?userid=zhangsan&orderid=123123123"}]
      */
     private String articles;
 
@@ -73,8 +73,8 @@ public class EnterpriseWeChatContentModel extends ContentModel {
     private String contentItems;
 
 
-    /**
-     *  其他消息类型： https://developer.work.weixin.qq.com/document/path/90372#%E6%96%87%E6%9C%AC%E6%B6%88%E6%81%AF
+    /*
+       其他消息类型： https://developer.work.weixin.qq.com/document/path/90372#%E6%96%87%E6%9C%AC%E6%B6%88%E6%81%AF
      */
 
 }

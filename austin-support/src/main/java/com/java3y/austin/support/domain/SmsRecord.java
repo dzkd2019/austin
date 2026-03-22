@@ -15,9 +15,9 @@ import jakarta.persistence.Id;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-/**
- * 短信（回执和发送记录）
- * @author 3y
+/*
+  短信（回执和发送记录）
+  @author 3y
  */
 public class SmsRecord {
 

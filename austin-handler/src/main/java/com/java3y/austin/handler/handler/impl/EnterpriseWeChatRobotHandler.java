@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * 企业微信群机器人 消息处理器
- * https://developer.work.weixin.qq.com/document/path/91770
+ * <a href="https://developer.work.weixin.qq.com/document/path/91770">...</a>
  *
  * @author 3y
  */
@@ -94,7 +94,7 @@ public class EnterpriseWeChatRobotHandler extends BaseHandler{
 
     /**
      * 企业微信群机器人 不支持撤回消息
-     * https://developer.work.weixin.qq.com/document/path/91770
+     * <a href="https://developer.work.weixin.qq.com/document/path/91770">...</a>
      * @param recallTaskInfo
      */
     @Override

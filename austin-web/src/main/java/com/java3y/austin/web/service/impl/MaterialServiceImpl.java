@@ -48,7 +48,7 @@ public class MaterialServiceImpl implements MaterialService {
 
 
     @Override
-    public BasicResultVO dingDingMaterialUpload(MultipartFile file, String sendAccount, String fileType) {
+    public BasicResultVO<UploadResponseVo> dingDingMaterialUpload(MultipartFile file, String sendAccount, String fileType) {
         OapiMediaUploadResponse rsp;
         try {
             DingDingWorkNoticeAccount account = accountUtils.getAccountById(Integer.valueOf(sendAccount), DingDingWorkNoticeAccount.class);
@@ -61,7 +61,7 @@ public class MaterialServiceImpl implements MaterialService {
             req.setType(EnumUtil.getDescriptionByCode(Integer.valueOf(fileType), FileType.class));
             rsp = client.execute(req, accessToken);
             if (rsp.isSuccess()) {
-                return new BasicResultVO(RespStatusEnum.SUCCESS, UploadResponseVo.builder().id(rsp.getMediaId()).build());
+                return new BasicResultVO<>(RespStatusEnum.SUCCESS, UploadResponseVo.builder().id(rsp.getMediaId()).build());
             }
             log.error("MaterialService#dingDingMaterialUpload fail:{}", rsp.getErrmsg());
         } catch (Exception e) {
@@ -71,7 +71,7 @@ public class MaterialServiceImpl implements MaterialService {
     }
 
     @Override
-    public BasicResultVO enterpriseWeChatRootMaterialUpload(MultipartFile multipartFile, String sendAccount, String fileType) {
+    public BasicResultVO<UploadResponseVo> enterpriseWeChatRootMaterialUpload(MultipartFile multipartFile, String sendAccount, String fileType) {
         try {
             EnterpriseWeChatRobotAccount weChatRobotAccount = accountUtils.getAccountById(Integer.valueOf(sendAccount), EnterpriseWeChatRobotAccount.class);
             String key = weChatRobotAccount.getWebhook().substring(weChatRobotAccount.getWebhook().indexOf(CommonConstant.EQUAL_STRING) + 1);
@@ -83,7 +83,7 @@ public class MaterialServiceImpl implements MaterialService {
                     .execute().body();
             EnterpriseWeChatRootResult result = JSON.parseObject(response, EnterpriseWeChatRootResult.class);
             if (Integer.valueOf(WxCpErrorMsgEnum.CODE_0.getCode()).equals(result.getErrcode())) {
-                return new BasicResultVO(RespStatusEnum.SUCCESS, UploadResponseVo.builder().id(result.getMediaId()).build());
+                return new BasicResultVO<>(RespStatusEnum.SUCCESS, UploadResponseVo.builder().id(result.getMediaId()).build());
             }
             log.error("MaterialService#enterpriseWeChatRootMaterialUpload fail:{}", result.getErrmsg());
         } catch (Exception e) {
@@ -93,7 +93,7 @@ public class MaterialServiceImpl implements MaterialService {
     }
 
     @Override
-    public BasicResultVO enterpriseWeChatMaterialUpload(MultipartFile multipartFile, String sendAccount, String fileType) {
+    public BasicResultVO<UploadResponseVo> enterpriseWeChatMaterialUpload(MultipartFile multipartFile, String sendAccount, String fileType) {
         try {
             WxCpDefaultConfigImpl accountConfig = accountUtils.getAccountById(Integer.valueOf(sendAccount), WxCpDefaultConfigImpl.class);
             WxCpServiceImpl wxCpService = new WxCpServiceImpl();
@@ -101,7 +101,7 @@ public class MaterialServiceImpl implements MaterialService {
             WxMediaUploadResult result = wxCpService.getMediaService()
                     .upload(EnumUtil.getDescriptionByCode(Integer.valueOf(fileType), FileType.class), SpringFileUtils.getFile(multipartFile));
             if (CharSequenceUtil.isNotBlank(result.getMediaId())) {
-                return new BasicResultVO(RespStatusEnum.SUCCESS, UploadResponseVo.builder().id(result.getMediaId()).build());
+                return new BasicResultVO<>(RespStatusEnum.SUCCESS, UploadResponseVo.builder().id(result.getMediaId()).build());
             }
             log.error("MaterialService#enterpriseWeChatMaterialUpload fail:{}", JSON.toJSONString(result));
         } catch (Exception e) {

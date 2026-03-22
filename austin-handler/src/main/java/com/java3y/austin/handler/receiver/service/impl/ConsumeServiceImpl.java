@@ -1,6 +1,5 @@
 package com.java3y.austin.handler.receiver.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import com.java3y.austin.common.domain.AnchorInfo;
 import com.java3y.austin.common.domain.LogParam;
 import com.java3y.austin.common.domain.RecallTaskInfo;
@@ -11,15 +10,15 @@ import com.java3y.austin.handler.handler.VirtualThreadBackPressureManager;
 import com.java3y.austin.handler.pending.Task;
 import com.java3y.austin.handler.pending.TaskPendingHolder;
 import com.java3y.austin.handler.receiver.service.ConsumeService;
-import com.java3y.austin.handler.utils.GroupIdMappingUtils;
 import com.java3y.austin.support.utils.LogUtils;
-import com.java3y.austin.support.utils.ThreadPoolUtils;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author 3y
@@ -47,6 +46,8 @@ public class ConsumeServiceImpl implements ConsumeService {
         backPressureManager = new VirtualThreadBackPressureManager(100000, 50000);
     }
 
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+
     @Override
     public void consume2Send(List<TaskInfo> taskInfoLists) {
 //        String topicGroupId = GroupIdMappingUtils.getGroupIdByTaskInfo(CollUtil.getFirst(taskInfoLists.iterator()));
@@ -56,7 +57,7 @@ public class ConsumeServiceImpl implements ConsumeService {
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
 //            taskPendingHolder.route(topicGroupId).execute(task);
             try {
-                ThreadPoolUtils.getVirtualExecutorService().execute(task);
+                executor.submit(task);
             } finally {
                 backPressureManager.decrement();
             }

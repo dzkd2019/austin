@@ -1,7 +1,9 @@
 package com.java3y.austin.handler.config;
 
 
+import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.pipeline.ProcessController;
+import com.java3y.austin.common.pipeline.ProcessModel;
 import com.java3y.austin.common.pipeline.ProcessTemplate;
 import com.java3y.austin.handler.action.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,11 +41,10 @@ public class TaskPipelineConfig {
      * 2.通用去重功能
      * 3.发送消息
      *
-     * @return
      */
     @Bean("taskTemplate")
-    public ProcessTemplate taskTemplate() {
-        ProcessTemplate processTemplate = new ProcessTemplate();
+    public ProcessTemplate<TaskInfo> taskTemplate() {
+        var processTemplate = new ProcessTemplate<TaskInfo>();
         processTemplate.setProcessList(Arrays.asList(discardAction, shieldAction, deduplicationAction,
                 sensWordsAction, sendMessageAction));
         return processTemplate;
@@ -53,12 +54,11 @@ public class TaskPipelineConfig {
      * pipeline流程控制器
      * 后续扩展则加BusinessCode和ProcessTemplate
      *
-     * @return
      */
     @Bean("handlerProcessController")
     public ProcessController processController() {
         ProcessController processController = new ProcessController();
-        Map<String, ProcessTemplate> templateConfig = new HashMap<>(4);
+        Map<String, ProcessTemplate<? extends ProcessModel>> templateConfig = new HashMap<>(4);
         templateConfig.put(PIPELINE_HANDLER_CODE, taskTemplate());
         processController.setTemplateConfig(templateConfig);
         return processController;

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
  * @author 3y
  * 钉钉 自定义机器人
  * <p>
- * https://open.dingtalk.com/document/group/custom-robot-access
+ * <a href="<a">href="https://open.dingtalk.com/document/group/custom-rob</a>ot-access">...</a>
  */
 @Data
 @Builder
@@ -39,7 +39,7 @@ public class DingDingRobotContentModel extends ContentModel {
 
     /**
      * 钉钉机器人：【ActionCard消息】按钮的文案和跳转链接的json
-     * [{\"title\":\"别点我\",\"actionURL\":\"https://www.baidu.com/\"},{\"title\":\"没关系，还是点我把\",\"actionURL\":\"https://www.baidu.com/\\t\"}]
+     * [{\"title\":\"别点我\",\"actionURL\":\"<a href="https://www.baidu.com/">...</a>\"},{\"title\":\"没关系，还是点我把\",\"actionURL\":\"<a href="https://www.baidu.com/">...</a>\\t\"}]
      */
     private String btns;
 
@@ -57,7 +57,7 @@ public class DingDingRobotContentModel extends ContentModel {
 
     /**
      * 钉钉机器人：【FeedCard类型】 消息体
-     * "[{\"picUrl\":\"https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png\",\"title\":\"{$title1}\",\"url\":\"https://www.dingtalk.com/\"},{\"picUrl\":\"https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png\\t\",\"title\":\"时代的火车向前开2\",\"url\":\"https://www.dingtalk.com/\"}]"}
+     * "[{\"picUrl\":\"<a href="https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png">...</a>\",\"title\":\"{$title1}\",\"url\":\"<a href="https://www.dingtalk.com/">...</a>\"},{\"picUrl\":\"<a href="https://img.alicdn.com/tfs/TB1NwmBEL9TBuNjy1zbXXXpepXa-2400-1218.png">...</a>\\t\",\"title\":\"时代的火车向前开2\",\"url\":\"<a href="https://www.dingtalk.com/">...</a>\"}]"}
      */
     private String feedCards;
 }

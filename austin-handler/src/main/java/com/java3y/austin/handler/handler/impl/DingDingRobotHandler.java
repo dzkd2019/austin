@@ -31,7 +31,7 @@ import java.util.List;
 
 /**
  * 钉钉消息自定义机器人 消息处理器
- * https://open.dingtalk.com/document/group/custom-robot-access
+ * <a href="https://open.dingtalk.com/document/group/custom-robot-access">...</a>
  * @author 3y
  */
 @Slf4j
@@ -138,7 +138,7 @@ public class DingDingRobotHandler extends BaseHandler{
 
     /**
      * 钉钉自定义机器人 不支持撤回消息
-     * https://open.dingtalk.com/document/group/custom-robot-access
+     * <a href="https://open.dingtalk.com/document/group/custom-robot-access">...</a>
      * @param recallTaskInfo
      */
     @Override
