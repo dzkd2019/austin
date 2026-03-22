@@ -35,6 +35,7 @@ public class FlowControlFactory implements ApplicationContextAware {
     private static final String FLOW_CONTROL_PREFIX = "flow_control_";
 
     private final Map<RateLimitStrategy, FlowControlService> flowControlServiceMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, RateLimiter> rateLimiterMap = new ConcurrentHashMap<>();
 
     @Autowired
     private ConfigService config;
@@ -47,15 +48,23 @@ public class FlowControlFactory implements ApplicationContextAware {
     }
 
     public void flowControl(TaskInfo taskInfo, FlowControlParam flowControlParam) {
-        RateLimiter rateLimiter;
+//        RateLimiter rateLimiter;
         Double rateInitValue = flowControlParam.getRateInitValue();
         // 对比 初始限流值 与 配置限流值，以 配置中心的限流值为准
-        Double rateLimitConfig = getRateLimitConfig(taskInfo.getSendChannel());
-        if (Objects.nonNull(rateLimitConfig) && !rateInitValue.equals(rateLimitConfig)) {
-            rateLimiter = RateLimiter.create(rateLimitConfig);
-            flowControlParam.setRateInitValue(rateLimitConfig);
-            flowControlParam.setRateLimiter(rateLimiter);
-        }
+        Double rate = getRateLimitConfig(taskInfo.getSendChannel());
+        Double rateLimitConfig = rate == null ? rateInitValue :rate;
+
+//        rateLimitConfig = rateLimitConfig == null ? rateInitValue : rateLimitConfig;
+
+        RateLimiter rateLimiter = rateLimiterMap.compute(taskInfo.getSendChannel(), (channel, existing) -> {
+            if (existing == null ||
+                    !Objects.equals(existing.getRate(), rateLimitConfig)) {
+                return RateLimiter.create(rateLimitConfig);
+            }
+            return existing;
+        });
+        flowControlParam.setRateLimiter(rateLimiter);
+
         FlowControlService flowControlService = flowControlServiceMap.get(flowControlParam.getRateLimitStrategy());
         if (Objects.isNull(flowControlService)) {
             log.error("没有找到对应的单机限流策略");

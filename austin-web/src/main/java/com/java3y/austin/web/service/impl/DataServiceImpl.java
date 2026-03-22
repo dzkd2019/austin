@@ -3,7 +3,6 @@ package com.java3y.austin.web.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.text.StrPool;
 import com.alibaba.fastjson2.JSON;
@@ -31,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -127,25 +127,23 @@ public class DataServiceImpl implements DataService {
 
     private UserTimeLineVo buildUserTimeLineVo(List<SimpleAnchorInfo> sortAnchorList) {
         // 1. 对相同的businessId进行分类  {"businessId":[{businessId,state,timeStamp},{businessId,state,timeStamp}]}
-        Map<String, List<SimpleAnchorInfo>> map = MapUtil.newHashMap();
-        for (SimpleAnchorInfo simpleAnchorInfo : sortAnchorList) {
-            List<SimpleAnchorInfo> simpleAnchorInfos = map.get(String.valueOf(simpleAnchorInfo.getBusinessId()));
-            if (CollUtil.isEmpty(simpleAnchorInfos)) {
-                simpleAnchorInfos = new ArrayList<>();
-            }
-            simpleAnchorInfos.add(simpleAnchorInfo);
-            map.put(String.valueOf(simpleAnchorInfo.getBusinessId()), simpleAnchorInfos);
-        }
+        Map<Long, List<SimpleAnchorInfo>> map1 = sortAnchorList.stream()
+                .collect(Collectors.groupingBy(SimpleAnchorInfo::getBusinessId));
+
+        Set<Long> templateIds = map1.keySet().stream()
+                .map(TaskInfoUtils::getMessageTemplateIdFromBusinessId)
+                .collect(Collectors.toSet());
+
+        Map<Long, MessageTemplate> messageTemplateMap = messageTemplateDao.findAllById(templateIds)
+                .stream()
+                .collect(Collectors.toMap(MessageTemplate::getId, Function.identity()));
 
         // 2. 封装vo 给到前端渲染展示
         List<UserTimeLineVo.ItemsVO> items = new ArrayList<>();
-        for (Map.Entry<String, List<SimpleAnchorInfo>> entry : map.entrySet()) {
-            Long messageTemplateId = TaskInfoUtils.getMessageTemplateIdFromBusinessId(Long.valueOf(entry.getKey()));
-            MessageTemplate messageTemplate = messageTemplateDao.findById(messageTemplateId).orElse(null);
-            if (Objects.isNull(messageTemplate)) {
-                continue;
-            }
+    
 
+        for (var entry : map1.entrySet()) {
+            MessageTemplate messageTemplate = messageTemplateMap.get(TaskInfoUtils.getMessageTemplateIdFromBusinessId(entry.getKey()));
             StringBuilder sb = new StringBuilder();
             for (SimpleAnchorInfo simpleAnchorInfo : entry.getValue()) {
                 if (AnchorState.RECEIVE.getCode().equals(simpleAnchorInfo.getState())) {
@@ -160,7 +158,7 @@ public class DataServiceImpl implements DataService {
             for (String detail : sb.toString().split(StrPool.CRLF)) {
                 if (CharSequenceUtil.isNotBlank(detail)) {
                     UserTimeLineVo.ItemsVO itemsVO = UserTimeLineVo.ItemsVO.builder()
-                            .businessId(entry.getKey())
+                            .businessId(String.valueOf(entry.getKey()))
                             .sendType(EnumUtil.getEnumByCode(messageTemplate.getSendChannel(), ChannelType.class).getDescription())
                             .creator(messageTemplate.getCreator())
                             .title(messageTemplate.getName())
