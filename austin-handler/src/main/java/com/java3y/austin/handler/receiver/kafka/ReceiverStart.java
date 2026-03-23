@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.KafkaListenerAnnotationBeanPostProcessor;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @ConditionalOnProperty(name = "austin.mq.pipeline", havingValue = MessageQueuePipeline.KAFKA)
 @Slf4j
+@EnableKafka
 public class ReceiverStart {
 
     /**
