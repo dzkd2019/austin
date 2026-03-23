@@ -1,5 +1,7 @@
 package com.java3y.austin.handler.backpressure;
 
+import com.java3y.austin.handler.utils.GroupIdMappingUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
@@ -10,121 +12,317 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
+/**
+ * 虚拟线程背压管理器 - 支持每个 groupId 独立的水位配置
+ *
+ * <p>设计要点：
+ * <ul>
+ *   <li>每个 Kafka Listener（groupId）有独立的水位线</li>
+ *   <li>支持动态调整单个 groupId 的水位</li>
+ *   <li>提供全局默认水位作为 fallback</li>
+ *   <li>使用 CAS 原子操作防止重复 pause/resume</li>
+ * </ul>
+ *
+ * @author 3y
+ */
 @Slf4j
 @Component
 public class VirtualThreadBackPressureManager {
-    private final AtomicInteger inFlightCount = new AtomicInteger(0);
+    // ==================== 全局默认水位（作为 fallback）====================
 
-    @Getter
-    private volatile int highWaterMark = 100000;
+    private volatile WaterMarkConfig defaultWaterMark = new WaterMarkConfig(100000, 50000);
+    // ==================== 存储 ====================
 
-    @Getter
-    private volatile int lowWaterMark = 50000;
-
-    private final Map<String, AtomicInteger> pendingCount = new ConcurrentHashMap<>();
+    /**
+     * groupId -> GroupContext
+     * 包含计数器、暂停状态、容器引用、独立水位配置
+     */
     private final Map<String, GroupContext> groupContexts = new ConcurrentHashMap<>();
-
     private final KafkaListenerEndpointRegistry registry;
-
-    private final ReentrantLock lock = new ReentrantLock();
+    // ==================== 构造函数 =====================
 
     public VirtualThreadBackPressureManager(KafkaListenerEndpointRegistry registry) {
         this.registry = registry;
     }
 
+    @PostConstruct
+    public void init() {
+        // 提前预热上下文。即使 container 暂时为 null 也无妨，
+        // 当真正消费发生时，getOrCreateGroupContext 会尝试再次捕获 container
+        GroupIdMappingUtils.getAllGroupIds().forEach(this::getOrCreateGroupContext);
+        log.info("虚拟线程背压管理器初始化完成，全局默认水位: High={}, Low={}",
+                defaultWaterMark.highWaterMark(), defaultWaterMark.lowWaterMark());
+    }
+
+    // ==================== 核心方法 =====================
+
+    /**
+     * 增加计数并检查是否需要暂停
+     */
     public void incrementAndCheckPause(String groupId) {
-        GroupContext context = getGroupContext(groupId);
+        GroupContext context = getOrCreateGroupContext(groupId);
         int current = context.inFlightCount.incrementAndGet();
-
-        // 【极其优雅的 CAS 控制】：
-        // 只有当 current >= high 且 isPaused 原本为 false 时，才允许执行 pause()
-        // 这意味着哪怕超过了 150000，底层的 container.pause() 也绝对只会执行一次！
+        int highWaterMark = context.getHighWaterMark();
+        // 【CAS 控制】：只有首次超过高水位时才执行 pause()
         if (current >= highWaterMark && context.isPaused.compareAndSet(false, true)) {
-            if (context.container != null) {
-                log.warn("🚨 Group [{}] 触及高水位 ({} / {})，正式下达暂停消费指令", groupId, current, highWaterMark);
-                context.container.pause();
+            MessageListenerContainer container = context.getContainer();
+            if (container != null) {
+                log.warn("Group [{}] 触及高水位 ({} / {})，正式下达暂停消费指令",
+                        groupId, current, highWaterMark);
+                container.pause();
             }
         }
-
     }
 
+    /**
+     * 减少计数并检查是否需要恢复
+     */
     public void decrementAndCheckResume(String groupId) {
-        GroupContext context = getGroupContext(groupId);
+        GroupContext context = getOrCreateGroupContext(groupId);
         int current = context.inFlightCount.decrementAndGet();
-
-        // 【极速回落】：
-        // 只有当 isPaused 为 true 且回落到低水位时，才允许执行 resume()
+        int lowWaterMark = context.getLowWaterMark();
+        // 【CAS 控制】：只有首次回落到低水位时才执行 resume()
         if (current <= lowWaterMark && context.isPaused.compareAndSet(true, false)) {
-            if (context.container != null) {
-                log.info("✅ Group [{}] 水位回落至低水位 ({} / {}), 恢复拉取消费", groupId, current, lowWaterMark);
-                context.container.resume();
+            MessageListenerContainer container = context.getContainer();
+            if (container != null) {
+                log.info("Group [{}] 水位回落至低水位 ({} / {})，恢复拉取消费",
+                        groupId, current, lowWaterMark);
+                container.resume();
             }
         }
     }
+    // ==================== 水位配置 API =====================
 
-    private GroupContext getGroupContext(String groupId) {
-        return groupContexts.computeIfAbsent(groupId, k -> {
-            MessageListenerContainer container = registry.getListenerContainer(k);
-            if (container == null) {
-                // Spring Kafka 默认的容器 ID 即为 groupId
-                // 如果找不到，需要检查 @KafkaListener(id = "...", groupId = "...") 的配置
-                log.warn("无法在 Registry 中找到 groupId [{}] 对应的 ListenerContainer", k);
+    /**
+     * 为指定 groupId 设置水位
+     *
+     * @param groupId       Kafka 消费者组 ID
+     * @param highWaterMark 高水位
+     * @param lowWaterMark  低水位
+     */
+    public void setWaterMark(String groupId, int highWaterMark, int lowWaterMark) {
+        validateWaterMarks(highWaterMark, lowWaterMark);
+
+        GroupContext context = getOrCreateGroupContext(groupId);
+        context.setCustomConfig(new WaterMarkConfig(highWaterMark, lowWaterMark));
+
+        log.info("设置 Group [{}] 水位: 高水位={}, 低水位={}",
+                groupId, highWaterMark, lowWaterMark);
+
+        // 检查是否需要立即恢复（当前水位已低于新的低水位）
+        tryResumeIfBelowLowWaterMark(context, groupId);
+    }
+
+    /**
+     * 为指定 groupId 设置水位（使用 WaterMarkConfig）
+     */
+    public void setWaterMark(String groupId, WaterMarkConfig config) {
+        setWaterMark(groupId, config.highWaterMark(), config.lowWaterMark());
+    }
+
+    /**
+     * 批量设置多个 groupId 的水位
+     *
+     * @param waterMarkConfigs groupId -> WaterMarkConfig 的映射
+     */
+    public void setWaterMarks(Map<String, WaterMarkConfig> waterMarkConfigs) {
+        if (waterMarkConfigs == null || waterMarkConfigs.isEmpty()) {
+            return;
+        }
+        waterMarkConfigs.forEach(this::setWaterMark);
+    }
+
+    /**
+     * 移除指定 groupId 的独立水位配置，恢复使用全局默认水位
+     *
+     * @param groupId Kafka 消费者组 ID
+     */
+    public void resetToDefaultWaterMark(String groupId) {
+        GroupContext context = groupContexts.get(groupId);
+        if (context != null && !context.isUsingDefaultWaterMark()) {
+            context.resetToDefault();
+            log.info("Group [{}] 已恢复使用全局默认水位", groupId);
+            tryResumeIfBelowLowWaterMark(context, groupId);
+        }
+    }
+
+    /**
+     * 更新全局默认水位（影响所有未单独配置的 groupId）
+     */
+    public void updateDefaultWaterMarks(int highWaterMark, int lowWaterMark) {
+        validateWaterMarks(highWaterMark, lowWaterMark);
+
+        log.info("更新全局默认水位: 高水位 {} -> {}, 低水位 {} -> {}",
+                this.defaultWaterMark.highWaterMark(), highWaterMark,
+                this.defaultWaterMark.lowWaterMark(), lowWaterMark);
+
+        this.defaultWaterMark = new WaterMarkConfig(highWaterMark, lowWaterMark);
+
+        // 遍历所有使用默认水位的 context，触发可能的恢复
+        groupContexts.forEach((groupId, context) -> {
+            if (context.isUsingDefaultWaterMark()) {
+                context.resetToDefault();
+                tryResumeIfBelowLowWaterMark(context, groupId);
             }
-            return new GroupContext(container);
         });
     }
+    // ==================== 查询方法 =====================
 
-    private MessageListenerContainer getContainerByGroupId(String groupId) {
-        if (groupId == null) {
-            return null;
+    /**
+     * 获取指定 groupId 的当前水位配置
+     */
+    public WaterMarkConfig getWaterMarkConfig(String groupId) {
+        GroupContext context = groupContexts.get(groupId);
+        if (context == null) {
+            return new WaterMarkConfig(defaultWaterMark.highWaterMark(), defaultWaterMark.lowWaterMark());
         }
-
-        return registry.getListenerContainers().stream()
-                .filter(c -> groupId.equals(c.getGroupId()))
-                .findFirst()
-                .orElse(null);
+        return new WaterMarkConfig(context.getHighWaterMark(), context.getLowWaterMark());
     }
 
-    public void updateWaterMarks(int newLow, int newHigh) {
-        if (newLow <= 0 || newHigh <= newLow) {
-            throw new IllegalArgumentException("非法的动态水位参数: 低水位必须严格小于高水位");
+    /**
+     * 获取指定 groupId 的当前飞行中任务数
+     */
+    public int getInFlightCount(String groupId) {
+        GroupContext context = groupContexts.get(groupId);
+        return context != null ? context.inFlightCount.get() : 0;
+    }
+
+    /**
+     * 获取指定 groupId 是否处于暂停状态
+     */
+    public boolean isPaused(String groupId) {
+        GroupContext context = groupContexts.get(groupId);
+        return context != null && context.isPaused.get();
+    }
+    // ==================== 私有方法 =====================
+
+    private GroupContext getOrCreateGroupContext(String groupId) {
+
+        return groupContexts.computeIfAbsent(groupId, k -> {
+            // 将 registry 和一个"实时获取最新全局水位的函数(Supplier)" 传给内部类
+            return new GroupContext(k, registry, () -> this.defaultWaterMark);
+        });
+
+    }
+
+    private void validateWaterMarks(int highWaterMark, int lowWaterMark) {
+        if (lowWaterMark <= 0) {
+            throw new IllegalArgumentException("低水位必须大于 0，当前值: " + lowWaterMark);
         }
-
-        lock.lock();
-        try {
-            log.info("🌊 动态调整水位: 高水位 {} -> {}, 低水位 {} -> {}",
-                    this.highWaterMark, newHigh, this.lowWaterMark, newLow);
-
-            this.highWaterMark = newHigh;
-            this.lowWaterMark = newLow;
-
-            // 遍历已缓存的上下文，触发可能的恢复动作
-            groupContexts.forEach((groupId, context) -> {
-                int current = context.inFlightCount.get();
-                // 如果之前是暂停状态，且现在的水位已经满足新的低水位要求，立刻唤醒
-                if (current <= this.lowWaterMark && context.isPaused.compareAndSet(true, false)) {
-                    if (context.container != null) {
-                        log.info("✅ 因水位阈值放宽，Group [{}] 提前恢复消费 ({} / {})", groupId, current, this.lowWaterMark);
-                        context.container.resume();
-                    }
-                }
-            });
-        } finally {
-            lock.unlock();
+        if (highWaterMark <= lowWaterMark) {
+            throw new IllegalArgumentException(
+                    String.format("高水位(%d)必须严格大于低水位(%d)", highWaterMark, lowWaterMark));
         }
     }
 
+    /**
+     * 检查并尝试恢复消费（如果当前水位低于低水位）
+     *
+     * <p>触发场景：
+     * <ul>
+     *   <li>调用 setWaterMark() 设置更宽松的水位后</li>
+     *   <li>调用 updateDefaultWaterMarks() 更新全局默认水位后</li>
+     *   <li>调用 resetToDefaultWaterMark() 重置为默认水位后</li>
+     * </ul>
+     *
+     * @param context 消费者组上下文
+     * @param groupId 消费者组 ID（用于日志）
+     */
+    private void tryResumeIfBelowLowWaterMark(GroupContext context, String groupId) {
+        // 获取当前计数
+        int current = context.inFlightCount.get();
+        // 获取该 context 的低水位（可能是独立配置或默认值）
+        int lowWaterMark = context.getLowWaterMark();
+
+        // 条件：当前计数 <= 低水位 且 当前是暂停状态
+        // 使用 CAS 确保只恢复一次
+        if (current <= lowWaterMark && context.isPaused.compareAndSet(true, false)) {
+            MessageListenerContainer container = context.getContainer();
+            if (container != null) {
+                log.info("因水位阈值放宽，Group [{}] 提前恢复消费 ({} / {})",
+                        groupId, current, lowWaterMark);
+                container.resume();
+            }
+        }
+    }
+    // ==================== 内部类 =====================
+
+    /**
+     * 每个消费者组的上下文
+     */
     private static class GroupContext {
+        final String groupId;
         final AtomicInteger inFlightCount = new AtomicInteger(0);
-        // 使用 CAS 原子布尔值，绝对防止重复 pause / resume
         final AtomicBoolean isPaused = new AtomicBoolean(false);
-        // 缓存容器引用，避免每次 O(N) 遍历查找
-        final MessageListenerContainer container;
 
-        GroupContext(MessageListenerContainer container) {
-            this.container = container;
+        // 显式持有的外部依赖
+        private final KafkaListenerEndpointRegistry registry;
+        // 一个能够实时获取外部最新全局水位的函数指针
+        private final Supplier<WaterMarkConfig> defaultWaterMarkSupplier;
+
+        private volatile MessageListenerContainer container;
+        private volatile WaterMarkConfig customConfig = null;
+
+        GroupContext(String groupId,
+                     KafkaListenerEndpointRegistry registry,
+                     Supplier<WaterMarkConfig> defaultWaterMarkSupplier) {
+            this.groupId = groupId;
+            this.registry = registry;
+            this.defaultWaterMarkSupplier = defaultWaterMarkSupplier;
+            tryBindContainer();
+        }
+
+        MessageListenerContainer getContainer() {
+            if (container == null) {
+                tryBindContainer();
+            }
+            return container;
+        }
+
+        private void tryBindContainer() {
+            registry.getListenerContainers().stream()
+                    .filter(c -> groupId.equals(c.getGroupId()))
+                    .findFirst()
+                    .ifPresent(c -> this.container = c);
+        }
+
+        /**
+         * 动态路由：优先使用自定义配置，否则通过 Supplier 实时读取外部最新的全局配置
+         */
+        WaterMarkConfig getConfig() {
+            WaterMarkConfig cfg = customConfig;
+            // 当 customConfig 为空时，调用 Supplier.get() 瞬间拿到外部最新的 defaultWaterMark
+            if(cfg == null) cfg = defaultWaterMarkSupplier.get();
+            if(cfg == null) {
+                throw new IllegalStateException("Default watermark config is null for group: " + groupId);
+            }
+            return cfg;
+        }
+
+        void resetToDefault() {
+            this.customConfig = null;
+        }
+
+        int getHighWaterMark() {
+            return getConfig().highWaterMark();
+        }
+
+        int getLowWaterMark() {
+            return getConfig().lowWaterMark();
+        }
+
+        boolean isUsingDefaultWaterMark() {
+            return customConfig == null;
+        }
+
+        void setCustomConfig(WaterMarkConfig config) {
+            this.customConfig = config;
+        }
+
+        void clearCustomConfig() {
+            this.customConfig = null;
         }
     }
 }

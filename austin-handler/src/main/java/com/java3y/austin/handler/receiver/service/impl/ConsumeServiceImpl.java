@@ -75,7 +75,7 @@ public class ConsumeServiceImpl implements ConsumeService {
                     task.run();
                 } finally {
                     long rt = System.nanoTime() - startTime;
-                    rtSensor.record(rt);
+                    rtSensor.record(groupId, rt);
 
                     backPressureManager.decrementAndCheckResume(groupId);
                 }

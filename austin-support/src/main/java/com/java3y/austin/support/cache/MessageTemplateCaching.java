@@ -51,6 +51,17 @@ public class MessageTemplateCaching {
                 });
     }
 
+    /**
+     * 存在竞态条件
+     * T1: get() 返回 null
+     * T2: get() 返回 null
+     * T1: put(NULL_MESSAGE_TEMPLATE)
+     * T2: put(NULL_MESSAGE_TEMPLATE)
+     * T3: 数据库更新，模板存在了
+     * 但缓存中仍是 NULL_MESSAGE_TEMPLATE，直到过期
+     * 建议：使用 Caffeine 的 refresh 机制或更完善的缓存策略
+     * todo 避免竞态条件
+     */
     public Optional<MessageTemplate> getMessageTemplate(Long id) {
         MessageTemplate template = messageTemplateCache.get(id).join();
         if (template == null) {
