@@ -5,8 +5,10 @@ import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.enums.DeduplicationType;
 import com.java3y.austin.common.enums.EnumUtil;
+import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
+import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.handler.deduplication.DeduplicationHolder;
 import com.java3y.austin.handler.deduplication.DeduplicationParam;
 import com.java3y.austin.support.service.ConfigService;
@@ -40,6 +42,7 @@ public class DeduplicationAction implements BusinessProcess<TaskInfo> {
         TaskInfo taskInfo = context.getProcessModel();
 
         // 配置样例{"deduplication_10":{"num":1,"time":300},"deduplication_20":{"num":5}}
+        // todo 配置中心
         String deduplicationConfig = config.getProperty(DEDUPLICATION_RULE_KEY, CommonConstant.EMPTY_JSON_OBJECT);
 
         // 去重
@@ -53,6 +56,7 @@ public class DeduplicationAction implements BusinessProcess<TaskInfo> {
 
         if (CollUtil.isEmpty(taskInfo.getReceiver())) {
             context.setNeedBreak(true);
+            context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_DEDUPLICATION));
         }
     }
 }

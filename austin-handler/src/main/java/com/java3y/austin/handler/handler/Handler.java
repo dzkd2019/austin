@@ -14,7 +14,7 @@ public interface Handler {
      *
      * @param taskInfo
      */
-    void doHandler(TaskInfo taskInfo);
+    void handle(TaskInfo taskInfo);
 
     /**
      * 撤回消息

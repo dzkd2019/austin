@@ -43,7 +43,7 @@ public class OfficialAccountHandler extends BaseHandler{
     }
 
     @Override
-    public boolean handler(TaskInfo taskInfo) {
+    public boolean doHandle(TaskInfo taskInfo) {
         try {
             OfficialAccountsContentModel contentModel = (OfficialAccountsContentModel) taskInfo.getContentModel();
             WxMpService wxMpService = accountUtils.getAccountById(taskInfo.getSendAccount(), WxMpService.class);

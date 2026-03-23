@@ -46,7 +46,7 @@ public class DingDingRobotHandler extends BaseHandler{
     }
 
     @Override
-    public boolean handler(TaskInfo taskInfo) {
+    public boolean doHandle(TaskInfo taskInfo) {
         try {
             DingDingRobotAccount account = accountUtils.getAccountById(taskInfo.getSendAccount(), DingDingRobotAccount.class);
             DingDingRobotParam dingDingRobotParam = assembleParam(taskInfo);

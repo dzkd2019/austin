@@ -21,14 +21,15 @@ import java.util.*;
 @Service
 public class SensWordsAction implements BusinessProcess<TaskInfo> {
 
+    private final RedisTemplate<String, String> redisTemplate;
 
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+    public SensWordsAction(RedisTemplate<String, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     /**
      * 过滤逻辑
-     *
-     * @param context
+     * todo 本地敏感词过滤词典缓存
      *
      * @see com.java3y.austin.common.enums.ChannelType
      */
@@ -114,9 +115,6 @@ public class SensWordsAction implements BusinessProcess<TaskInfo> {
     /**
      * 敏感词替换成对应长度'*'
      *
-     * @param content
-     * @param sensDict
-     * @return
      */
     private String filter(String content, Set<String> sensDict) {
         if (ObjectUtils.isEmpty(content) || ObjectUtils.isEmpty(sensDict)) {
@@ -157,8 +155,6 @@ public class SensWordsAction implements BusinessProcess<TaskInfo> {
     /**
      * 构建字典树
      *
-     * @param sensDict
-     * @return
      */
     private TrieNode buildTrie(Set<String> sensDict) {
         TrieNode root = new TrieNode();

@@ -52,9 +52,6 @@ public abstract class AbstractDeduplicationService implements DeduplicationServi
     /**
      * 构建去重的Key
      *
-     * @param taskInfo
-     * @param receiver
-     * @return
      */
     public abstract String deduplicationSingleKey(TaskInfo taskInfo, String receiver);
 

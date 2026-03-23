@@ -58,12 +58,12 @@ public class SimpleLimitService extends AbstractLimitService {
     /**
      * 存入redis 实现去重
      *
-     * @param readyPutRedisReceiver
      */
     private void putInRedis(Map<String, String> readyPutRedisReceiver,
                             Map<String, String> inRedisValue, Long deduplicationTime) {
+
         Map<String, String> keyValues = new HashMap<>(readyPutRedisReceiver.size());
-        for (Map.Entry<String, String> entry : readyPutRedisReceiver.entrySet()) {
+        for (var entry : readyPutRedisReceiver.entrySet()) {
             String key = entry.getValue();
             if (Objects.nonNull(inRedisValue.get(key))) {
                 keyValues.put(key, String.valueOf(Integer.parseInt(inRedisValue.get(key)) + 1));

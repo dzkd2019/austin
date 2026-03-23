@@ -47,12 +47,12 @@ public abstract class BaseHandler implements Handler {
 
 
     @Override
-    public void doHandler(TaskInfo taskInfo) {
+    public void handle(TaskInfo taskInfo) {
         // 只有子类指定了限流参数，才需要限流
         if (Objects.nonNull(flowControlParam)) {
             flowControlFactory.flowControl(taskInfo, flowControlParam);
         }
-        if (handler(taskInfo)) {
+        if (doHandle(taskInfo)) {
             logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_SUCCESS.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
             return;
         }
@@ -66,7 +66,7 @@ public abstract class BaseHandler implements Handler {
      * @param taskInfo
      * @return
      */
-    public abstract boolean handler(TaskInfo taskInfo);
+    public abstract boolean doHandle(TaskInfo taskInfo);
 
 
     /**

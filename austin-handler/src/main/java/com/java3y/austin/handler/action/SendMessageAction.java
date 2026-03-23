@@ -4,8 +4,10 @@ import cn.hutool.core.util.ObjectUtil;
 import com.google.common.collect.Sets;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.enums.ChannelType;
+import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
+import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.handler.handler.HandlerHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,10 +33,16 @@ public class SendMessageAction implements BusinessProcess<TaskInfo> {
             TaskInfo taskClone = ObjectUtil.cloneByStream(taskInfo);
             for (String receiver : taskInfo.getReceiver()) {
                 taskClone.setReceiver(Sets.newHashSet(receiver));
-                handlerHolder.route(taskInfo.getSendChannel()).doHandler(taskClone);
+                handlerHolder.route(taskInfo.getSendChannel()).handle(taskClone);
             }
             return;
         }
-        handlerHolder.route(taskInfo.getSendChannel()).doHandler(taskInfo);
+        try {
+            handlerHolder.route(taskInfo.getSendChannel()).handle(taskInfo);
+            context.setResponse(BasicResultVO.success());
+        } catch (Exception e) {
+            context.setNeedBreak(true);
+            context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_SEND_FAIL));
+        }
     }
 }

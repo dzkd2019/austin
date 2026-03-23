@@ -41,7 +41,7 @@ public class MiniProgramAccountHandler extends BaseHandler{
     }
 
     @Override
-    public boolean handler(TaskInfo taskInfo) {
+    public boolean doHandle(TaskInfo taskInfo) {
         try {
             MiniProgramContentModel contentModel = (MiniProgramContentModel) taskInfo.getContentModel();
             WxMaService wxMaService = accountUtils.getAccountById(taskInfo.getSendAccount(), WxMaService.class);

@@ -2,7 +2,6 @@ package com.java3y.austin.handler.backpressure;
 
 import com.java3y.austin.handler.utils.GroupIdMappingUtils;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.MessageListenerContainer;

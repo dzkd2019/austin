@@ -5,9 +5,11 @@ import com.alibaba.fastjson2.JSONWriter;
 import com.java3y.austin.common.domain.AnchorInfo;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.enums.AnchorState;
+import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.enums.ShieldType;
 import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
+import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.support.utils.LogUtils;
 import com.java3y.austin.support.utils.RedisUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,12 +56,14 @@ public class ShieldAction implements BusinessProcess<TaskInfo> {
             if (ShieldType.NIGHT_SHIELD.getCode().equals(taskInfo.getShieldType())) {
                 logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD.getCode())
                         .bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+                context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_SHIELD));
             }
             if (ShieldType.NIGHT_SHIELD_BUT_NEXT_DAY_SEND.getCode().equals(taskInfo.getShieldType())) {
                 redisUtils.lPush(NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY, JSON.toJSONString(taskInfo,
                                 JSONWriter.Feature.WriteClassName),
                         SECONDS_OF_A_DAY);
                 logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD_NEXT_SEND.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+                context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_SHIELD_NEXT_SEND));
             }
             context.setNeedBreak(true);
         }

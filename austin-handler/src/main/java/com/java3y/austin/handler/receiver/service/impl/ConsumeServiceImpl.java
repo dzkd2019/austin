@@ -67,6 +67,7 @@ public class ConsumeServiceImpl implements ConsumeService {
         String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfoLists.getFirst());
         for (TaskInfo taskInfo : taskInfoLists) {
             backPressureManager.incrementAndCheckPause(groupId);
+            // 打点记录当前状态
             logUtils.print(LogParam.builder().bizType(LOG_BIZ_TYPE).object(taskInfo).build(), AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).ids(taskInfo.getReceiver()).businessId(taskInfo.getBusinessId()).state(AnchorState.RECEIVE.getCode()).build());
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
             long startTime = System.nanoTime();
@@ -74,6 +75,7 @@ public class ConsumeServiceImpl implements ConsumeService {
                 try {
                     task.run();
                 } finally {
+                    // 记录处理时间，供巡航器使用
                     long rt = System.nanoTime() - startTime;
                     rtSensor.record(groupId, rt);
 

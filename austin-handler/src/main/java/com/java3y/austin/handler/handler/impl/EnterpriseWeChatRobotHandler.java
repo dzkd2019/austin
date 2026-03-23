@@ -44,7 +44,7 @@ public class EnterpriseWeChatRobotHandler extends BaseHandler{
     }
 
     @Override
-    public boolean handler(TaskInfo taskInfo) {
+    public boolean doHandle(TaskInfo taskInfo) {
         try {
             EnterpriseWeChatRobotAccount account = accountUtils.getAccountById(taskInfo.getSendAccount(), EnterpriseWeChatRobotAccount.class);
             EnterpriseWeChatRobotParam enterpriseWeChatRobotParam = assembleParam(taskInfo);

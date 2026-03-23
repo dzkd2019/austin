@@ -63,7 +63,7 @@ public class SlideWindowLimitService extends AbstractLimitService {
             List<String> batch = receivers.subList(i, Math.min(i + BATCH_SIZE, receivers.size()));
             List<String> keys = batch
                     .stream()
-                    .map(r -> LIMIT_TAG + deduplicationSingleKey(service, taskInfo, r))
+                    .map(receiver -> LIMIT_TAG + deduplicationSingleKey(service, taskInfo, receiver))
                     .toList();
 
             List<Boolean> filterResult = redisUtils.execLimitLuaPipeline(redisScript, keys, param.getDeduplicationTime() * 1000, param.getCountNum());

@@ -67,7 +67,7 @@ public class SmsHandler extends BaseHandler {
     }
 
     @Override
-    public boolean handler(TaskInfo taskInfo) {
+    public boolean doHandle(TaskInfo taskInfo) {
         SmsParam smsParam = SmsParam.builder()
                 .phones(taskInfo.getReceiver())
                 .content(getSmsContent(taskInfo))

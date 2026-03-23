@@ -5,7 +5,6 @@ import cn.hutool.core.util.IdUtil;
 import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -25,14 +24,17 @@ import java.util.*;
 @Slf4j
 public class RedisUtils {
 
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+
+    private final StringRedisTemplate redisTemplate;
+
+    public RedisUtils(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     /**
      * mGet将结果封装为Map
      *
-     * @param keys
-     */
+     **/
     public Map<String, String> mGet(List<String> keys) {
         HashMap<String, String> result = new HashMap<>(keys.size());
         try {
@@ -51,11 +53,7 @@ public class RedisUtils {
         return result;
     }
 
-    /**
-     * hGetAll
-     *
-     * @param key
-     */
+
     public Map<Object, Object> hGetAll(String key) {
         try {
             return redisTemplate.opsForHash().entries(key);
@@ -68,7 +66,6 @@ public class RedisUtils {
     /**
      * lRange
      *
-     * @param key
      */
     public List<String> lRange(String key, long start, long end) {
         try {
@@ -86,8 +83,9 @@ public class RedisUtils {
         try {
             redisTemplate.executePipelined((RedisCallback<String>) connection -> {
                 for (Map.Entry<String, String> entry : keyValues.entrySet()) {
-                    connection.setEx(entry.getKey().getBytes(StandardCharsets.UTF_8), seconds,
-                            entry.getValue().getBytes(StandardCharsets.UTF_8));
+                    connection.stringCommands()
+                            .setEx(entry.getKey().getBytes(StandardCharsets.UTF_8), seconds,
+                                    entry.getValue().getBytes(StandardCharsets.UTF_8));
                 }
                 return null;
             });
@@ -103,8 +101,8 @@ public class RedisUtils {
     public void lPush(String key, String value, Long seconds) {
         try {
             redisTemplate.executePipelined((RedisCallback<String>) connection -> {
-                connection.lPush(key.getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8));
-                connection.expire(key.getBytes(StandardCharsets.UTF_8), seconds);
+                connection.listCommands().lPush(key.getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8));
+                connection.keyCommands().expire(key.getBytes(StandardCharsets.UTF_8), seconds);
                 return null;
             });
         } catch (Exception e) {
@@ -146,10 +144,10 @@ public class RedisUtils {
         try {
             redisTemplate.executePipelined((RedisCallback<String>) connection -> {
                 for (Map.Entry<String, String> entry : keyValues.entrySet()) {
-                    connection.hIncrBy(entry.getKey().getBytes(StandardCharsets.UTF_8),
+                    connection.hashCommands().hIncrBy(entry.getKey().getBytes(StandardCharsets.UTF_8),
                             entry.getValue().getBytes(StandardCharsets.UTF_8),
                             delta);
-                    connection.expire(entry.getKey().getBytes(StandardCharsets.UTF_8),
+                    connection.keyCommands().expire(entry.getKey().getBytes(StandardCharsets.UTF_8),
                             seconds);
                 }
                 return null;
@@ -167,10 +165,6 @@ public class RedisUtils {
      * --ARGV[3]: 阈值
      * --ARGV[4]: score 对应的唯一value
      *
-     * @param redisScript
-     * @param keys
-     * @param args
-     * @return
      */
     public Boolean execLimitLua(RedisScript<Long> redisScript, List<String> keys, String... args) {
 

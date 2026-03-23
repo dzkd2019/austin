@@ -39,7 +39,7 @@ public class FeiShuRobotHandler extends BaseHandler{
     }
 
     @Override
-    public boolean handler(TaskInfo taskInfo) {
+    public boolean doHandle(TaskInfo taskInfo) {
         try {
             FeiShuRobotAccount account = accountUtils.getAccountById(taskInfo.getSendAccount(), FeiShuRobotAccount.class);
             FeiShuRobotParam feiShuRobotParam = assembleParam(taskInfo);

@@ -37,7 +37,7 @@ public class AlipayMiniProgramAccountHandler extends BaseHandler{
     }
 
     @Override
-    public boolean handler(TaskInfo taskInfo) {
+    public boolean doHandle(TaskInfo taskInfo) {
         AlipayMiniProgramContentModel contentModel= (AlipayMiniProgramContentModel) taskInfo.getContentModel();
 
         try {

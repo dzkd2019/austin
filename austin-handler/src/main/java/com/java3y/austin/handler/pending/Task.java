@@ -36,7 +36,7 @@ public class Task implements Runnable {
     public void run() {
         ProcessContext<ProcessModel> context = ProcessContext.builder()
                 .processModel(taskInfo).code(TaskPipelineConfig.PIPELINE_HANDLER_CODE)
-                .needBreak(false).response(BasicResultVO.success())
+                .needBreak(false)
                 .build();
         processController.process(context);
     }
