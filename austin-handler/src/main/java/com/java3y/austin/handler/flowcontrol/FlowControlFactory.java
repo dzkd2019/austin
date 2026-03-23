@@ -1,110 +1,72 @@
 package com.java3y.austin.handler.flowcontrol;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
-import com.google.common.util.concurrent.RateLimiter;
-import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.TaskInfo;
-import com.java3y.austin.common.enums.ChannelType;
-import com.java3y.austin.common.enums.EnumUtil;
 import com.java3y.austin.handler.enums.RateLimitStrategy;
-import com.java3y.austin.handler.flowcontrol.annotations.LocalRateLimit;
-import com.java3y.austin.support.service.ConfigService;
+import com.java3y.austin.handler.flowcontrol.config.RateLimiterConfig;
+import com.java3y.austin.handler.flowcontrol.controller.FlowController;
+import com.java3y.austin.handler.flowcontrol.controller.TokenBucketFlowController;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.aop.support.AopUtils;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author 3y
  * @date 2022/4/18
+ * <p>
+ * todo 通过令牌桶实现限流
  */
 @Service
 @Slf4j
-public class FlowControlFactory implements ApplicationContextAware {
+public class FlowControlFactory {
 
-    private static final String FLOW_CONTROL_KEY = "flowControlRule";
-    private static final String FLOW_CONTROL_PREFIX = "flow_control_";
+    // 存储维度：渠道(ChannelId) -> 具体的限流器实例
+    private final Map<Integer, FlowController> channelLimiterMap = new ConcurrentHashMap<>();
 
-    private final Map<RateLimitStrategy, FlowControlService> flowControlServiceMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, RateLimiter> rateLimiterMap = new ConcurrentHashMap<>();
+    /**
+     * 核心路由与执行方法
+     * * @param channelId 渠道唯一标识 (如: "tencent_sms_01")
+     *
+     * @param param Handler 声明的限流策略, 当前的限流配置 (可能是 Handler 的默认配置，也可能是来自 Nacos 的最新配置)
+     */
+    public void flowControl(TaskInfo taskInfo, FlowControlParam param) throws InterruptedException {
+        RateLimitStrategy strategy = param.getRateLimitStrategy();
+        RateLimiterConfig config = param.getRateLimiterConfig();
+        Integer channelId = taskInfo.getSendChannel();
 
-    @Autowired
-    private ConfigService config;
-
-    private ApplicationContext applicationContext;
-
-    @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
-    }
-
-    public void flowControl(TaskInfo taskInfo, FlowControlParam flowControlParam) {
-//        RateLimiter rateLimiter;
-        Double rateInitValue = flowControlParam.getRateInitValue();
-        // 对比 初始限流值 与 配置限流值，以 配置中心的限流值为准
-        Double rate = getRateLimitConfig(taskInfo.getSendChannel());
-        Double rateLimitConfig = rate == null ? rateInitValue :rate;
-
-//        rateLimitConfig = rateLimitConfig == null ? rateInitValue : rateLimitConfig;
-
-        RateLimiter rateLimiter = rateLimiterMap.compute(taskInfo.getSendChannel(), (channel, existing) -> {
-            if (existing == null ||
-                    !Objects.equals(existing.getRate(), rateLimitConfig)) {
-                return RateLimiter.create(rateLimitConfig);
-            }
-            return existing;
-        });
-        flowControlParam.setRateLimiter(rateLimiter);
-
-        FlowControlService flowControlService = flowControlServiceMap.get(flowControlParam.getRateLimitStrategy());
-        if (Objects.isNull(flowControlService)) {
-            log.error("没有找到对应的单机限流策略");
+        // 1. 如果策略是不限流，直接放行
+        if (strategy == RateLimitStrategy.NONE || config == null) {
             return;
         }
-        double costTime = flowControlService.flowControl(taskInfo, flowControlParam);
-        if (costTime > 0) {
-            log.info("consumer {} flow control time {}",
-                    EnumUtil.getEnumByCode(taskInfo.getSendChannel(), ChannelType.class).getDescription(), costTime);
+
+        // 2. 获取或创建该渠道专属的限流器
+        FlowController controller = channelLimiterMap.computeIfAbsent(channelId, _ -> createController(strategy, config));
+
+        if (controller == null) {
+            return;
         }
+
+        // 3. 极其轻量的配置更新检查（内部有 equals 判断，日常调用零开销）
+        controller.updateConfig(config);
+
+        // 4. 执行限流阻塞（虚拟线程挂起）
+
+        double cost = controller.acquire();
+        log.info("渠道 [{}] 流量控制耗时: {} 秒", channelId, cost);
+
     }
 
     /**
-     * 得到限流值的配置
-     * <p>
-     * apollo配置样例     key：flowControl value：{"flow_control_40":1}
-     * <p>
-     * 渠道枚举可看：com.java3y.austin.common.enums.ChannelType
-     *
-     * @param channelCode
+     * 策略路由工厂方法
      */
-    private Double getRateLimitConfig(Integer channelCode) {
-        String flowControlConfig = config.getProperty(FLOW_CONTROL_KEY, CommonConstant.EMPTY_JSON_OBJECT);
-        JSONObject jsonObject = JSON.parseObject(flowControlConfig);
-        if (Objects.isNull(jsonObject.getDouble(FLOW_CONTROL_PREFIX + channelCode))) {
-            return null;
-        }
-        return jsonObject.getDouble(FLOW_CONTROL_PREFIX + channelCode);
-    }
-
-    @PostConstruct
-    private void init() {
-        Map<String, Object> serviceMap = this.applicationContext.getBeansWithAnnotation(LocalRateLimit.class);
-        serviceMap.forEach((name, service) -> {
-            if (service instanceof FlowControlService) {
-                LocalRateLimit localRateLimit = AopUtils.getTargetClass(service).getAnnotation(LocalRateLimit.class);
-                RateLimitStrategy rateLimitStrategy = localRateLimit.rateLimitStrategy();
-                //通常情况下 实现的限流service与rateLimitStrategy一一对应
-                flowControlServiceMap.put(rateLimitStrategy, (FlowControlService) service);
-            }
-        });
+    private FlowController createController(RateLimitStrategy strategy, RateLimiterConfig config) {
+        // 使用 JDK 14+ 的 Switch 表达式，代码极简。
+        // 如果你的策略非常多，这里也可以升级为 Spring 自动注入的 List<FlowControllerProvider> 来彻底解耦。
+        return switch (strategy) {
+            case TOKEN_BUCKET_RATE_LIMIT -> new TokenBucketFlowController(config);
+            case NONE -> null;
+            default -> throw new UnsupportedOperationException("不支持的限流策略: " + strategy);
+        };
     }
 }

@@ -14,6 +14,7 @@ import com.java3y.austin.common.dto.model.EmailContentModel;
 import com.java3y.austin.common.enums.ChannelType;
 import com.java3y.austin.handler.enums.RateLimitStrategy;
 import com.java3y.austin.handler.flowcontrol.FlowControlParam;
+import com.java3y.austin.handler.flowcontrol.config.TokenBucketRateLimiterConfig;
 import com.java3y.austin.handler.handler.BaseHandler;
 import com.java3y.austin.support.utils.AccountUtils;
 import com.java3y.austin.support.utils.AustinFileUtils;
@@ -44,11 +45,10 @@ public class EmailHandler extends BaseHandler{
     public EmailHandler() {
         channelCode = ChannelType.EMAIL.getCode();
 
-        // 按照请求限流，默认单机 3 qps （具体数值配置在apollo动态调整)
-        double rateInitValue = 3.0;
-        flowControlParam = FlowControlParam.builder().rateInitValue(rateInitValue)
-                .rateLimitStrategy(RateLimitStrategy.REQUEST_RATE_LIMIT)
-                .rateLimiter(RateLimiter.create(rateInitValue)).build();
+        flowControlParam = FlowControlParam.builder()
+                .rateLimitStrategy(RateLimitStrategy.TOKEN_BUCKET_RATE_LIMIT)
+                .rateLimiterConfig(new TokenBucketRateLimiterConfig(10, 20))
+                .build();
 
     }
 

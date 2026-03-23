@@ -6,10 +6,10 @@ import com.java3y.austin.common.enums.AnchorState;
 import com.java3y.austin.handler.flowcontrol.FlowControlFactory;
 import com.java3y.austin.handler.flowcontrol.FlowControlParam;
 import com.java3y.austin.support.utils.LogUtils;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-import jakarta.annotation.PostConstruct;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -47,10 +47,15 @@ public abstract class BaseHandler implements Handler {
 
 
     @Override
-    public void handle(TaskInfo taskInfo) {
+    public void handle(TaskInfo taskInfo) throws InterruptedException {
         // 只有子类指定了限流参数，才需要限流
         if (Objects.nonNull(flowControlParam)) {
-            flowControlFactory.flowControl(taskInfo, flowControlParam);
+            try {
+                flowControlFactory.flowControl(taskInfo, flowControlParam);
+            } catch (InterruptedException e) {
+                logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_FAIL.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+                throw e;
+            }
         }
         if (doHandle(taskInfo)) {
             logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_SUCCESS.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());

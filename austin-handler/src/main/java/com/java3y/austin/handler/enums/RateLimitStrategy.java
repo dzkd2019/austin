@@ -14,15 +14,12 @@ import lombok.ToString;
 @AllArgsConstructor
 public enum RateLimitStrategy {
 
+    NONE(0, "不限流"),
 
     /**
-     * 根据真实请求数限流 (实际意义上的QPS）
+     *  基于令牌桶限流
      */
-    REQUEST_RATE_LIMIT(10, "根据真实请求数限流"),
-    /**
-     * 根据发送用户数限流（人数限流）
-     */
-    SEND_USER_NUM_RATE_LIMIT(20, "根据发送用户数限流"),
+    TOKEN_BUCKET_RATE_LIMIT(30, "基于令牌桶限流")
     ;
 
     private final Integer code;

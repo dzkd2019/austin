@@ -9,6 +9,7 @@ import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.handler.handler.HandlerHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
  * @author 3y
  */
 @Service
+@Slf4j
 public class SendMessageAction implements BusinessProcess<TaskInfo> {
     @Autowired
     private HandlerHolder handlerHolder;
@@ -33,16 +35,25 @@ public class SendMessageAction implements BusinessProcess<TaskInfo> {
             TaskInfo taskClone = ObjectUtil.cloneByStream(taskInfo);
             for (String receiver : taskInfo.getReceiver()) {
                 taskClone.setReceiver(Sets.newHashSet(receiver));
-                handlerHolder.route(taskInfo.getSendChannel()).handle(taskClone);
+                try {
+                    handlerHolder.route(taskInfo.getSendChannel()).handle(taskClone);
+                } catch (InterruptedException e) {
+                    log.error("在限流过程中被中断，消息发送失败, 模板ID：{}, 发送渠道：{}", taskInfo.getMessageTemplateId(), taskInfo.getSendChannel());
+                    context.setNeedBreak(true);
+                    context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_SEND_FAIL));
+                    Thread.currentThread().interrupt();
+                }
             }
             return;
         }
         try {
             handlerHolder.route(taskInfo.getSendChannel()).handle(taskInfo);
             context.setResponse(BasicResultVO.success());
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            log.error("在限流过程中被中断，消息发送失败, 模板ID：{}, 发送渠道：{}", taskInfo.getMessageTemplateId(), taskInfo.getSendChannel());
             context.setNeedBreak(true);
             context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_SEND_FAIL));
+            Thread.currentThread().interrupt();
         }
     }
 }
