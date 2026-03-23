@@ -8,7 +8,7 @@ import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.support.domain.ChannelAccount;
 import com.java3y.austin.web.annotation.AustinAspect;
 import com.java3y.austin.web.annotation.AustinResult;
-import com.java3y.austin.web.exception.CommonException;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.web.service.ChannelAccountService;
 import com.java3y.austin.web.utils.Convert4Amis;
 import com.java3y.austin.web.utils.LoginUtils;

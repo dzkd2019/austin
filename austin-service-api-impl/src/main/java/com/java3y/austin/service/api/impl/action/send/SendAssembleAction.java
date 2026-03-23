@@ -17,6 +17,7 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.domain.MessageParam;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
+import com.java3y.austin.support.cache.MessageTemplateCaching;
 import com.java3y.austin.support.dao.MessageTemplateDao;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.support.utils.ContentHolderUtil;
@@ -40,8 +41,7 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
     private static final String LINK_NAME = "url";
 
     @Autowired
-    private MessageTemplateDao messageTemplateDao;
-
+    private MessageTemplateCaching caching;
     /**
      * 获取 contentModel，替换模板msgContent中占位符信息
      */
@@ -64,7 +64,7 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
 
             if (CharSequenceUtil.isNotBlank(originValue)) {
                 String resultValue = ContentHolderUtil.replacePlaceHolder(originValue, variables);
-                Object resultObj = JSONUtil.isJsonObj(resultValue) ? JSONUtil.toBean(resultValue, field.getType()) : resultValue;
+                Object resultObj = JSONUtil.isTypeJSONObject(resultValue) ? JSONUtil.toBean(resultValue, field.getType()) : resultValue;
                 ReflectUtil.setFieldValue(contentModel, field, resultObj);
             }
         }
@@ -84,8 +84,10 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
         Long messageTemplateId = sendTaskModel.getMessageTemplateId();
 
         try {
-            Optional<MessageTemplate> messageTemplate = messageTemplateDao.findById(messageTemplateId);
-            if (!messageTemplate.isPresent() || messageTemplate.get().getIsDeleted().equals(CommonConstant.TRUE)) {
+//            Optional<MessageTemplate> messageTemplate = messageTemplateDao.findById(messageTemplateId);
+            Optional<MessageTemplate> messageTemplate = caching.getMessageTemplate(messageTemplateId);
+
+            if (messageTemplate.isEmpty() || messageTemplate.get().getIsDeleted().equals(CommonConstant.TRUE)) {
                 context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.TEMPLATE_NOT_FOUND));
                 return;
             }

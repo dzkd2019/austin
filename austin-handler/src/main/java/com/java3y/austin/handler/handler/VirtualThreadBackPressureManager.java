@@ -29,7 +29,7 @@ public class VirtualThreadBackPressureManager {
     }
 
     public void decrement() {
-        int current = inFlightCount.get();
+        int current = inFlightCount.getAndDecrement();
 
         if (current < lowWaterMark) {
             lock.lock();

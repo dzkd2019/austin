@@ -3,6 +3,7 @@ package com.java3y.austin.service.api.impl.service;
 import cn.monitor4all.logRecord.annotation.OperationLog;
 import com.java3y.austin.common.domain.SimpleTaskInfo;
 import com.java3y.austin.common.enums.RespStatusEnum;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.pipeline.ProcessController;
 import com.java3y.austin.common.vo.BasicResultVO;
@@ -32,6 +33,7 @@ public class SendServiceImpl implements SendService {
     private ProcessController processController;
 
     @Override
+    @SuppressWarnings("unchecked")
     @OperationLog(bizType = "SendService#send", bizId = "#sendRequest.messageTemplateId", msg = "#sendRequest")
     public SendResponse send(SendRequest sendRequest) {
         if (ObjectUtils.isEmpty(sendRequest)) {
@@ -54,6 +56,7 @@ public class SendServiceImpl implements SendService {
         return new SendResponse(process.getResponse().getStatus(), process.getResponse().getMsg(), (List<SimpleTaskInfo>) process.getResponse().getData());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     @OperationLog(bizType = "SendService#batchSend", bizId = "#batchSendRequest.messageTemplateId", msg = "#batchSendRequest")
     public SendResponse batchSend(BatchSendRequest batchSendRequest) {
@@ -73,6 +76,11 @@ public class SendServiceImpl implements SendService {
                 .response(BasicResultVO.success()).build();
 
         var process = processController.process(context);
+        var response = process.getResponse();
+
+        if (!"0".equals(response.getStatus())) {
+            throw new CommonException(RespStatusEnum.getByCode(response.getStatus()));
+        }
 
         return new SendResponse(process.getResponse().getStatus(), process.getResponse().getMsg(), (List<SimpleTaskInfo>) process.getResponse().getData());
     }

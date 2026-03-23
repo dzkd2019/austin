@@ -15,7 +15,7 @@ import com.java3y.austin.support.utils.AccountUtils;
 import com.java3y.austin.web.annotation.AustinAspect;
 import com.java3y.austin.web.annotation.AustinResult;
 import com.java3y.austin.web.config.WeChatLoginConfig;
-import com.java3y.austin.web.exception.CommonException;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.web.utils.Convert4Amis;
 import com.java3y.austin.web.utils.LoginUtils;
 import com.java3y.austin.web.vo.amis.CommonAmisVo;

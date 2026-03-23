@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
+import com.java3y.austin.common.exception.CommonException;
 
 @Slf4j
 public class RetryUtils {
@@ -13,9 +14,9 @@ public class RetryUtils {
     /**
      * 针对云服务调用的轻量级虚拟线程重试执行器
      *
-     * @param maxRetries 最大重试次数
+     * @param maxRetries  最大重试次数
      * @param baseDelayMs 基础退避时间（毫秒）
-     * @param action 真正要执行的云端调用逻辑
+     * @param action      真正要执行的云端调用逻辑
      */
     public static void executeWithRetry(int maxRetries, long baseDelayMs, Runnable action) {
         try {
@@ -78,6 +79,7 @@ public class RetryUtils {
         }
     }
 
+
     /**
      * 判断异常是否属于“可重试”的瞬时网络故障
      */
@@ -89,6 +91,13 @@ public class RetryUtils {
         //     return status == 502 || status == 503 || status == 504;
         // }
         // 默认全重试（建议根据实际业务收紧条件）
+        if (e instanceof CommonException ce) {
+            String code = ce.getCode();
+            return switch(code) {
+                case "-1", "500" -> true;
+                default -> false;
+            };
+        }
         return true;
     }
 }

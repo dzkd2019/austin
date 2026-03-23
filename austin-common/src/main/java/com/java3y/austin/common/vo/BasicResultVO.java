@@ -1,6 +1,7 @@
 package com.java3y.austin.common.vo;
 
 import com.java3y.austin.common.enums.RespStatusEnum;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,11 +23,13 @@ public final class BasicResultVO<T> implements Serializable {
     /**
      * 响应状态
      */
+    @NotNull
     private String status;
 
     /**
      * 响应编码
      */
+    @NotNull
     private String msg;
 
     /**

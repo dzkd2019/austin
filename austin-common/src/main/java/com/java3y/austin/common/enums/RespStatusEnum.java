@@ -63,4 +63,13 @@ public enum RespStatusEnum {
      * 响应编码
      */
     private final String msg;
+
+    public static RespStatusEnum getByCode(String code) {
+        for (RespStatusEnum respStatusEnum : RespStatusEnum.values()) {
+            if (respStatusEnum.getCode().equals(code)) {
+                return respStatusEnum;
+            }
+        }
+        return null;
+    }
 }

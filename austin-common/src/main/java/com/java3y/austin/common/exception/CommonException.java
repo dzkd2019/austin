@@ -1,4 +1,4 @@
-package com.java3y.austin.web.exception;
+package com.java3y.austin.common.exception;
 
 import com.java3y.austin.common.enums.RespStatusEnum;
 import lombok.Getter;

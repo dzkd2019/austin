@@ -18,7 +18,7 @@ import com.java3y.austin.service.api.service.SendService;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.web.annotation.AustinAspect;
 import com.java3y.austin.web.annotation.AustinResult;
-import com.java3y.austin.web.exception.CommonException;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.web.service.MessageTemplateService;
 import com.java3y.austin.web.utils.Convert4Amis;
 import com.java3y.austin.web.utils.LoginUtils;

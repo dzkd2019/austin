@@ -31,9 +31,9 @@ public class ExceptionHandlerAdvice {
         return BasicResultVO.fail(RespStatusEnum.ERROR_500, "\r\n" + errStackStr + "\r\n");
     }
 
-    @ExceptionHandler({CommonException.class})
+    @ExceptionHandler({com.java3y.austin.common.exception.CommonException.class})
     @ResponseStatus(HttpStatus.OK)
-    public BasicResultVO<RespStatusEnum> commonResponse(CommonException ce) {
+    public BasicResultVO<RespStatusEnum> commonResponse(com.java3y.austin.common.exception.CommonException ce) {
         log.error(Throwables.getStackTrace(ce));
         return new BasicResultVO<>(ce.getCode(), ce.getMessage(), ce.getRespStatusEnum());
     }

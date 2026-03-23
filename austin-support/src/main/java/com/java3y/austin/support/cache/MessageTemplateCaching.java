@@ -1,0 +1,53 @@
+package com.java3y.austin.support.cache;
+
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.java3y.austin.support.dao.MessageTemplateDao;
+import com.java3y.austin.support.domain.MessageTemplate;
+import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+@Service
+@Slf4j
+public class MessageTemplateCaching {
+    private final MessageTemplateDao messageTemplateDao;
+
+    private final Executor cacheLoaderExecutor = Executors.newVirtualThreadPerTaskExecutor();
+
+    private AsyncLoadingCache<Long, MessageTemplate> messageTemplateCache;
+
+    public MessageTemplateCaching(MessageTemplateDao messageTemplateDao) {
+        this.messageTemplateDao = messageTemplateDao;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.messageTemplateCache = Caffeine.newBuilder()
+                // 1. 基础容量控制
+                .maximumSize(5000)
+                // 2. 被动一致性控制：写入后 10 分钟自动过期
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                // 3. 【核心配置】：指定使用虚拟线程池去执行数据库查询！
+                .executor(cacheLoaderExecutor)
+                // 4. 定义如何从数据库加载数据
+                .buildAsync(templateId -> {
+                    log.info("缓存未命中，正由虚拟线程去数据库加载模板 ID: {}", templateId);
+                    // 这里发生数据库 I/O 阻塞，但毫无关系，因为是虚拟线程！
+                    return messageTemplateDao.findById(templateId).orElse(null);
+                });
+    }
+
+    public Optional<MessageTemplate> getMessageTemplate(Long id) {
+        return Optional.ofNullable(messageTemplateCache.get(id).join());
+    }
+
+    public void removeMessageTemplate(Long id) {
+        messageTemplateCache.synchronous().invalidate(id);
+    }
+}

@@ -1,6 +1,7 @@
 package com.java3y.austin.common.pipeline;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -9,12 +10,10 @@ import java.util.List;
  *
  * @author 3y
  */
+@Setter
 @Getter
 public class ProcessTemplate<T extends ProcessModel> {
 
     private List<BusinessProcess<T>> processList;
 
-    public void setProcessList(List<BusinessProcess<T>> processList) {
-        this.processList = processList;
-    }
 }
