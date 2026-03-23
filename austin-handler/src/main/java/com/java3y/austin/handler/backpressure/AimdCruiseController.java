@@ -1,5 +1,6 @@
 package com.java3y.austin.handler.backpressure;
 
+import com.java3y.austin.support.config.ThreadPoolExecutorShutdownDefinition;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -32,13 +33,19 @@ public class AimdCruiseController {
     private static final int ADDITIVE_INCREASE_STEP = 2000; // 每次提速增加的并发数
     private static final double MULTIPLICATIVE_DECREASE_FACTOR = 0.5; // 每次降速砍掉的比例
 
-    public AimdCruiseController(VirtualThreadBackPressureManager manager, RtSensor sensor) {
+    private static final double LOW_WATERMARK_PERCENTAGE = 0.7;
+
+    private final ThreadPoolExecutorShutdownDefinition shutdownDefinition;
+
+    public AimdCruiseController(VirtualThreadBackPressureManager manager, RtSensor sensor, ThreadPoolExecutorShutdownDefinition shutdownDefinition) {
         this.backPressureManager = manager;
         this.rtSensor = sensor;
+        this.shutdownDefinition = shutdownDefinition;
     }
 
     @PostConstruct
     public void startCruising() {
+        shutdownDefinition.registryExecutor(scheduler);
         // 每 5 秒巡航一次
         scheduler.scheduleAtFixedRate(this::checkAndAdjust, 5, 5, TimeUnit.SECONDS);
         log.info("AIMD 巡航控制器已启动，周期: 5秒");
@@ -57,18 +64,18 @@ public class AimdCruiseController {
             if (avgRt > RT_DANGER_MIN) {
                 // 【乘性减】：响应太慢了，下游快崩溃了，立刻砍半！
                 newHigh = (int) (currentHigh * MULTIPLICATIVE_DECREASE_FACTOR);
-                log.warn("🚨 巡航警报: 当前平均 RT ({}ms) 超过危险阈值 ({}ms)！断崖式降载: {} -> {}",
+                log.warn("巡航警报: 当前平均 RT ({}ms) 超过危险阈值 ({}ms)！断崖式降载: {} -> {}",
                         avgRt, RT_DANGER_MIN, currentHigh, newHigh);
             }
             else if (avgRt < RT_HEALTHY_MAX) {
                 // 【加性增】：响应很快，下游很闲，慢慢增加并发度
                 newHigh = currentHigh + ADDITIVE_INCREASE_STEP;
-                log.info("🚀 巡航提速: 当前平均 RT ({}ms) 表现优异。尝试提速: {} -> {}",
+                log.info("巡航提速: 当前平均 RT ({}ms) 表现优异。尝试提速: {} -> {}",
                         avgRt, currentHigh, newHigh);
             }
             else {
                 // RT 在 100 ~ 300 之间，属于平稳期，不增不减
-                log.debug("⚖️ 巡航平稳: 当前平均 RT ({}ms)，水位保持在 {}", avgRt, currentHigh);
+                log.debug("巡航平稳: 当前平均 RT ({}ms)，水位保持在 {}", avgRt, currentHigh);
             }
 
             // 限制绝对边界，防止计算溢出或跌破下限
@@ -77,7 +84,7 @@ public class AimdCruiseController {
             // 如果高水位发生了变化，计算新的低水位并更新
             if (newHigh != currentHigh) {
                 // 低水位固定设置为高水位的 70%，保证有一定的呼吸空间防抖
-                int newLow = (int) (newHigh * 0.7);
+                int newLow = (int) (newHigh * LOW_WATERMARK_PERCENTAGE);
                 backPressureManager.updateWaterMarks(newHigh, newLow);
             }
 

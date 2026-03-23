@@ -2,6 +2,7 @@ package com.java3y.austin.support.cache;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.java3y.austin.support.config.ThreadPoolExecutorShutdownDefinition;
 import com.java3y.austin.support.dao.MessageTemplateDao;
 import com.java3y.austin.support.domain.MessageTemplate;
 import jakarta.annotation.PostConstruct;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -18,16 +20,22 @@ import java.util.concurrent.TimeUnit;
 public class MessageTemplateCaching {
     private final MessageTemplateDao messageTemplateDao;
 
-    private final Executor cacheLoaderExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ExecutorService cacheLoaderExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     private AsyncLoadingCache<Long, MessageTemplate> messageTemplateCache;
 
-    public MessageTemplateCaching(MessageTemplateDao messageTemplateDao) {
+    private final ThreadPoolExecutorShutdownDefinition threadPoolExecutorShutdownDefinition;
+
+    private static final MessageTemplate NULL_MESSAGE_TEMPLATE = new MessageTemplate();
+
+    public MessageTemplateCaching(MessageTemplateDao messageTemplateDao, ThreadPoolExecutorShutdownDefinition threadPoolExecutorShutdownDefinition) {
         this.messageTemplateDao = messageTemplateDao;
+        this.threadPoolExecutorShutdownDefinition = threadPoolExecutorShutdownDefinition;
     }
 
     @PostConstruct
     public void init() {
+        threadPoolExecutorShutdownDefinition.registryExecutor(cacheLoaderExecutor);
         this.messageTemplateCache = Caffeine.newBuilder()
                 // 1. 基础容量控制
                 .maximumSize(5000)
@@ -44,7 +52,15 @@ public class MessageTemplateCaching {
     }
 
     public Optional<MessageTemplate> getMessageTemplate(Long id) {
-        return Optional.ofNullable(messageTemplateCache.get(id).join());
+        MessageTemplate template = messageTemplateCache.get(id).join();
+        if (template == null) {
+            // 为了防止缓存穿透，将 null 值也缓存起来（使用一个特殊的 NULL_MESSAGE_TEMPLATE 对象）
+            messageTemplateCache.synchronous().put(id, NULL_MESSAGE_TEMPLATE);
+        } else if(template == NULL_MESSAGE_TEMPLATE) {
+            // 如果缓存中是 NULL_MESSAGE_TEMPLATE，说明数据库中确实没有这个模板，直接返回 Optional.empty()
+            return Optional.empty();
+        }
+        return Optional.ofNullable(template);
     }
 
     public void removeMessageTemplate(Long id) {

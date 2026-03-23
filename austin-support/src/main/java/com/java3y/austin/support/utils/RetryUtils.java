@@ -84,13 +84,7 @@ public class RetryUtils {
      * 判断异常是否属于“可重试”的瞬时网络故障
      */
     private static boolean isRetriable(Exception e) {
-        // 伪代码：根据你的实际 HTTP 客户端框架（如 OkHttp, Spring RestTemplate）进行判断
-        // if (e instanceof java.net.SocketTimeoutException) return true;
-        // if (e instanceof HttpServerErrorException) {
-        //     int status = ((HttpServerErrorException) e).getStatusCode().value();
-        //     return status == 502 || status == 503 || status == 504;
-        // }
-        // 默认全重试（建议根据实际业务收紧条件）
+        // 默认全不重试
         if (e instanceof CommonException ce) {
             String code = ce.getCode();
             return switch(code) {
@@ -98,6 +92,6 @@ public class RetryUtils {
                 default -> false;
             };
         }
-        return true;
+        return false;
     }
 }

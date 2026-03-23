@@ -1,6 +1,7 @@
 package com.java3y.austin.support.utils;
 
 import com.java3y.austin.support.config.ThreadPoolExecutorShutdownDefinition;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,14 +22,10 @@ public class ThreadPoolUtils {
 
     private static final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
-    /**
-     * 1. 将当前线程池 加入到 动态线程池内
-     * 2. 注册 线程池 被Spring管理，优雅关闭
-     */
-//    public void register(DtpExecutor dtpExecutor) {
-//        DtpRegistry.register(dtpExecutor, SOURCE_NAME);
-//        shutdownDefinition.registryExecutor(dtpExecutor);
-//    }
+    @PostConstruct
+    public void init() {
+        shutdownDefinition.registryExecutor(executorService);
+    }
 
     public static ExecutorService getVirtualExecutorService() {
         return executorService;
