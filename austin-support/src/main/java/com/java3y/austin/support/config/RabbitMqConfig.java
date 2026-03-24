@@ -3,12 +3,14 @@ package com.java3y.austin.support.config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeansException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @Slf4j
+@ConditionalOnProperty(name = "austin.mq.pipeline", havingValue = "RABBITMQ")
 public class RabbitMqConfig implements ApplicationContextAware {
 
     /**

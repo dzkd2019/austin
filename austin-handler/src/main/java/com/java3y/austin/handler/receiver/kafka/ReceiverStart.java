@@ -30,8 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Service
 @ConditionalOnProperty(name = "austin.mq.pipeline", havingValue = MessageQueuePipeline.KAFKA)
-@Slf4j
 @EnableKafka
+@Slf4j
 public class ReceiverStart {
 
     /**
@@ -65,16 +65,6 @@ public class ReceiverStart {
             }
             return attrs;
         };
-    }
-
-    /**
-     * 为每个渠道不同的消息类型 创建一个Receiver对象
-     */
-    @PostConstruct
-    public void init() {
-        for (int i = 0; i < GROUP_IDS.size(); i++) {
-            context.getBean(Receiver.class);
-        }
     }
 
     /**
