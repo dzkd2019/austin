@@ -19,6 +19,7 @@ import com.tencentcloudapi.sms.v20210111.SmsClient;
 import com.tencentcloudapi.sms.v20210111.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import java.util.Objects;
 
 @Slf4j
 @Component("TencentSmsScript")
+@Profile("prod")
 public class TencentSmsScript implements SmsScript {
 
     private static final Integer PHONE_NUM = 11;

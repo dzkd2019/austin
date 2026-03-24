@@ -34,7 +34,7 @@ public class AimdCruiseController {
 
     // 水位线绝对物理边界 (保护 JVM 本身)
     private static final int ABSOLUTE_MIN_HIGH_WATERMARK = 1000;
-    private static final int ABSOLUTE_MAX_HIGH_WATERMARK = 100_000;
+    private static final int ABSOLUTE_MAX_HIGH_WATERMARK = 200_000;
 
     // 调节步长
     private static final int ADDITIVE_INCREASE_STEP = 2000; // 每次提速增加的并发数
@@ -74,16 +74,16 @@ public class AimdCruiseController {
                     if (avgRt > RT_DANGER_MIN) {
                         // 【乘性减】：响应太慢了，下游快崩溃了，立刻砍半！
                         newHigh = (int) (currentHigh * MULTIPLICATIVE_DECREASE_FACTOR);
-                        log.warn("巡航警报: 当前平均 RT ({}ms) 超过危险阈值 ({}ms)！断崖式降载: {} -> {}",
-                                avgRt, RT_DANGER_MIN, currentHigh, newHigh);
+                        log.warn("巡航警报: 当前group {}, 平均 RT ({}ms) 超过危险阈值 ({}ms)！断崖式降载: {} -> {}",
+                                groupId, avgRt, RT_DANGER_MIN, currentHigh, newHigh);
                     } else if (avgRt < RT_HEALTHY_MAX) {
                         // 【加性增】：响应很快，下游很闲，慢慢增加并发度
                         newHigh = currentHigh + ADDITIVE_INCREASE_STEP;
-                        log.info("巡航提速: 当前平均 RT ({}ms) 表现优异。尝试提速: {} -> {}",
-                                avgRt, currentHigh, newHigh);
+                        log.info("巡航提速: 当前group {}, 当前平均 RT ({}ms) 表现优异。尝试提速: {} -> {}",
+                                groupId, avgRt, currentHigh, newHigh);
                     } else {
                         // RT 在 100 ~ 300 之间，属于平稳期，不增不减
-                        log.debug("巡航平稳: 当前平均 RT ({}ms)，水位保持在 {}", avgRt, currentHigh);
+                        log.debug("巡航平稳: 当前group {}, 当前平均 RT ({}ms)，水位保持在 {}",groupId, avgRt, currentHigh);
                     }
 
                     // 限制绝对边界，防止计算溢出或跌破下限

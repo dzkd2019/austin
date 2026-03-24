@@ -76,7 +76,7 @@ public class ConsumeServiceImpl implements ConsumeService {
                     task.run();
                 } finally {
                     // 记录处理时间，供巡航器使用
-                    long rt = System.nanoTime() - startTime;
+                    long rt = (System.nanoTime() - startTime) / 1000000;
                     rtSensor.record(groupId, rt);
 
                     backPressureManager.decrementAndCheckResume(groupId);

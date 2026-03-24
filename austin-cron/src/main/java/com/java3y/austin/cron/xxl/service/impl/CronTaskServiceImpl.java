@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONPath;
 import com.alibaba.fastjson2.TypeReference;
 import com.google.common.base.Throwables;
 import com.java3y.austin.common.enums.RespStatusEnum;
@@ -14,7 +15,6 @@ import com.java3y.austin.cron.xxl.constants.XxlJobConstant;
 import com.java3y.austin.cron.xxl.entity.XxlJobGroup;
 import com.java3y.austin.cron.xxl.entity.XxlJobInfo;
 import com.java3y.austin.cron.xxl.service.CronTaskService;
-import com.xxl.job.core.biz.model.ReturnT;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,29 +54,25 @@ public class CronTaskServiceImpl implements CronTaskService {
         String path = Objects.isNull(xxlJobInfo.getId()) ? xxlAddresses + XxlJobConstant.INSERT_URL
                 : xxlAddresses + XxlJobConstant.UPDATE_URL;
 
-        HttpResponse response;
-        ReturnT<Integer> returnT = null;
-        try {
-            response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
-            returnT = JSON.parseObject(response.body(), new TypeReference<>() {
-            });
-
+        String body = null;
+        try (var response = HttpRequest.post(path).form(params).cookie(getCookie()).execute()) {
+            body = response.body();
+            int code = (int) JSONPath.eval(body, "$.code");
             // 插入时需要返回Id，而更新时不需要
-            if (response.isOk() && ReturnT.SUCCESS_CODE == returnT.getCode()) {
+            if (response.isOk() && XxlJobConstant.SUCCESS_CODE == code) {
                 if (path.contains(XxlJobConstant.INSERT_URL)) {
-//                    Integer taskId = Integer.parseInt(String.valueOf(returnT.getContent()));
-                    Integer taskId = returnT.getContent();
+                    Integer taskId = Integer.parseInt(JSONPath.eval(body, "$.data").toString());
                     return BasicResultVO.success(taskId);
                 } else if (path.contains(XxlJobConstant.UPDATE_URL)) {
                     return BasicResultVO.success();
                 }
             }
         } catch (Exception e) {
-            log.error("CronTaskService#saveTask fail,e:{},param:{},response:{}", Throwables.getStackTraceAsString(e)
-                    , JSON.toJSONString(xxlJobInfo), JSON.toJSONString(returnT));
+            log.error("CronTaskService#saveTask fail,e:{},param:{}, content: {}", Throwables.getStackTraceAsString(e)
+                    , JSON.toJSONString(xxlJobInfo), body);
         }
         invalidateCookie();
-        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, JSON.toJSONString(returnT));
+        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, JSON.toJSONString(body));
     }
 
     @Override
@@ -84,22 +80,21 @@ public class CronTaskServiceImpl implements CronTaskService {
         String path = xxlAddresses + XxlJobConstant.DELETE_URL;
 
         HashMap<String, Object> params = MapUtil.newHashMap();
-        params.put("id", taskId);
+        params.put("ids[]", List.of(taskId));
 
-        HttpResponse response;
-        ReturnT<?> returnT = null;
-        try {
-            response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
-            returnT = JSON.parseObject(response.body(), ReturnT.class);
-            if (response.isOk() && ReturnT.SUCCESS_CODE == returnT.getCode()) {
+        String body = null;
+        try (var response = HttpRequest.post(path).form(params).cookie(getCookie()).execute()) {
+            body = response.body();
+            int code = (int) JSONPath.eval(body, "$.code");
+            if (response.isOk() && XxlJobConstant.SUCCESS_CODE == code) {
                 return BasicResultVO.success();
             }
         } catch (Exception e) {
             log.error("CronTaskService#deleteCronTask fail,e:{},param:{},response:{}", Throwables.getStackTraceAsString(e)
-                    , JSON.toJSONString(params), JSON.toJSONString(returnT));
+                    , JSON.toJSONString(params), body);
         }
         invalidateCookie();
-        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, JSON.toJSONString(returnT));
+        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, body);
     }
 
     @Override
@@ -107,22 +102,21 @@ public class CronTaskServiceImpl implements CronTaskService {
         String path = xxlAddresses + XxlJobConstant.RUN_URL;
 
         HashMap<String, Object> params = MapUtil.newHashMap();
-        params.put("id", taskId);
+        params.put("ids[]", List.of(taskId));
 
-        HttpResponse response;
-        ReturnT<?> returnT = null;
-        try {
-            response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
-            returnT = JSON.parseObject(response.body(), ReturnT.class);
-            if (response.isOk() && ReturnT.SUCCESS_CODE == returnT.getCode()) {
+        String body = null;
+        try (var response = HttpRequest.post(path).form(params).cookie(getCookie()).execute()) {
+            body = response.body();
+            int code = (int) JSONPath.eval(body, "$.code");
+            if (response.isOk() && XxlJobConstant.SUCCESS_CODE == code) {
                 return BasicResultVO.success();
             }
         } catch (Exception e) {
             log.error("CronTaskService#startCronTask fail,e:{},param:{},response:{}", Throwables.getStackTraceAsString(e)
-                    , JSON.toJSONString(params), JSON.toJSONString(returnT));
+                    , JSON.toJSONString(params), body);
         }
         invalidateCookie();
-        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, JSON.toJSONString(returnT));
+        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, body);
     }
 
     @Override
@@ -130,22 +124,21 @@ public class CronTaskServiceImpl implements CronTaskService {
         String path = xxlAddresses + XxlJobConstant.STOP_URL;
 
         HashMap<String, Object> params = MapUtil.newHashMap();
-        params.put("id", taskId);
+        params.put("ids[]", List.of(taskId));
 
-        HttpResponse response;
-        ReturnT<?> returnT = null;
-        try {
-            response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
-            returnT = JSON.parseObject(response.body(), ReturnT.class);
-            if (response.isOk() && ReturnT.SUCCESS_CODE == returnT.getCode()) {
+        String body = null;
+        try (var response = HttpRequest.post(path).form(params).cookie(getCookie()).execute()) {
+            body = response.body();
+            int code = (int) JSONPath.eval(body, "$.code");
+            if (response.isOk() && XxlJobConstant.SUCCESS_CODE == code) {
                 return BasicResultVO.success();
             }
         } catch (Exception e) {
             log.error("CronTaskService#stopCronTask fail,e:{},param:{},response:{}", Throwables.getStackTraceAsString(e)
-                    , JSON.toJSONString(params), JSON.toJSONString(returnT));
+                    , JSON.toJSONString(params), body);
         }
         invalidateCookie();
-        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, JSON.toJSONString(returnT));
+        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, body);
     }
 
     @Override
@@ -156,24 +149,29 @@ public class CronTaskServiceImpl implements CronTaskService {
         params.put("appname", appName);
         params.put("title", title);
 
-        HttpResponse response = null;
-        try {
-            response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
+        String body = null;
+        try (var response = HttpRequest.get(path).form(params).cookie(getCookie()).execute()) {
             if (Objects.isNull(response)) {
                 return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR);
             }
-            Integer id = JSON.parseObject(response.body()).getJSONArray("data").getJSONObject(0).getInteger("id");
-            if (response.isOk() && Objects.nonNull(id)) {
-                return BasicResultVO.success(id);
+            body = response.body();
+            try {
+            Integer id = Integer.parseInt(JSONPath.eval(response.body(), "$.data.data[0].id").toString());
+                if (response.isOk()) {
+                    return BasicResultVO.success(id);
+                }
+            } catch (Exception e) {
+                return  BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR);
             }
+
         } catch (Exception e) {
             log.error("CronTaskService#getGroupId fail,e:{},param:{},response:{}", Throwables.getStackTraceAsString(e)
                     , JSON.toJSONString(params),
-                    response != null ? JSON.toJSONString(response.body()) : "");
+                    body != null ? body : "");
         }
         invalidateCookie();
         return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR,
-                response != null ? JSON.toJSONString(response.body()) : "");
+                body != null ? body : "");
     }
 
     @Override
@@ -182,21 +180,19 @@ public class CronTaskServiceImpl implements CronTaskService {
         });
         String path = xxlAddresses + XxlJobConstant.JOB_GROUP_INSERT_URL;
 
-        HttpResponse response;
-        ReturnT<?> returnT = null;
-
-        try {
-            response = HttpRequest.post(path).form(params).cookie(getCookie()).execute();
-            returnT = JSON.parseObject(response.body(), ReturnT.class);
-            if (response.isOk() && ReturnT.SUCCESS_CODE == returnT.getCode()) {
+        String body = null;
+        try (var response = HttpRequest.post(path).form(params).cookie(getCookie()).execute()) {
+            body = response.body();
+            int code = (int) JSONPath.eval(body, "$.code");
+            if (response.isOk() && XxlJobConstant.SUCCESS_CODE == code) {
                 return BasicResultVO.success();
             }
         } catch (Exception e) {
             log.error("CronTaskService#createGroup fail,e:{},param:{},response:{}", Throwables.getStackTraceAsString(e)
-                    , JSON.toJSONString(params), JSON.toJSONString(returnT));
+                    , JSON.toJSONString(params), body);
         }
         invalidateCookie();
-        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, JSON.toJSONString(returnT));
+        return BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR, body);
     }
 
     /**
@@ -220,6 +216,7 @@ public class CronTaskServiceImpl implements CronTaskService {
         try {
             response = HttpRequest.post(path).form(params).execute();
             if (response.isOk()) {
+
                 List<HttpCookie> cookies = response.getCookies();
                 StringBuilder sb = new StringBuilder();
                 for (HttpCookie cookie : cookies) {

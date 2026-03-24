@@ -211,7 +211,7 @@ public class MessageTemplateController {
             }
             file.transferTo(localFile);
         } catch (Exception e) {
-            log.error("MessageTemplateController#upload fail! e:{},params{}", Throwables.getStackTraceAsString(e), JSON.toJSONString(file));
+            log.error("MessageTemplateController#upload fail! e:{},params{}", Throwables.getStackTraceAsString(e), JSON.toJSONString(file != null ? file.getOriginalFilename() : "null file"));
             throw new CommonException(RespStatusEnum.SERVICE_ERROR);
         }
         return MapUtil.of(new String[][]{{"value", filePath}});

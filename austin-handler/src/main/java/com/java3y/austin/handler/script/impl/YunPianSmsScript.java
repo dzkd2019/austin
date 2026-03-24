@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * 发送短信接入文档：<a href="https://www.yunpian.com/official/document/sms/zh_CN/domestic_list">...</a>
  */
 @Component("YunPianSmsScript")
+@Profile("prod")
 public class YunPianSmsScript implements SmsScript {
 
     private static final String PARAMS_SPLIT_KEY = "{|}";

@@ -188,19 +188,20 @@ public class RedisUtils {
             return new ArrayList<>();
         }
 
-        String scriptSha1 = redisScript.getSha1();
+        String script = redisScript.getScriptAsString();
         RedisSerializer<String> serializer = redisTemplate.getStringSerializer();
         final long currentTime = System.currentTimeMillis();
         byte[] windowBytes = serializer.serialize(String.valueOf(windowSize));
         byte[] thresholdBytes = serializer.serialize(String.valueOf(threshold));
         byte[] scoreBytes = serializer.serialize(String.valueOf(currentTime));
+        byte[] scriptBytes = serializer.serialize(script);
 
         List<Object> pipelineResults = redisTemplate.executePipelined((RedisCallback<Long>) connection -> {
             for (String key : keys) {
                 byte[] keyBytes = serializer.serialize(key);
                 byte[] valueBytes = serializer.serialize(String.valueOf(IdUtil.getSnowflake().nextId()));
 
-                connection.scriptingCommands().evalSha(scriptSha1, ReturnType.INTEGER, 1, keyBytes, windowBytes, scoreBytes, thresholdBytes, valueBytes);
+                connection.scriptingCommands().eval(scriptBytes, ReturnType.INTEGER, 1, keyBytes, windowBytes, scoreBytes, thresholdBytes, valueBytes);
             }
             return null;
         });

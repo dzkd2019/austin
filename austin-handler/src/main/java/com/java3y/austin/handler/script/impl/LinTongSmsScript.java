@@ -19,6 +19,7 @@ import com.java3y.austin.support.domain.SmsRecord;
 import com.java3y.austin.support.utils.AccountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -36,6 +37,7 @@ import java.util.*;
  */
 @Slf4j
 @Component("LinTongSmsScript")
+@Profile("prod")
 public class LinTongSmsScript implements SmsScript {
 
     @Autowired

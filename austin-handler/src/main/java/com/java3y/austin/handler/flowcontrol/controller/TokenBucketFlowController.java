@@ -12,6 +12,7 @@ public class TokenBucketFlowController implements FlowController {
 
     public TokenBucketFlowController(RateLimiterConfig rateLimiterConfig) {
         this.rateLimiter = new TokenBucketRateLimiter(rateLimiterConfig);
+        this.currentConfig = rateLimiterConfig;
     }
 
     @Override
@@ -28,7 +29,7 @@ public class TokenBucketFlowController implements FlowController {
             throw new IllegalArgumentException("config must be instance of TokenBucketRateLimiterConfig");
         }
 
-        if(currentConfig.equals(config)) {
+        if(config.equals(currentConfig)) {
             return;
         }
 
