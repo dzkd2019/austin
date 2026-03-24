@@ -13,6 +13,7 @@ import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.cron.xxl.entity.XxlJobInfo;
 import com.java3y.austin.cron.xxl.service.CronTaskService;
 import com.java3y.austin.cron.xxl.utils.XxlJobUtils;
+import com.java3y.austin.support.cache.MessageTemplateCaching;
 import com.java3y.austin.support.dao.MessageTemplateDao;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.web.service.MessageTemplateService;
@@ -38,14 +39,20 @@ import java.util.Objects;
 public class MessageTemplateServiceImpl implements MessageTemplateService {
 
 
-    @Autowired
-    private MessageTemplateDao messageTemplateDao;
+    private final MessageTemplateDao messageTemplateDao;
 
-    @Autowired
-    private CronTaskService cronTaskService;
+    private final CronTaskService cronTaskService;
 
-    @Autowired
-    private XxlJobUtils xxlJobUtils;
+    private final XxlJobUtils xxlJobUtils;
+
+    private final MessageTemplateCaching cache;
+
+    public MessageTemplateServiceImpl(MessageTemplateDao messageTemplateDao, CronTaskService cronTaskService, XxlJobUtils xxlJobUtils, MessageTemplateCaching cache) {
+        this.messageTemplateDao = messageTemplateDao;
+        this.cronTaskService = cronTaskService;
+        this.xxlJobUtils = xxlJobUtils;
+        this.cache = cache;
+    }
 
     @Override
     public Page<MessageTemplate> queryList(MessageTemplateParam param) {
@@ -82,7 +89,11 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
         }
 
         messageTemplate.setUpdated(Math.toIntExact(DateUtil.currentSeconds()));
-        return messageTemplateDao.save(messageTemplate);
+
+        var updated = messageTemplateDao.save(messageTemplate);
+
+        cache.removeMessageTemplate(updated.getId());
+        return updated;
     }
 
 
@@ -96,19 +107,29 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
             }
         }
         messageTemplateDao.saveAll(messageTemplates);
+        cache.removeMessageTemplate(ids);
     }
 
     @Override
     public MessageTemplate queryById(Long id) {
-        return messageTemplateDao.findById(id).orElse(null);
+        return cache.getMessageTemplate(id).orElse(null);
+    }
+
+    @Override
+    public List<MessageTemplate> queryByIds(Long[] ids) {
+        var res = messageTemplateDao.findAllById(List.of(ids));
+        res.forEach(cache::put);
+
+        return res;
     }
 
     @Override
     public void copy(Long id) {
-        MessageTemplate messageTemplate = messageTemplateDao.findById(id).orElse(null);
+        MessageTemplate messageTemplate = cache.getMessageTemplate(id).orElse(null);
         if (Objects.nonNull(messageTemplate)) {
             MessageTemplate clone = ObjectUtil.clone(messageTemplate).setId(null).setCronTaskId(null);
-            messageTemplateDao.save(clone);
+            MessageTemplate saved = messageTemplateDao.save(clone);
+            cache.put(saved);
         }
     }
 
@@ -143,12 +164,13 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     @Override
     public BasicResultVO<Void> stopCronTask(Long id) {
         // 1.修改模板状态
-        MessageTemplate messageTemplate = messageTemplateDao.findById(id).orElse(null);
+        MessageTemplate messageTemplate = cache.getMessageTemplate(id).orElse(null);
         if (Objects.isNull(messageTemplate)) {
             return BasicResultVO.fail();
         }
         MessageTemplate clone = ObjectUtil.clone(messageTemplate).setMsgStatus(MessageStatus.STOP.getCode()).setUpdated(Math.toIntExact(DateUtil.currentSeconds()));
         messageTemplateDao.save(clone);
+        cache.removeMessageTemplate(id);
 
         // 2.暂停定时任务
         return cronTaskService.stopCronTask(clone.getCronTaskId());

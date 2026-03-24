@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @LoadBalancer(loadbalancer = LoadBalancerStrategy.SERVICE_LOAD_BALANCER_ROBIN)
 public class RobinServiceLoadBalancerImpl implements ServiceLoadBalancer<MessageTypeSmsConfig> {
-    private volatile AtomicInteger atomicInteger = new AtomicInteger(0);
+    private final AtomicInteger atomicInteger = new AtomicInteger(0);
 
     @Override
     public MessageTypeSmsConfig selectOne(List<MessageTypeSmsConfig> servers) {

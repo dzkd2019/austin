@@ -57,6 +57,8 @@ public interface MessageTemplateService {
      */
     MessageTemplate queryById(Long id);
 
+    List<MessageTemplate> queryByIds(Long[] ids);
+
     /**
      * 复制配置
      *

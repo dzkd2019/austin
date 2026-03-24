@@ -16,7 +16,6 @@ import com.java3y.austin.cron.xxl.entity.XxlJobGroup;
 import com.java3y.austin.cron.xxl.entity.XxlJobInfo;
 import com.java3y.austin.cron.xxl.service.CronTaskService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -43,8 +42,11 @@ public class CronTaskServiceImpl implements CronTaskService {
     @Value("${xxl.job.admin.addresses}")
     private String xxlAddresses;
 
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+    private final StringRedisTemplate redisTemplate;
+
+    public CronTaskServiceImpl(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
 
     @Override

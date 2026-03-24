@@ -40,8 +40,9 @@ public class VirtualThreadBackPressureManager {
      */
     private final Map<String, GroupContext> groupContexts = new ConcurrentHashMap<>();
     private final KafkaListenerEndpointRegistry registry;
-    // ==================== 构造函数 =====================
 
+    // ==================== 构造函数 =====================
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     public VirtualThreadBackPressureManager(KafkaListenerEndpointRegistry registry) {
         this.registry = registry;
     }
@@ -293,8 +294,8 @@ public class VirtualThreadBackPressureManager {
         WaterMarkConfig getConfig() {
             WaterMarkConfig cfg = customConfig;
             // 当 customConfig 为空时，调用 Supplier.get() 瞬间拿到外部最新的 defaultWaterMark
-            if(cfg == null) cfg = defaultWaterMarkSupplier.get();
-            if(cfg == null) {
+            if (cfg == null) cfg = defaultWaterMarkSupplier.get();
+            if (cfg == null) {
                 throw new IllegalStateException("Default watermark config is null for group: " + groupId);
             }
             return cfg;

@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -76,5 +77,17 @@ public class MessageTemplateCaching {
 
     public void removeMessageTemplate(Long id) {
         messageTemplateCache.synchronous().invalidate(id);
+    }
+
+    public void removeMessageTemplate(Collection<Long> ids) {
+        messageTemplateCache.synchronous().invalidateAll(ids);
+    }
+
+    public void put(MessageTemplate messageTemplate) {
+        messageTemplateCache.synchronous().put(messageTemplate.getId(), messageTemplate);
+    }
+
+    public boolean contains(Long id) {
+        return messageTemplateCache.asMap().containsKey(id);
     }
 }

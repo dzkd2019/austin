@@ -8,10 +8,9 @@ import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.impl.domain.RecallTaskModel;
-import com.java3y.austin.support.dao.MessageTemplateDao;
+import com.java3y.austin.support.cache.MessageTemplateCaching;
 import com.java3y.austin.support.domain.MessageTemplate;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -24,16 +23,19 @@ import java.util.Optional;
 @Service
 public class RecallAssembleAction implements BusinessProcess<RecallTaskModel> {
 
-    @Autowired
-    private MessageTemplateDao messageTemplateDao;
+    private final MessageTemplateCaching cache;
+
+    public RecallAssembleAction(MessageTemplateCaching cache) {
+        this.cache = cache;
+    }
 
     @Override
     public void process(ProcessContext<RecallTaskModel> context) {
         RecallTaskModel recallTaskModel = context.getProcessModel();
         Long messageTemplateId = recallTaskModel.getMessageTemplateId();
         try {
-            Optional<MessageTemplate> messageTemplate = messageTemplateDao.findById(messageTemplateId);
-            if (!messageTemplate.isPresent() || messageTemplate.get().getIsDeleted().equals(CommonConstant.TRUE)) {
+            Optional<MessageTemplate> messageTemplate = cache.getMessageTemplate(messageTemplateId);
+            if (messageTemplate.isEmpty() || messageTemplate.get().getIsDeleted().equals(CommonConstant.TRUE)) {
                 context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.TEMPLATE_NOT_FOUND));
                 return;
             }

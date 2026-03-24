@@ -6,7 +6,9 @@ import com.java3y.austin.handler.handler.impl.DingDingWorkNoticeHandler;
 import com.java3y.austin.handler.receipt.stater.ReceiptMessageStater;
 import com.java3y.austin.support.dao.ChannelAccountDao;
 import com.java3y.austin.support.domain.ChannelAccount;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -15,6 +17,8 @@ import java.util.List;
  *
  * @author 3y
  */
+@Component
+@Slf4j
 public class DingDingWorkReceiptStaterImpl implements ReceiptMessageStater {
 
     @Autowired

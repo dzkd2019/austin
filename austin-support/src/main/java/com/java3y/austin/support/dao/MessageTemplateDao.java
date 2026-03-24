@@ -21,7 +21,6 @@ public interface MessageTemplateDao extends JpaRepository<MessageTemplate, Long>
      *
      * @param deleted  0：未删除 1：删除
      * @param pageable 分页对象
-     * @return
      */
     List<MessageTemplate> findAllByIsDeletedEqualsOrderByUpdatedDesc(Integer deleted, Pageable pageable);
 
@@ -29,8 +28,6 @@ public interface MessageTemplateDao extends JpaRepository<MessageTemplate, Long>
     /**
      * 统计未删除的条数
      *
-     * @param deleted
-     * @return
      */
     Long countByIsDeletedEquals(Integer deleted);
 

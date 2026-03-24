@@ -8,15 +8,13 @@ import org.apache.kafka.common.header.Header;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.KafkaListenerAnnotationBeanPostProcessor;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -28,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author 3y
  * &#064;date  2021/12/4
  */
-@Service
+@Configuration
 @ConditionalOnProperty(name = "austin.mq.pipeline", havingValue = MessageQueuePipeline.KAFKA)
 @EnableKafka
 @Slf4j
@@ -46,8 +44,7 @@ public class ReceiverStart {
      * 下标(用于迭代groupIds位置)
      */
     private static final AtomicInteger index = new AtomicInteger(0);
-    @Autowired
-    private ApplicationContext context;
+
     @Autowired
     private ConsumerFactory<String, String> consumerFactory;
 
@@ -75,7 +72,7 @@ public class ReceiverStart {
      */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> filterContainerFactory(@Value("${austin.business.tagId.key}") String tagIdKey,
-                                                                          @Value("${austin.business.tagId.value}") String tagIdValue) {
+                                                                                          @Value("${austin.business.tagId.value}") String tagIdValue) {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setAckDiscarded(true);

@@ -13,20 +13,19 @@ import com.java3y.austin.common.enums.ChannelType;
 import com.java3y.austin.common.enums.EnumUtil;
 import com.java3y.austin.service.api.domain.TraceResponse;
 import com.java3y.austin.service.api.service.TraceService;
-import com.java3y.austin.support.dao.MessageTemplateDao;
 import com.java3y.austin.support.dao.SmsRecordDao;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.support.domain.SmsRecord;
 import com.java3y.austin.support.utils.RedisUtils;
 import com.java3y.austin.support.utils.TaskInfoUtils;
 import com.java3y.austin.web.service.DataService;
+import com.java3y.austin.web.service.MessageTemplateService;
 import com.java3y.austin.web.utils.AnchorStateUtils;
 import com.java3y.austin.web.utils.Convert4Amis;
 import com.java3y.austin.web.vo.DataParam;
 import com.java3y.austin.web.vo.amis.EchartsVo;
 import com.java3y.austin.web.vo.amis.SmsTimeLineVo;
 import com.java3y.austin.web.vo.amis.UserTimeLineVo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -41,17 +40,20 @@ import java.util.stream.Collectors;
 @Service
 public class DataServiceImpl implements DataService {
 
-    @Autowired
-    private RedisUtils redisUtils;
+    private final RedisUtils redisUtils;
 
-    @Autowired
-    private MessageTemplateDao messageTemplateDao;
+    private final SmsRecordDao smsRecordDao;
 
-    @Autowired
-    private SmsRecordDao smsRecordDao;
+    private final TraceService traceService;
 
-    @Autowired
-    private TraceService traceService;
+    private final MessageTemplateService messageTemplateService;
+
+    public DataServiceImpl(RedisUtils redisUtils, SmsRecordDao smsRecordDao, TraceService traceService, MessageTemplateService messageTemplateService) {
+        this.redisUtils = redisUtils;
+        this.smsRecordDao = smsRecordDao;
+        this.traceService = traceService;
+        this.messageTemplateService = messageTemplateService;
+    }
 
 
     @Override
@@ -80,8 +82,8 @@ public class DataServiceImpl implements DataService {
 
         // 获取businessId并获取模板信息
         businessId = getRealBusinessId(businessId);
-        Optional<MessageTemplate> optional = messageTemplateDao.findById(TaskInfoUtils.getMessageTemplateIdFromBusinessId(Long.valueOf(businessId)));
-        if (!optional.isPresent()) {
+        MessageTemplate template = messageTemplateService.queryById(TaskInfoUtils.getMessageTemplateIdFromBusinessId(Long.valueOf(businessId)));
+        if (template == null) {
             return null;
         }
 
@@ -92,7 +94,7 @@ public class DataServiceImpl implements DataService {
          */
         Map<Object, Object> anchorResult = redisUtils.hGetAll(getRealBusinessId(businessId));
 
-        return Convert4Amis.getEchartsVo(anchorResult, optional.get(), businessId);
+        return Convert4Amis.getEchartsVo(anchorResult, template, businessId);
     }
 
     @Override
@@ -117,10 +119,9 @@ public class DataServiceImpl implements DataService {
         if (AustinConstant.BUSINESS_ID_LENGTH == businessId.length()) {
             return businessId;
         }
-        Optional<MessageTemplate> optional = messageTemplateDao.findById(Long.valueOf(businessId));
-        if (optional.isPresent()) {
-            MessageTemplate messageTemplate = optional.get();
-            return String.valueOf(TaskInfoUtils.generateBusinessId(messageTemplate.getId(), messageTemplate.getTemplateType()));
+        MessageTemplate template = messageTemplateService.queryById(Long.valueOf(businessId));
+        if (template != null) {
+            return String.valueOf(TaskInfoUtils.generateBusinessId(template.getId(), template.getTemplateType()));
         }
         return businessId;
     }
@@ -134,13 +135,13 @@ public class DataServiceImpl implements DataService {
                 .map(TaskInfoUtils::getMessageTemplateIdFromBusinessId)
                 .collect(Collectors.toSet());
 
-        Map<Long, MessageTemplate> messageTemplateMap = messageTemplateDao.findAllById(templateIds)
+        Map<Long, MessageTemplate> messageTemplateMap = messageTemplateService.queryByIds(templateIds.toArray(Long[]::new))
                 .stream()
                 .collect(Collectors.toMap(MessageTemplate::getId, Function.identity()));
 
         // 2. 封装vo 给到前端渲染展示
         List<UserTimeLineVo.ItemsVO> items = new ArrayList<>();
-    
+
 
         for (var entry : map1.entrySet()) {
             MessageTemplate messageTemplate = messageTemplateMap.get(TaskInfoUtils.getMessageTemplateIdFromBusinessId(entry.getKey()));

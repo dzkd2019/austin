@@ -8,11 +8,10 @@ import com.java3y.austin.cron.pending.CrowdBatchTaskPending;
 import com.java3y.austin.cron.service.TaskHandler;
 import com.java3y.austin.cron.utils.ReadFileUtils;
 import com.java3y.austin.cron.vo.CrowdInfoVo;
-import com.java3y.austin.support.dao.MessageTemplateDao;
+import com.java3y.austin.support.cache.MessageTemplateCaching;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.support.pending.AbstractLazyPending;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -26,17 +25,20 @@ import java.util.Objects;
 @Service
 @Slf4j
 public class TaskHandlerImpl implements TaskHandler {
-    @Autowired
-    private MessageTemplateDao messageTemplateDao;
 
-    @Autowired
-    private ApplicationContext context;
+    private final ApplicationContext context;
 
+    private final MessageTemplateCaching cache;
+
+    public TaskHandlerImpl(ApplicationContext context, MessageTemplateCaching cache) {
+        this.context = context;
+        this.cache = cache;
+    }
 
     @Override
     public void handle(Long messageTemplateId) {
 
-        MessageTemplate messageTemplate = messageTemplateDao.findById(messageTemplateId).orElse(null);
+        MessageTemplate messageTemplate = cache.getMessageTemplate(messageTemplateId).orElse(null);
         if (Objects.isNull(messageTemplate)) {
             return;
         }

@@ -18,7 +18,6 @@ import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.domain.MessageParam;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
 import com.java3y.austin.support.cache.MessageTemplateCaching;
-import com.java3y.austin.support.dao.MessageTemplateDao;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.support.utils.ContentHolderUtil;
 import com.java3y.austin.support.utils.TaskInfoUtils;
@@ -40,8 +39,12 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
 
     private static final String LINK_NAME = "url";
 
-    @Autowired
-    private MessageTemplateCaching caching;
+    private final MessageTemplateCaching caching;
+
+    public SendAssembleAction(MessageTemplateCaching caching) {
+        this.caching = caching;
+    }
+
     /**
      * 获取 contentModel，替换模板msgContent中占位符信息
      */
@@ -103,8 +106,6 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
     /**
      * 组装 TaskInfo 任务消息
      *
-     * @param sendTaskModel
-     * @param messageTemplate
      */
     private List<TaskInfo> assembleTaskInfo(SendTaskModel sendTaskModel, MessageTemplate messageTemplate) {
         List<MessageParam> messageParamList = sendTaskModel.getMessageParamList();

@@ -46,7 +46,7 @@ public class ServiceLoadBalancerFactory<T>  implements ApplicationContextAware {
     @SuppressWarnings("unchecked")
     private void init() {
         Map<String, Object> serviceMap = this.applicationContext.getBeansWithAnnotation(LoadBalancer.class);
-        serviceMap.forEach((name, service) -> {
+        serviceMap.forEach((_, service) -> {
             if (service instanceof ServiceLoadBalancer) {
                 LoadBalancer LoadBalancer = AopUtils.getTargetClass(service).getAnnotation(LoadBalancer.class);
                 String loadbalancerStrategy = LoadBalancer.loadbalancer();
