@@ -2,7 +2,7 @@ package com.java3y.austin.handler.deduplication.service;
 
 import cn.hutool.core.text.StrPool;
 import com.java3y.austin.common.domain.TaskInfo;
-import com.java3y.austin.common.enums.DeduplicationType;
+import com.java3y.austin.handler.deduplication.DeduplicationType;
 import com.java3y.austin.handler.deduplication.limit.LimitService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,8 +24,7 @@ public class FrequencyDeduplicationService extends AbstractDeduplicationService 
     public FrequencyDeduplicationService(@Qualifier("SimpleLimitService") LimitService limitService) {
 
         this.limitService = limitService;
-        deduplicationType = DeduplicationType.FREQUENCY.getCode();
-
+        type = DeduplicationType.FREQUENCY;
     }
 
     /**

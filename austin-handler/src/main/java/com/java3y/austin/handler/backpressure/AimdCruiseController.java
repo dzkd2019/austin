@@ -33,7 +33,7 @@ public class AimdCruiseController {
     private static final long RT_DANGER_MIN = 300L;   // 危险水位，大于此值立刻降速
 
     // 水位线绝对物理边界 (保护 JVM 本身)
-    private static final int ABSOLUTE_MIN_HIGH_WATERMARK = 1000;
+    private static final int ABSOLUTE_MIN_HIGH_WATERMARK = 100;
     private static final int ABSOLUTE_MAX_HIGH_WATERMARK = 200_000;
 
     // 调节步长

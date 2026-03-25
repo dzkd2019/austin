@@ -42,7 +42,7 @@ public class SensWordsAction implements BusinessProcess<TaskInfo> {
         if (ObjectUtils.isEmpty(sensDict)) {
             return;
         }
-        switch (context.getProcessModel().getMsgType()) {
+        switch (context.getProcessModel().getSendChannel()) {
             // IM
             case 10:
                 // 无文本内容，暂不做过滤处理

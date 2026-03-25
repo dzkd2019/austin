@@ -184,6 +184,12 @@ public class MessageTemplateController {
         return messageTemplateService.startCronTask(id);
     }
 
+    @PostMapping("startAll")
+    @Operation(summary = "启动所有模板的定时任务")
+    public BasicResultVO<Void> startAll() {
+        return messageTemplateService.startAllCronTask();
+    }
+
     /**
      * 暂停模板的定时任务
      */
@@ -191,6 +197,12 @@ public class MessageTemplateController {
     @Operation(summary = "暂停模板的定时任务")
     public BasicResultVO<Void> stop(@RequestBody @PathVariable("id") Long id) {
         return messageTemplateService.stopCronTask(id);
+    }
+
+    @PostMapping("stopAll")
+    @Operation(summary = "暂停所有模板的定时任务")
+    public BasicResultVO<Void> stopAll() {
+        return messageTemplateService.stopAllCronTask();
     }
 
     /**

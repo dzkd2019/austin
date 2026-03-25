@@ -82,4 +82,7 @@ public interface MessageTemplateService {
      */
     BasicResultVO<Void> stopCronTask(Long id);
 
+    BasicResultVO<Void> startAllCronTask();
+
+    BasicResultVO<Void> stopAllCronTask();
 }

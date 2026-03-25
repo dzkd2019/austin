@@ -114,8 +114,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.alibaba.boot</groupId>
-            <artifactId>nacos-config-spring-boot-starter</artifactId>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
 
         <dependency>
@@ -133,10 +133,6 @@
             <artifactId>weixin-java-miniapp</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.github.ZhongFuCheng3y</groupId>
-            <artifactId>hades-nacos-starter</artifactId>
-        </dependency>
     </dependencies>
 
 </project>

@@ -2,14 +2,12 @@ package com.java3y.austin.handler.handler.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.dto.account.sms.SmsAccount;
 import com.java3y.austin.common.dto.model.SmsContentModel;
 import com.java3y.austin.common.enums.ChannelType;
+import com.java3y.austin.handler.config.AustinMessageSendProperties;
 import com.java3y.austin.handler.domain.sms.MessageTypeSmsConfig;
 import com.java3y.austin.handler.domain.sms.SmsParam;
 import com.java3y.austin.handler.enums.LoadBalancerStrategy;
@@ -18,12 +16,14 @@ import com.java3y.austin.handler.loadbalance.ServiceLoadBalancerFactory;
 import com.java3y.austin.handler.script.SmsScript;
 import com.java3y.austin.support.dao.SmsRecordDao;
 import com.java3y.austin.support.domain.SmsRecord;
-import com.java3y.austin.support.service.ConfigService;
 import com.java3y.austin.support.utils.AccountUtils;
 import com.java3y.austin.support.utils.RetryUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -37,14 +37,14 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class SmsHandler extends BaseHandler {
+public class SmsHandler extends BaseHandler implements ApplicationContextAware {
 
     /**
      * 流量自动分配策略
      */
     private static final Integer AUTO_FLOW_RULE = 0;
-    private static final String FLOW_KEY = "msgTypeSmsConfig";
-    private static final String FLOW_KEY_PREFIX = "message_type_";
+    private ApplicationContext applicationContext;
+
 
     /**
      * 默认负载均衡为随机加权, 待拓展读取配置, 不同Handler可绑定不同的负载均衡策略
@@ -54,13 +54,12 @@ public class SmsHandler extends BaseHandler {
     @Autowired
     private SmsRecordDao smsRecordDao;
     @Autowired
-    private ConfigService config;
-    @Autowired
-    private ApplicationContext applicationContext;
-    @Autowired
     private AccountUtils accountUtils;
     @Autowired
     private ServiceLoadBalancerFactory<MessageTypeSmsConfig> serviceLoadBalancer;
+
+    @Autowired
+    private AustinMessageSendProperties messageSendProperties;
 
     public SmsHandler() {
         channelCode = ChannelType.SMS.getCode();
@@ -125,17 +124,24 @@ public class SmsHandler extends BaseHandler {
             return Collections.singletonList(MessageTypeSmsConfig.builder().sendAccount(taskInfo.getSendAccount()).scriptName(account.getScriptName()).weights(100).build());
         }
 
-        /*
-          读取流量配置
-         */
-        String property = config.getProperty(FLOW_KEY, CommonConstant.EMPTY_VALUE_JSON_ARRAY);
-        JSONArray jsonArray = JSON.parseArray(property);
-        for (int i = 0; i < jsonArray.size(); i++) {
-            JSONArray array = jsonArray.getJSONObject(i).getJSONArray(FLOW_KEY_PREFIX + taskInfo.getMsgType());
-            if (CollUtil.isNotEmpty(array)) {
-                return JSON.parseArray(JSON.toJSONString(array), MessageTypeSmsConfig.class);
+        var configList = messageSendProperties.getMsgTypeSmsConfig();
+
+        for (var config : configList) {
+            var msgType = config.keySet().stream().findFirst().orElse(null);
+            if (msgType != null && msgType.getCode().equals(taskInfo.getMsgType())) {
+                var res = new ArrayList<MessageTypeSmsConfig>();
+                for (var msgTypeSmsConfig : config.get(msgType)) {
+                    res.add(
+                            MessageTypeSmsConfig.builder()
+                                    .scriptName(msgTypeSmsConfig.scriptName())
+                                    .weights(msgTypeSmsConfig.weight())
+                                    .build()
+                    );
+                }
+                return res;
             }
         }
+
         return new ArrayList<>();
     }
 
@@ -163,5 +169,10 @@ public class SmsHandler extends BaseHandler {
     @Override
     public void recall(RecallTaskInfo recallTaskInfo) {
 
+    }
+
+    @Override
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
+        this.applicationContext = applicationContext;
     }
 }

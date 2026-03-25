@@ -20,7 +20,7 @@ import java.util.Properties;
  * @create: 2022-07-28
  **/
 @Slf4j
-@Component
+//@Component
 public class NacosUtils {
     private final Properties properties = new Properties();
     @NacosInjected

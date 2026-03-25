@@ -7,11 +7,14 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * 虚拟线程背压管理器 - 支持每个 groupId 独立的水位配置
@@ -66,6 +69,9 @@ public class VirtualThreadBackPressureManager {
         int current = context.inFlightCount.incrementAndGet();
         int highWaterMark = context.getHighWaterMark();
         // 【CAS 控制】：只有首次超过高水位时才执行 pause()
+
+        log.info("当前group: {}, 积压量 pendingCount: {}, 当前生效的高水位线 currentHighWatermark: {}", groupId, current, highWaterMark);
+
         if (current >= highWaterMark && context.isPaused.compareAndSet(false, true)) {
             MessageListenerContainer container = context.getContainer();
             if (container != null) {
@@ -98,21 +104,29 @@ public class VirtualThreadBackPressureManager {
     /**
      * 为指定 groupId 设置水位
      *
-     * @param groupId       Kafka 消费者组 ID
+     * @param id       Channel_id
      * @param highWaterMark 高水位
      * @param lowWaterMark  低水位
      */
-    public void setWaterMark(String groupId, int highWaterMark, int lowWaterMark) {
+    public void setWaterMark(String id, int highWaterMark, int lowWaterMark) {
         validateWaterMarks(highWaterMark, lowWaterMark);
 
-        GroupContext context = getOrCreateGroupContext(groupId);
-        context.setCustomConfig(new WaterMarkConfig(highWaterMark, lowWaterMark));
+        List<String> adaptedGroupIds = adaptGroupId(id);
+        if(adaptedGroupIds == null || adaptedGroupIds.isEmpty()) {
+            log.error("无效的 groupId [{}]，无法设置水位", id);
+            return;
+        }
 
-        log.info("设置 Group [{}] 水位: 高水位={}, 低水位={}",
-                groupId, highWaterMark, lowWaterMark);
+        for (String groupId : adaptedGroupIds) {
+            GroupContext context = getOrCreateGroupContext(groupId);
+            context.setCustomConfig(new WaterMarkConfig(highWaterMark, lowWaterMark));
 
-        // 检查是否需要立即恢复（当前水位已低于新的低水位）
-        tryResumeIfBelowLowWaterMark(context, groupId);
+            log.info("设置 Group [{}] 水位: 高水位={}, 低水位={}",
+                    groupId, highWaterMark, lowWaterMark);
+
+            // 检查是否需要立即恢复（当前水位已低于新的低水位）
+            tryResumeIfBelowLowWaterMark(context, groupId);
+        }
     }
 
     /**
@@ -196,6 +210,14 @@ public class VirtualThreadBackPressureManager {
         GroupContext context = groupContexts.get(groupId);
         return context != null && context.isPaused.get();
     }
+
+    public Set<String> getCustomizedGroupIds() {
+        return groupContexts.entrySet()
+                .stream()
+                .filter(entry -> !entry.getValue().isUsingDefaultWaterMark())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
     // ==================== 私有方法 =====================
 
     private GroupContext getOrCreateGroupContext(String groupId) {
@@ -246,6 +268,17 @@ public class VirtualThreadBackPressureManager {
                 container.resume();
             }
         }
+    }
+
+    private List<String> adaptGroupId(String groupId) {
+        String[] split = groupId.split("\\.");
+        if(split.length == 2) {
+            return List.of(groupId);
+        } else if(split.length > 2) {
+            return null;
+        }
+
+        return GroupIdMappingUtils.getGroupIdByChannel(groupId);
     }
     // ==================== 内部类 =====================
 

@@ -18,16 +18,19 @@ import com.java3y.austin.support.dao.MessageTemplateDao;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.web.service.MessageTemplateService;
 import com.java3y.austin.web.vo.MessageTemplateParam;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.criteria.Predicate;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * 消息模板管理 Service
@@ -36,6 +39,7 @@ import java.util.Objects;
  * @date 2022/1/22
  */
 @Service
+@Slf4j
 public class MessageTemplateServiceImpl implements MessageTemplateService {
 
 
@@ -57,7 +61,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     @Override
     public Page<MessageTemplate> queryList(MessageTemplateParam param) {
         PageRequest pageRequest = PageRequest.of(param.getPage() - 1, param.getPerPage());
-        String creator = CharSequenceUtil.isBlank(param.getCreator()) ? AustinConstant.DEFAULT_CREATOR : param.getCreator();
+//        String creator = CharSequenceUtil.isBlank(param.getCreator()) ? AustinConstant.DEFAULT_CREATOR : param.getCreator();
         return messageTemplateDao.findAll((Specification<MessageTemplate>) (root, query, cb) -> {
             List<Predicate> predicateList = new ArrayList<>();
             // 加搜索条件
@@ -65,7 +69,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
                 predicateList.add(cb.like(root.get("name").as(String.class), "%" + param.getKeywords() + "%"));
             }
             predicateList.add(cb.equal(root.get("isDeleted").as(Integer.class), CommonConstant.FALSE));
-            predicateList.add(cb.equal(root.get("creator").as(String.class), creator));
+//            predicateList.add(cb.equal(root.get("creator").as(String.class), creator));
             Predicate[] p = new Predicate[predicateList.size()];
             // 查询
             query.where(cb.and(predicateList.toArray(p)));
@@ -174,6 +178,73 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
 
         // 2.暂停定时任务
         return cronTaskService.stopCronTask(clone.getCronTaskId());
+    }
+
+
+    @Override
+    public BasicResultVO<Void> startAllCronTask() {
+        List<MessageTemplate> templates = messageTemplateDao.findAll()
+                .stream()
+                .filter(t -> t.getMsgStatus().equals(20))
+                .toList();
+
+        List<Future<BasicResultVO<Void>>> futures = new ArrayList<>();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (MessageTemplate messageTemplate : templates) {
+                var future = executor.submit(() -> startCronTask(messageTemplate.getId()));
+                futures.add(future);
+            }
+        }
+
+        long count = futures.stream()
+                .map(f -> {
+                    try {
+                        return f.get();
+                    } catch (Exception e) {
+                        log.error("startAllCronTask fail!", e);
+                        return BasicResultVO.fail();
+                    }
+                })
+                .filter(res -> !RespStatusEnum.SUCCESS.getCode().equals(res.getStatus()))
+                .count();
+
+
+        if (count > 0) {
+            return BasicResultVO.fail();
+        }
+        return BasicResultVO.success();
+    }
+
+    @Override
+    public BasicResultVO<Void> stopAllCronTask() {
+        List<MessageTemplate> templates = messageTemplateDao.findAll()
+                .stream()
+                .filter(t -> t.getMsgStatus().equals(30))
+                .toList();
+
+        List<Future<BasicResultVO<Void>>> futures = new ArrayList<>();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            for (MessageTemplate messageTemplate : templates) {
+                var future = executor.submit(() -> stopCronTask(messageTemplate.getId()));
+                futures.add(future);
+            }
+        }
+        long count = futures.stream()
+                .map(f -> {
+                    try {
+                        return f.get();
+                    } catch (Exception e) {
+                        log.error("stopAllCronTask fail!", e);
+                        return BasicResultVO.fail();
+                    }
+                })
+                .filter(res -> !RespStatusEnum.SUCCESS.getCode().equals(res.getStatus()))
+                .count();
+
+        if (count > 0) {
+            return BasicResultVO.fail();
+        }
+        return BasicResultVO.success();
     }
 
 

@@ -115,4 +115,11 @@ public enum ChannelType implements PowerfulEnum {
                 .map(ChannelType::getContentModelClass)
                 .findFirst().orElse(null);
     }
+
+    public static ChannelType getChannelTypeByCodeEn(String codeEn) {
+        return Arrays.stream(values())
+                .filter(channelType -> Objects.equals(codeEn, channelType.getCodeEn()))
+                .findFirst()
+                .orElse(null);
+    }
 }

@@ -1,0 +1,46 @@
+server:
+  port: 7777
+
+# ==================== Message Queue Pipeline ====================
+austin:
+  mq:
+    pipeline: kafka  # choices: [kafka]/[eventBus]/[rocketMq]/[rabbitMq], recommend [eventBus] or [kafka]
+
+  # ==================== XXL-Job Switch ====================
+  xxl:
+    job:
+      enabled: true
+
+  # ==================== Apollo/Nacos Switch ====================
+  apollo:
+    enabled: false
+  nacos:
+    enabled: true
+
+  # ==================== Rule Engine Switch ====================
+  rule:
+    engine:
+      enabled: true
+
+  # ==================== File Upload Configuration ====================
+  business:
+    upload:
+      crowd:
+        path: /Users/3y/temp
+
+  # ==================== Sensitive Words Filter ====================
+  senswords:
+    filter:
+      enabled: true
+    dict:
+      path: classpath:sensitive-words.txt
+
+  # ==================== WeChat Official Account Login ====================
+  login:
+    official:
+      account:
+        enable: true
+        appId: wx27f83ca10e06b325
+        secret: 203299484df873a18621d076db46fa99
+        token: austin123
+
