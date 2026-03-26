@@ -128,9 +128,6 @@ austin:
     tagId:
       key: kafka_tag_id
       value: com.java3y.austin.3y
-  # ==================== Graylog Configuration ====================
-  graylog:
-    host: ${austin.graylog.host:austin-graylog}
   # ==================== Observability Configuration ====================
   message-send:
     kafka-metrics:
