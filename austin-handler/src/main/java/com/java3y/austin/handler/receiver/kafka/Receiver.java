@@ -43,16 +43,27 @@ public class Receiver implements MessageReceiver {
     @KafkaListener(topics = "#{'${austin.business.topic.name}'}", containerFactory = "filterContainerFactory")
     public void consumer(ConsumerRecord<?, String> consumerRecord, @Header(KafkaHeaders.GROUP_ID) String topicGroupId) {
         Optional<String> kafkaMessage = Optional.ofNullable(consumerRecord.value());
-        if (kafkaMessage.isPresent()) {
-
+        if (!kafkaMessage.isPresent()) {
+            return;
+        }
+        try {
             List<TaskInfo> taskInfoLists = JSON.parseArray(kafkaMessage.get(), TaskInfo.class);
-            String messageGroupId = GroupIdMappingUtils.getGroupIdByTaskInfo(CollUtil.getFirst(taskInfoLists.iterator()));
+            // taskInfoLists 为 null（JSON 解析失败）或空时跳过，避免后续 NPE / NoSuchElementException
+            if (CollUtil.isEmpty(taskInfoLists)) {
+                log.warn("consumer: received empty or unparseable message, offset={}", consumerRecord.offset());
+                return;
+            }
+            TaskInfo first = taskInfoLists.get(0);
+            String messageGroupId = GroupIdMappingUtils.getGroupIdByTaskInfo(first);
             /*
               每个消费者组 只消费 他们自身关心的消息
              */
             if (topicGroupId.equals(messageGroupId)) {
                 consumeService.consume2Send(taskInfoLists);
             }
+        } catch (Exception e) {
+            log.error("consumer: failed to process message, offset={}, payload={}",
+                    consumerRecord.offset(), kafkaMessage.get(), e);
         }
     }
 
@@ -64,9 +75,19 @@ public class Receiver implements MessageReceiver {
     @KafkaListener(topics = "#{'${austin.business.recall.topic.name}'}", groupId = "#{'${austin.business.recall.group.name}'}", containerFactory = "filterContainerFactory")
     public void recall(ConsumerRecord<?, String> consumerRecord) {
         Optional<String> kafkaMessage = Optional.ofNullable(consumerRecord.value());
-        if (kafkaMessage.isPresent()) {
+        if (!kafkaMessage.isPresent()) {
+            return;
+        }
+        try {
             RecallTaskInfo recallTaskInfo = JSON.parseObject(kafkaMessage.get(), RecallTaskInfo.class);
+            if (recallTaskInfo == null) {
+                log.warn("recall: received unparseable message, offset={}", consumerRecord.offset());
+                return;
+            }
             consumeService.consume2recall(recallTaskInfo);
+        } catch (Exception e) {
+            log.error("recall: failed to process message, offset={}, payload={}",
+                    consumerRecord.offset(), kafkaMessage.get(), e);
         }
     }
 }

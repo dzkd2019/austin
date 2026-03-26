@@ -70,8 +70,10 @@ public class ConsumeServiceImpl implements ConsumeService {
             // 打点记录当前状态
             logUtils.print(LogParam.builder().bizType(LOG_BIZ_TYPE).object(taskInfo).build(), AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).ids(taskInfo.getReceiver()).businessId(taskInfo.getBusinessId()).state(AnchorState.RECEIVE.getCode()).build());
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
-            long startTime = System.nanoTime();
             executor.execute(() -> {
+                // startTime 必须在虚拟线程内部捕获，否则会将排队等待时间计入 RT，
+                // 导致 AIMD 控制器误判系统过载而触发不必要的降速。
+                long startTime = System.nanoTime();
                 try {
                     task.run();
                 } finally {

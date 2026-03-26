@@ -70,8 +70,7 @@ public class VirtualThreadBackPressureManager {
         int highWaterMark = context.getHighWaterMark();
         // 【CAS 控制】：只有首次超过高水位时才执行 pause()
 
-        log.info("当前group: {}, 积压量 pendingCount: {}, 当前生效的高水位线 currentHighWatermark: {}", groupId, current, highWaterMark);
-
+        log.debug("Group [{}] pendingCount={}, highWaterMark={}", groupId, current, highWaterMark);
         if (current >= highWaterMark && context.isPaused.compareAndSet(false, true)) {
             MessageListenerContainer container = context.getContainer();
             if (container != null) {
@@ -272,10 +271,11 @@ public class VirtualThreadBackPressureManager {
 
     private List<String> adaptGroupId(String groupId) {
         String[] split = groupId.split("\\.");
-        if(split.length == 2) {
+        if (split.length == 2) {
             return List.of(groupId);
-        } else if(split.length > 2) {
-            return null;
+        } else if (split.length > 2) {
+            // 格式非法，返回空列表而非 null，避免调用方 NPE
+            return List.of();
         }
 
         return GroupIdMappingUtils.getGroupIdByChannel(groupId);
@@ -352,10 +352,6 @@ public class VirtualThreadBackPressureManager {
 
         void setCustomConfig(WaterMarkConfig config) {
             this.customConfig = config;
-        }
-
-        void clearCustomConfig() {
-            this.customConfig = null;
         }
     }
 }
