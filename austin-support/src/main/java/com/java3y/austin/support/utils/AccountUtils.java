@@ -11,6 +11,7 @@ import com.java3y.austin.common.dto.account.WeChatMiniProgramAccount;
 import com.java3y.austin.common.dto.account.WeChatOfficialAccount;
 import com.java3y.austin.common.dto.account.sms.SmsAccount;
 import com.java3y.austin.common.enums.ChannelType;
+import com.java3y.austin.support.cache.ChannelAccountCaching;
 import com.java3y.austin.support.dao.ChannelAccountDao;
 import com.java3y.austin.support.domain.ChannelAccount;
 import lombok.extern.slf4j.Slf4j;
@@ -37,16 +38,23 @@ import java.util.concurrent.ConcurrentMap;
 @Configuration
 public class AccountUtils {
 
-    @Autowired
-    private ChannelAccountDao channelAccountDao;
-    @Autowired
-    private StringRedisTemplate redisTemplate;
+    private final ChannelAccountDao channelAccountDao;
+
+    private final StringRedisTemplate redisTemplate;
+
+    private final ChannelAccountCaching accountCaching;
 
     /**
      * 消息的小程序/微信服务号账号
      */
     private final ConcurrentMap<ChannelAccount, WxMpService> officialAccountServiceMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<ChannelAccount, WxMaService> miniProgramServiceMap = new ConcurrentHashMap<>();
+
+    public AccountUtils(ChannelAccountDao channelAccountDao, StringRedisTemplate redisTemplate, ChannelAccountCaching accountCaching) {
+        this.channelAccountDao = channelAccountDao;
+        this.redisTemplate = redisTemplate;
+        this.accountCaching = accountCaching;
+    }
 
     @Bean
     public RedisTemplateWxRedisOps redisTemplateWxRedisOps() {
@@ -66,7 +74,7 @@ public class AccountUtils {
     @SuppressWarnings("unchecked")
     public <T> T getAccountById(Integer sendAccountId, Class<T> clazz) {
         try {
-            Optional<ChannelAccount> optionalChannelAccount = channelAccountDao.findById(Long.valueOf(sendAccountId));
+            Optional<ChannelAccount> optionalChannelAccount = accountCaching.get(Long.valueOf(sendAccountId));
             if (optionalChannelAccount.isPresent()) {
                 ChannelAccount channelAccount = optionalChannelAccount.get();
                 if (clazz.equals(WxMaService.class)) {

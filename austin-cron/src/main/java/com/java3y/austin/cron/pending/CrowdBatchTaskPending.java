@@ -41,7 +41,7 @@ public class CrowdBatchTaskPending extends AbstractLazyPending<CrowdInfoVo> {
         PendingParam<CrowdInfoVo> pendingParam = new PendingParam<>();
         pendingParam.setQueue(new LinkedBlockingQueue<>(PendingConstant.QUEUE_SIZE))
                 .setTimeThreshold(PendingConstant.TIME_THRESHOLD)
-                .setNumThreshold(AustinConstant.BATCH_RECEIVER_SIZE)
+                .setNumThreshold(PendingConstant.NUM_THRESHOLD)
                 .setExecutorService(CronAsyncThreadPoolConfig.getConsumePendingThreadPool());
         this.pendingParam = pendingParam;
     }
