@@ -84,7 +84,15 @@ public class RetryUtils {
      * 判断异常是否属于“可重试”的瞬时网络故障
      */
     private static boolean isRetriable(Exception e) {
-        // 默认全不重试
+        // 精准匹配可重试的网络瞬时故障，避免将 FileNotFoundException 等永久性错误误判为可重试
+        // ConnectException / SocketException 已覆盖连接拒绝、连接重置等场景；
+        // SocketTimeoutException 覆盖读写超时；
+        // NoRouteToHostException 是 SocketException 的子类，无需单独列出。
+        if (e instanceof java.net.SocketTimeoutException
+                || e instanceof java.net.ConnectException
+                || e instanceof java.net.SocketException) {
+            return true;
+        }
         if (e instanceof CommonException ce) {
             String code = ce.getCode();
             return switch(code) {

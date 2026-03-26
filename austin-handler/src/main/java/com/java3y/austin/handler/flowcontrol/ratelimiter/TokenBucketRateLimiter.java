@@ -26,8 +26,9 @@ public class TokenBucketRateLimiter {
 
         if (config instanceof TokenBucketRateLimiterConfig tc) {
             setRate(tc);
+        } else {
+            setRate(new TokenBucketRateLimiterConfig(MAX_QPS, MAX_TOKENS));
         }
-        setRate(new TokenBucketRateLimiterConfig(MAX_QPS, MAX_TOKENS));
     }
 
     /**

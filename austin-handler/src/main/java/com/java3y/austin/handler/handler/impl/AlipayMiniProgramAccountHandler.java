@@ -85,13 +85,12 @@ public class AlipayMiniProgramAccountHandler extends BaseHandler{
         for (String toUserId : receiver) {
             AlipayOpenAppMiniTemplatemessageSendRequest request = new AlipayOpenAppMiniTemplatemessageSendRequest();
             AlipayOpenAppMiniTemplatemessageSendModel model = new AlipayOpenAppMiniTemplatemessageSendModel();
-            //兼容新旧用户ID
+            //兼容新旧用户ID：2088开头为旧版userId，否则使用openId
             if(toUserId.startsWith("2088")) {
                 model.setToUserId(toUserId);
             } else {
                 model.setToOpenId(toUserId);
             }
-            model.setToUserId(toUserId);
             model.setUserTemplateId(alipayMiniProgramContentModel.getTemplateId());
             model.setPage(alipayMiniProgramContentModel.getPage());
             model.setData(getAlipayMiniProgramParam(alipayMiniProgramContentModel.getMiniProgramParam()));
