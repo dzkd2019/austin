@@ -1,0 +1,47 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  # Promtail records file read positions, allowing resume after container restart
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://austin-loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: austin-app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          # Low-cardinality fixed labels for Loki indexing and Grafana filtering.
+          # NOTE: Set 'env' to match the actual deployment environment
+          # (e.g. dev / test / prod). Each deployment environment should have
+          # its own copy of this config with the correct value.
+          app: austin
+          env: prod
+          # __path__ 是 Promtail 内部保留字段，指定采集路径
+          __path__: /var/log/austin/austin-app.log
+
+    pipeline_stages:
+      # 1. 将每行 JSON 解析为结构化字段（保存到 pipeline 临时 map 中）
+      - json:
+          expressions:
+            level: level
+            logger_name: logger_name
+            # 以下高基数字段（traceId / messageId / userId / requestPath / kafkaTopic）
+            # 仅从 JSON 中读取，绝不提取为 Loki Label，防止标签基数爆炸导致 Loki OOM。
+            # 使用时通过 LogQL 的 | json 或 | line_format 过滤即可。
+
+      # 2. 从解析结果中提取 timestamp，使日志时间与 Loki 存储时间对齐
+      - timestamp:
+          source: "@timestamp"
+          format: RFC3339Nano
+
+      # 3. 仅将 level 和 logger_name（模块）作为低基数 Label 附加到日志流
+      #    - level：INFO / WARN / ERROR，枚举值少，安全
+      #    - logger_name：类名前缀，基数受控（需根据实际日志量评估，可按需注释掉）
+      - labels:
+          level:
+          logger_name:

@@ -151,5 +151,30 @@ services:
       - austin-nacos
     networks:
       - app
+  # ===================== Loki: log aggregation backend =====================
+  austin-loki:
+    image: grafana/loki:3.4.2
+    container_name: austin-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - app
+  # ===================== Promtail: log shipper → Loki =====================
+  austin-promtail:
+    image: grafana/promtail:3.4.2
+    container_name: austin-promtail
+    volumes:
+      # Mount the application log directory (read-only)
+      - ./logs:/var/log/austin:ro
+      # Mount Promtail configuration
+      - ./doc/docker/loki/promtail-local-config.yaml:/etc/promtail/config.yaml:ro
+    command: -config.file=/etc/promtail/config.yaml
+    restart: unless-stopped
+    depends_on:
+      - austin-loki
+    networks:
+      - app
 networks:
   app:

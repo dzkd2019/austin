@@ -99,8 +99,8 @@
         </dependency>
 
         <dependency>
-            <groupId>de.siegmar</groupId>
-            <artifactId>logback-gelf</artifactId>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
         </dependency>
 
         <dependency>

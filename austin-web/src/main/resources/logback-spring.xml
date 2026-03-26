@@ -4,162 +4,88 @@
 
     <contextName>austin</contextName>
 
-    <!-- 设置日志输出路径  可以使"${}"来使用变量。-->
+    <!-- 日志输出根路径 -->
     <property name="log.path" value="logs"/>
 
-    <springProperty scope="context" name="grayLogHost" source="austin.graylog.host" defaultValue="austin-graylog"/>
+    <!-- 将 Spring 活跃 profile 注入为 Logback 属性，供 LogstashEncoder customFields 使用 -->
+    <springProperty scope="context" name="springProfile" source="spring.profiles.active" defaultValue="default"/>
 
+    <!-- ===================== Console Appender ===================== -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} [traceId=%X{traceId}] - %msg%n</pattern>
-            <!-- 设置字符集 -->
-            <charset>UTF-8</charset>
-        </encoder>
-    </appender>
-
-
-    <!-- 时间滚动输出 level为 INFO 日志 -->
-    <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <!-- 正在记录的日志文件的路径及文件名 -->
-        <file>${log.path}/austin-info.log</file>
-        <!--日志文件输出格式-->
-        <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} [traceId=%X{traceId}] - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
-        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 每天日志归档路径以及格式 -->
-            <fileNamePattern>${log.path}/logs/austin-info-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>1000MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <!--日志文件保留天数-->
-            <maxHistory>3</maxHistory>
-        </rollingPolicy>
-        <!-- 此日志文件只记录info级别的 -->
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>info</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
-    </appender>
-
-    <appender name="ASYNC_INFO" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="INFO_FILE"/>
-
-        <queueSize>2048</queueSize>
-
-        <discardingThreshold>0</discardingThreshold>
-
-        <neverBlock>true</neverBlock>
-    </appender>
-
-    <!-- 时间滚动输出 level为 ERROR 日志 -->
-    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <!-- 正在记录的日志文件的路径及文件名 -->
-        <file>${log.path}/austin-error.log</file>
-        <!--日志文件输出格式-->
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} [traceId=%X{traceId}] - %msg%n</pattern>
-            <charset>UTF-8</charset> <!-- 此处设置字符集 -->
-        </encoder>
-        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${log.path}/logs/austin-error-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>1000MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
-            <!--日志文件保留天数-->
-            <maxHistory>3</maxHistory>
-        </rollingPolicy>
-        <!-- 此日志文件只记录ERROR级别的 -->
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>ACCEPT</onMatch>
-            <onMismatch>DENY</onMismatch>
-        </filter>
     </appender>
 
     <!--
-        GELF UDP Appender（同步写入端点，不应直接引用）
-        由 ASYNC_GELF 包装使用，隔离 UDP 网络抖动对业务线程的影响。
+        JSON 滚动文件 Appender（原始同步写入，不应直接引用）
+        使用 logstash-logback-encoder 输出纯 JSON，每行一条记录，便于 Promtail 采集。
+        MDC 字段（traceId、messageId、requestPath、userId、kafkaTopic）会自动包含在
+        JSON 的 "mdc" 对象中，供 LogQL 过滤使用——绝不作为 Loki Label，避免高基数灾难。
     -->
-    <appender name="GELF" class="de.siegmar.logbackgelf.GelfUdpAppender">
-        <!-- Graylog服务的地址（从 Spring 配置文件注入） -->
-        <graylogHost>${grayLogHost}</graylogHost>
-        <!-- UDP Input端口 -->
-        <graylogPort>12201</graylogPort>
-        <!-- 最大GELF数据块大小（单位：字节），508为建议最小值，最大值为65467 -->
-        <maxChunkSize>508</maxChunkSize>
-        <!-- 是否使用压缩 -->
-        <useCompression>true</useCompression>
-        <encoder class="de.siegmar.logbackgelf.GelfEncoder">
-            <!-- 是否发送原生的日志信息 -->
-            <includeRawMessage>false</includeRawMessage>
-            <includeMarker>true</includeMarker>
-            <!-- 关键：启用 MDC 传输，将结构化字段发送至 Graylog -->
-            <includeMdcData>true</includeMdcData>
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/austin-app.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- 固定低基数字段，作为 Loki Label 的数据来源 -->
+            <customFields>{"app":"austin","env":"${springProfile}"}</customFields>
+            <!-- 输出所有 MDC 字段到 JSON（traceId / messageId / requestPath / userId / kafkaTopic 等） -->
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>messageId</includeMdcKeyName>
+            <includeMdcKeyName>requestPath</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>kafkaTopic</includeMdcKeyName>
+            <!-- 不记录调用方行号，避免高并发下的额外栈帧解析开销 -->
             <includeCallerData>false</includeCallerData>
-            <includeRootCauseData>true</includeRootCauseData>
-            <!-- 是否发送日志级别的名称，否则默认以数字代表日志级别 -->
-            <includeLevelName>true</includeLevelName>
-            <shortPatternLayout class="ch.qos.logback.classic.PatternLayout">
-                <pattern>%m%nopex</pattern>
-            </shortPatternLayout>
-            <fullPatternLayout class="ch.qos.logback.classic.PatternLayout">
-                <pattern>%d - [%thread] %-5level %logger{35} - %msg%n</pattern>
-            </fullPatternLayout>
-            <!-- 配置应用名称，通过staticField标签自定义固定的日志字段 -->
-            <staticField>app_name:austin</staticField>
-            <staticField>env:${spring.profiles.active:-default}</staticField>
         </encoder>
+        <!-- 按日期+大小滚动 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/archive/austin-app-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>500MB</maxFileSize>
+            <!-- 保留最近 7 天的归档日志 -->
+            <maxHistory>7</maxHistory>
+            <!-- 所有归档文件总大小上限，防止磁盘写满 -->
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
     </appender>
 
     <!--
-        异步 GELF Appender（Reviewer 修正版）
-        - neverBlock=true：队列满时丢弃日志而非阻塞业务线程，保护高并发主链路。
-        - queueSize=4096：加大缓冲队列，降低瞬时高峰期的丢弃概率。
-        - discardingThreshold=0：不因队列占用率主动丢弃 WARN 以下日志（默认会丢弃20%时丢弃TRACE/DEBUG）。
-        - includeCallerData=false：避免获取调用栈信息导致性能损耗。
+        异步 JSON 文件 Appender（高并发安全版）
+        - queueSize=4096：较大的内存队列，缓冲瞬时写入洪峰，减少业务线程等待。
+        - discardingThreshold=0：不因队列水位主动丢弃日志（默认 20% 时会丢弃 TRACE/DEBUG）。
+        - neverBlock=true：队列满时直接丢弃最新日志，绝不阻塞业务线程（含虚拟线程）。
+        - includeCallerData=false：不复制调用栈帧，降低异步化本身的 CPU 开销。
     -->
-    <appender name="ASYNC_GELF" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="GELF"/>
+    <appender name="ASYNC_JSON_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="JSON_FILE"/>
         <queueSize>4096</queueSize>
         <discardingThreshold>0</discardingThreshold>
-        <!-- 队列满时直接丢弃，绝不阻塞业务线程 -->
         <neverBlock>true</neverBlock>
-        <!-- 不复制调用方数据（文件名/行号），避免额外栈帧解析开销 -->
         <includeCallerData>false</includeCallerData>
     </appender>
 
-    <!--dev环境不写graylog，只输出到控制台和文件-->
+    <!-- ===================== Profile-based root logger ===================== -->
+
+    <!-- dev 环境：只输出到控制台，不写文件，减少本地开发磁盘 I/O -->
     <springProfile name="dev">
         <root level="info">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="INFO_FILE"/>
-            <appender-ref ref="ERROR_FILE"/>
         </root>
     </springProfile>
 
-    <!--test/prod环境同时写本地文件和异步 Graylog-->
+    <!-- test 环境：控制台 + 异步 JSON 文件（Promtail 可从文件采集） -->
     <springProfile name="test">
         <root level="info">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="ASYNC_INFO"/>
-            <appender-ref ref="ERROR_FILE"/>
-            <appender-ref ref="ASYNC_GELF"/>
+            <appender-ref ref="ASYNC_JSON_FILE"/>
         </root>
     </springProfile>
 
+    <!-- prod 环境：仅异步 JSON 文件，由 Promtail 采集后推送至 Loki -->
     <springProfile name="prod">
         <root level="info">
-            <appender-ref ref="ASYNC_INFO"/>
-            <appender-ref ref="ERROR_FILE"/>
-            <appender-ref ref="ASYNC_GELF"/>
+            <appender-ref ref="ASYNC_JSON_FILE"/>
         </root>
     </springProfile>
-
 
 </configuration>
