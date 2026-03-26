@@ -8,10 +8,11 @@ import com.java3y.austin.handler.flowcontrol.FlowControlParam;
 import com.java3y.austin.support.utils.LogUtils;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author 3y
@@ -75,7 +76,7 @@ public abstract class BaseHandler implements Handler {
 
 
     /**
-     * 将撤回的消息存储到redis
+     * 将撤回的消息存储到redis（使用 pipeline 将 4 次网络往返合并为 1 次，降低 Redis 延迟）
      *
      * @param prefix            redis前缀
      * @param messageTemplateId 消息模板id
@@ -83,10 +84,18 @@ public abstract class BaseHandler implements Handler {
      * @param expireTime        存储到redis的有效时间（跟对应渠道可撤回多久的消息有关系)
      */
     protected void saveRecallInfo(String prefix, Long messageTemplateId, String taskId, Long expireTime) {
-        redisTemplate.opsForList().leftPush(prefix + messageTemplateId, taskId);
-        redisTemplate.opsForValue().set(prefix + taskId, taskId);
-        redisTemplate.expire(prefix + messageTemplateId, expireTime, TimeUnit.SECONDS);
-        redisTemplate.expire(prefix + taskId, expireTime, TimeUnit.SECONDS);
+        RedisSerializer<String> serializer = redisTemplate.getStringSerializer();
+        byte[] templateKey = serializer.serialize(prefix + messageTemplateId);
+        byte[] taskKey = serializer.serialize(prefix + taskId);
+        byte[] taskIdBytes = serializer.serialize(taskId);
+
+        redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            connection.listCommands().lPush(templateKey, taskIdBytes);
+            connection.stringCommands().set(taskKey, taskIdBytes);
+            connection.keyCommands().expire(templateKey, expireTime);
+            connection.keyCommands().expire(taskKey, expireTime);
+            return null;
+        });
     }
 
 

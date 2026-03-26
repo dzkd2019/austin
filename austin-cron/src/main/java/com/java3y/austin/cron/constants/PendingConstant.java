@@ -9,7 +9,7 @@ public class PendingConstant {
     /**
      * 阻塞队列大小
      */
-    public static final Integer QUEUE_SIZE = 100;
+    public static final Integer QUEUE_SIZE = 1000;
     /**
      * 触发执行的数量阈值
      */

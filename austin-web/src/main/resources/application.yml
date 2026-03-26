@@ -35,6 +35,16 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # 生产者调优配置（生产级参数）
+      acks: all                      # 等待所有 ISR 副本确认，防止消息丢失
+      retries: 3                     # 发送失败时自动重试 3 次
+      batch-size: 65536              # 批量发送大小 64KB（默认 16KB），提升吞吐
+      buffer-memory: 67108864        # 生产者缓冲区 64MB
+      compression-type: snappy       # 压缩类型，降低网络传输开销
+      properties:
+        linger.ms: 5                              # 等待最多 5ms 以积累更多消息组成批次
+        max.in.flight.requests.per.connection: 5  # 启用幂等时最多 5 个并行请求，兼顾顺序与吞吐
+        enable.idempotence: true                  # 启用幂等生产，防止重试导致重复消息
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer

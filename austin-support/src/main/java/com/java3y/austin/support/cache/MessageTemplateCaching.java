@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -45,31 +44,26 @@ public class MessageTemplateCaching {
                 // 3. 【核心配置】：指定使用虚拟线程池去执行数据库查询！
                 .executor(cacheLoaderExecutor)
                 // 4. 定义如何从数据库加载数据
+                // 数据库无记录时返回 NULL_MESSAGE_TEMPLATE 哨兵对象（非 null）
+                // 这样 Caffeine 会将"无此模板"这一结果也缓存起来，防止缓存穿透，
+                // 且无需在调用方额外写入，从根本上消除了并发写入时的竞态条件。
                 .buildAsync(templateId -> {
                     log.info("缓存未命中，正由虚拟线程去数据库加载模板 ID: {}", templateId);
                     // 这里发生数据库 I/O 阻塞，但毫无关系，因为是虚拟线程！
-                    return messageTemplateDao.findById(templateId).orElse(null);
+                    return messageTemplateDao.findById(templateId).orElse(NULL_MESSAGE_TEMPLATE);
                 });
     }
 
     /**
-     * 存在竞态条件
-     * T1: get() 返回 null
-     * T2: get() 返回 null
-     * T1: put(NULL_MESSAGE_TEMPLATE)
-     * T2: put(NULL_MESSAGE_TEMPLATE)
-     * T3: 数据库更新，模板存在了
-     * 但缓存中仍是 NULL_MESSAGE_TEMPLATE，直到过期
-     * 建议：使用 Caffeine 的 refresh 机制或更完善的缓存策略
-     * todo 避免竞态条件
+     * 获取消息模板（带缓存穿透防护）
+     *
+     * <p>loader 已将 DB 无记录的情况映射为 NULL_MESSAGE_TEMPLATE 哨兵，
+     * Caffeine 会将该哨兵值正常缓存，后续相同 ID 的请求直接命中缓存，
+     * 不再穿透到数据库，也不存在并发写入时的竞态条件。
      */
     public Optional<MessageTemplate> getMessageTemplate(Long id) {
         MessageTemplate template = messageTemplateCache.get(id).join();
-        if (template == null) {
-            // 为了防止缓存穿透，将 null 值也缓存起来（使用一个特殊的 NULL_MESSAGE_TEMPLATE 对象）
-            messageTemplateCache.synchronous().put(id, NULL_MESSAGE_TEMPLATE);
-        } else if(template == NULL_MESSAGE_TEMPLATE) {
-            // 如果缓存中是 NULL_MESSAGE_TEMPLATE，说明数据库中确实没有这个模板，直接返回 Optional.empty()
+        if (template == NULL_MESSAGE_TEMPLATE) {
             return Optional.empty();
         }
         return Optional.ofNullable(template);

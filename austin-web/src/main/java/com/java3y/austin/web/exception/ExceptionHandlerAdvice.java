@@ -26,9 +26,8 @@ public class ExceptionHandlerAdvice {
     @ExceptionHandler({Exception.class})
     @ResponseStatus(HttpStatus.OK)
     public BasicResultVO<String> exceptionResponse(Exception e) {
-        String errStackStr = Throwables.getStackTrace(e);
-        log.error(errStackStr);
-        return BasicResultVO.fail(RespStatusEnum.ERROR_500, "\r\n" + errStackStr + "\r\n");
+        log.error("Unhandled exception: {}", Throwables.getStackTrace(e));
+        return BasicResultVO.fail(RespStatusEnum.ERROR_500);
     }
 
     @ExceptionHandler({com.java3y.austin.common.exception.CommonException.class})

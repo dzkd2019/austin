@@ -28,6 +28,11 @@ import java.util.List;
 @Service
 public class SendServiceImpl implements SendService {
 
+    /**
+     * batchSend 单次请求允许的最大 MessageParam 数量，防止超大批次导致 OOM 或处理超时
+     */
+    private static final int MAX_BATCH_SIZE = 1000;
+
     @Autowired
     @Qualifier("apiProcessController")
     private ProcessController processController;
@@ -62,6 +67,11 @@ public class SendServiceImpl implements SendService {
     public SendResponse batchSend(BatchSendRequest batchSendRequest) {
         if (ObjectUtils.isEmpty(batchSendRequest)) {
             return new SendResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(), RespStatusEnum.CLIENT_BAD_PARAMETERS.getMsg(), null);
+        }
+        if (batchSendRequest.getMessageParamList() != null
+                && batchSendRequest.getMessageParamList().size() > MAX_BATCH_SIZE) {
+            return new SendResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(),
+                    "批量发送每次最多支持 " + MAX_BATCH_SIZE + " 条，当前: " + batchSendRequest.getMessageParamList().size(), null);
         }
 
         SendTaskModel sendTaskModel = SendTaskModel.builder()
