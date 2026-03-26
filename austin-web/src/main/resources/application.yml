@@ -83,9 +83,9 @@ management:
     health:
       show-details: always
     metrics:
-      enabled: false
+      enabled: true
     prometheus:
-      enabled: false
+      enabled: true
   endpoints:
     web:
       exposure:
@@ -93,7 +93,17 @@ management:
   prometheus:
     metrics:
       export:
-        enabled: false
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s
   health:
     rabbit:
       enabled: false
@@ -118,6 +128,13 @@ austin:
     tagId:
       key: kafka_tag_id
       value: com.java3y.austin.3y
+  # ==================== Graylog Configuration ====================
+  graylog:
+    host: ${austin.graylog.host:austin-graylog}
+  # ==================== Observability Configuration ====================
+  message-send:
+    kafka-metrics:
+      lag-refresh-interval-seconds: 30
 # ==================== XXL-Job Configuration ====================
 xxl:
   job:
@@ -134,8 +151,4 @@ xxl:
       logpath: logs/xxl
       logretentiondays: 30
     accessToken: ${austin.xxl.job.accessToken:default_token}
-
-# ==================== Graylog Configuration ====================
-graylog:
-  ip: ${austin.graylog:austin-graylog}
 
