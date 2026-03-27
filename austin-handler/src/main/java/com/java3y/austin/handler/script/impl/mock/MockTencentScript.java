@@ -31,7 +31,7 @@ public class MockTencentScript implements SmsScript {
             log.error("模拟腾讯云发送短信过程中被中断");
             Thread.currentThread().interrupt();
         }
-        return List.of();
+        return List.of(new SmsRecord());
     }
 
     @Override

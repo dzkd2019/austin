@@ -85,7 +85,8 @@ public class SmsHandler extends BaseHandler implements ApplicationContextAware {
                 SmsScript smsScript = applicationContext.getBean(messageTypeSmsConfig.getScriptName(), SmsScript.class);
                 List<SmsRecord> recordList = RetryUtils.submitWithRetry(3, 1000, () -> smsScript.send(smsParam));
                 if (CollUtil.isNotEmpty(recordList)) {
-                    smsRecordDao.saveAll(recordList);
+//                    smsRecordDao.saveAll(recordList);
+//                    log.info("调用接口发送短信y")
                     return true;
                 }
             } catch (Exception e) {

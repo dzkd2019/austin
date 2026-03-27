@@ -31,7 +31,7 @@ public class MockLinTongScript implements SmsScript {
             log.error("模拟LinTong发送短信过程中被中断");
             Thread.currentThread().interrupt();
         }
-        return List.of();
+        return List.of(new SmsRecord());
     }
 
     @Override

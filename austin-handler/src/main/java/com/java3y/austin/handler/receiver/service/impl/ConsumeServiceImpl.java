@@ -11,17 +11,21 @@ import com.java3y.austin.handler.handler.HandlerHolder;
 import com.java3y.austin.handler.handler.Task;
 import com.java3y.austin.handler.receiver.service.ConsumeService;
 import com.java3y.austin.handler.utils.GroupIdMappingUtils;
+import com.java3y.austin.handler.utils.MdcUtil;
 import com.java3y.austin.support.config.ThreadPoolExecutorShutdownDefinition;
+import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.utils.LogUtils;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -78,12 +82,18 @@ public class ConsumeServiceImpl implements ConsumeService {
     @Override
     public void consume2Send(List<TaskInfo> taskInfoLists) {
         String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfoLists.getFirst());
+        Map<String, String> mdcContext = new HashMap<>();
         for (TaskInfo taskInfo : taskInfoLists) {
             backPressureManager.incrementAndCheckPause(groupId);
             // 打点记录当前状态
             logUtils.print(LogParam.builder().bizType(LOG_BIZ_TYPE).object(taskInfo).build(), AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).ids(taskInfo.getReceiver()).businessId(taskInfo.getBusinessId()).state(AnchorState.RECEIVE.getCode()).build());
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
-            executor.execute(() -> {
+
+            mdcContext.clear();
+            mdcContext.put(MdcConstant.MDC_MESSAGE_ID, taskInfo.getMessageId());
+            mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getBusinessId()));
+            mdcContext.put(MdcConstant.MDC_KAFKA_GROUP_ID, groupId);
+            executor.execute(MdcUtil.wrap(new HashMap<>(mdcContext), () -> {
                 // startTime 必须在虚拟线程内部捕获，否则会将排队等待时间计入 RT，
                 // 导致 AIMD 控制器误判系统过载而触发不必要的降速。
                 long startTime = System.nanoTime();
@@ -102,7 +112,7 @@ public class ConsumeServiceImpl implements ConsumeService {
 
                     backPressureManager.decrementAndCheckResume(groupId);
                 }
-            });
+            }));
         }
     }
 

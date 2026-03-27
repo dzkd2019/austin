@@ -52,7 +52,7 @@ public class FlowControlFactory {
         // 4. 执行限流阻塞（虚拟线程挂起）
 
         double cost = controller.acquire();
-        log.info("渠道 [{}] 流量控制耗时: {} 秒", channelId, cost);
+        log.info("渠道 [{}] 流量控制耗时: {} 毫秒", channelId, cost);
 
     }
 
