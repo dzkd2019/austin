@@ -36,9 +36,7 @@ public class Receiver implements MessageReceiver {
 
     /**
      * 发送消息
-     *
-     * @param consumerRecord
-     * @param topicGroupId
+     * todo 解析mdc
      */
     @KafkaListener(topics = "#{'${austin.business.topic.name}'}", containerFactory = "filterContainerFactory")
     public void consumer(ConsumerRecord<?, String> consumerRecord, @Header(KafkaHeaders.GROUP_ID) String topicGroupId) {

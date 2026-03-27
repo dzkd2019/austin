@@ -29,8 +29,7 @@ public class SensWordsAction implements BusinessProcess<TaskInfo> {
 
     /**
      * 过滤逻辑
-     * todo 本地敏感词过滤词典缓存
-     *
+     * todo 考虑把敏感词典进行缓存，不必每次都从 Redis 获取     *
      * @see com.java3y.austin.common.enums.ChannelType
      */
     @Override
