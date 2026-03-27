@@ -21,7 +21,7 @@ austin:
     addr:
       ip: localhost
       port: 8848
-    namespace: 66dd22d5-6845-4c70-8105-f7232c1b4b7c
+    namespace: bd604821-8221-4c99-90e7-edd56431839f
     dataId: austin-test
 
   # ==================== File Upload Configuration ====================

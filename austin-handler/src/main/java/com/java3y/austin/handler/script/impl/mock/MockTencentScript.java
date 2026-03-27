@@ -18,17 +18,11 @@ import java.util.concurrent.ThreadLocalRandom;
 @Profile("test")
 @Slf4j
 public class MockTencentScript implements SmsScript {
-    private final AccountUtils accountUtils;
     private final ThreadLocalRandom random = ThreadLocalRandom.current();
-
-    public MockTencentScript(AccountUtils accountUtils) {
-        this.accountUtils = accountUtils;
-    }
 
     @Override
     public List<SmsRecord> send(SmsParam smsParam) {
-        TencentSmsAccount tencentSmsAccount = Objects.nonNull(smsParam.getSendAccountId()) ? accountUtils.getAccountById(smsParam.getSendAccountId(), TencentSmsAccount.class)
-                : accountUtils.getSmsAccountByScriptName(smsParam.getScriptName(), TencentSmsAccount.class);
+        TencentSmsAccount tencentSmsAccount = new TencentSmsAccount();
 
         try {
             Thread.sleep(50 + random.nextInt(50));
@@ -37,7 +31,7 @@ public class MockTencentScript implements SmsScript {
             log.error("模拟腾讯云发送短信过程中被中断");
             Thread.currentThread().interrupt();
         }
-        return MockAssembleUtils.assembleSendSmsRecord(smsParam, tencentSmsAccount);
+        return List.of();
     }
 
     @Override

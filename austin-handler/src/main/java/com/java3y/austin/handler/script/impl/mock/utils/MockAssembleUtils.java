@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 public class MockAssembleUtils {
-    public static List<SmsRecord> assembleSendSmsRecord(SmsParam smsParam, SmsAccount tencentSmsAccount) {
+    public static List<SmsRecord> assembleSendSmsRecord(SmsParam smsParam, SmsAccount smsAccount) {
 
         List<SmsRecord> smsRecordList = new ArrayList<>();
 
@@ -24,8 +24,8 @@ public class MockAssembleUtils {
                     .sendDate(Integer.valueOf(DateUtil.format(new Date(), DatePattern.PURE_DATE_PATTERN)))
                     .messageTemplateId(smsParam.getMessageTemplateId())
                     .phone(Long.valueOf(phone))
-                    .supplierId(tencentSmsAccount.getSupplierId())
-                    .supplierName(tencentSmsAccount.getSupplierName())
+                    .supplierId(smsAccount.getSupplierId())
+                    .supplierName(smsAccount.getSupplierName())
                     .msgContent(smsParam.getContent())
                     .seriesId(String.valueOf(System.currentTimeMillis()))
                     .chargingNum(1)

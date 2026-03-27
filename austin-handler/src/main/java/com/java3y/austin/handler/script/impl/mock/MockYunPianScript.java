@@ -18,18 +18,11 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 @Profile("test")
 public class MockYunPianScript implements SmsScript {
-    private final AccountUtils accountUtils;
     private final ThreadLocalRandom random = ThreadLocalRandom.current();
-
-
-    public MockYunPianScript(AccountUtils accountUtils) {
-        this.accountUtils = accountUtils;
-    }
 
     @Override
     public List<SmsRecord> send(SmsParam smsParam) {
-        YunPianSmsAccount yunPianSmsAccount = Objects.nonNull(smsParam.getSendAccountId()) ? accountUtils.getAccountById(smsParam.getSendAccountId(), YunPianSmsAccount.class)
-                : accountUtils.getSmsAccountByScriptName(smsParam.getScriptName(), YunPianSmsAccount.class);
+        YunPianSmsAccount yunPianSmsAccount = new YunPianSmsAccount();
         try {
             Thread.sleep(50 + random.nextInt(50));
             log.info("调用YunPian发送短信接口成功");
@@ -37,7 +30,7 @@ public class MockYunPianScript implements SmsScript {
             log.error("模拟YunPian发送短信过程中被中断");
             Thread.currentThread().interrupt();
         }
-        return MockAssembleUtils.assembleSendSmsRecord(smsParam, yunPianSmsAccount);
+        return List.of();
     }
 
     @Override

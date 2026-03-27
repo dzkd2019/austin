@@ -1,6 +1,7 @@
 package com.java3y;
 
 import com.java3y.austin.AustinApplication;
+import com.java3y.austin.handler.backpressure.config.BackPressureProperties;
 import com.java3y.austin.handler.config.AustinMessageSendProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,14 +14,15 @@ public class NacosTest {
     @Autowired
     AustinMessageSendProperties properties;
 
+//    @Autowired
+//    BackPressureProperties backPressureProperties;
 
-    @Value("${austin.cron.pending.permits}")
-    int permits;
+
 
     @Test
     public void test() {
         System.out.println(properties);
 //        System.out.println(backPressureProperties);
-        System.out.println(permits);
+//        System.out.println(permits);
     }
 }

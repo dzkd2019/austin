@@ -1,5 +1,7 @@
 package com.java3y.austin.handler.monitoring;
 
+import cn.hutool.core.thread.NamedThreadFactory;
+import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.java3y.austin.handler.utils.GroupIdMappingUtils;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -62,12 +64,14 @@ public class KafkaMetricsBinder implements MeterBinder {
     private final Object adminClientLock = new Object();
 
     private final ScheduledExecutorService lagRefreshScheduler =
-            Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = Thread.ofPlatform().name("kafka-lag-refresher").build();
-                t.setDaemon(true);
-                t.setPriority(Thread.MIN_PRIORITY);
-                return t;
-            });
+            Executors.newSingleThreadScheduledExecutor(
+                    new ThreadFactoryBuilder()
+                            .setNamePrefix("kafka-lag-refresh-")
+                            .setDaemon(true)
+                            .setPriority(Thread.MIN_PRIORITY)
+                            .build()
+            );
+
 
     public KafkaMetricsBinder(KafkaAdmin kafkaAdmin,
                               @Value("${austin.message-send.kafka-metrics.lag-refresh-interval-seconds:30}")

@@ -60,7 +60,7 @@ spring:
         server-addr: ${austin.nacos.addr.ip:localhost}:${austin.nacos.addr.port:8848}
         username: ${austin.nacos.username:nacos}
         password: ${austin.nacos.password:nacos}
-        namespace: ${austin.nacos.namespace:66dd22d5-6845-4c70-8105-f7232c1b4b7c}
+        namespace: ${austin.nacos.namespace:bd604821-8221-4c99-90e7-edd56431839f}
         group: ${austin.nacos.group:DEFAULT_GROUP}
   config:
     import:
@@ -104,9 +104,6 @@ management:
         http.server.requests: 0.5,0.95,0.99
       slo:
         http.server.requests: 50ms,100ms,200ms,500ms,1s
-  health:
-    rabbit:
-      enabled: false
 
 # ==================== Server Configuration ====================
 server:

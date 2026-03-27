@@ -1,6 +1,8 @@
 package com.java3y.austin.handler.deduplication.limit;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.handler.deduplication.DeduplicationParam;
@@ -9,6 +11,8 @@ import com.java3y.austin.support.utils.RedisUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -16,6 +20,7 @@ import java.util.stream.Collectors;
  * 采用普通的计数去重方法，限制的是每天发送的条数。
  * 业务逻辑： 一天内相同的用户如果已经收到某渠道内容5次，则应该被过滤掉
  * 技术方案：由pipeline set & mget实现
+ *
  * @author cao
  * @date 2022-04-20 13:41
  */
@@ -49,7 +54,7 @@ public class SimpleLimitService extends AbstractLimitService {
         }
 
         // 不符合条件的用户：需要更新Redis(无记录添加，有记录则累加次数)
-        putInRedis(readyPutRedisReceiver, inRedisValue, param.getDeduplicationTime());
+        putInRedis(readyPutRedisReceiver, inRedisValue, getRemainSecondsOfToday());
 
         return filterReceiver;
     }
@@ -76,4 +81,10 @@ public class SimpleLimitService extends AbstractLimitService {
         }
     }
 
+    private long getRemainSecondsOfToday() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime end = now.toLocalDate().plusDays(1).atStartOfDay();
+
+        return LocalDateTimeUtil.between(now, end, ChronoUnit.SECONDS);
+    }
 }

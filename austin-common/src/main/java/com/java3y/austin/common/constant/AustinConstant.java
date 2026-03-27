@@ -58,5 +58,5 @@ public class AustinConstant {
 
     }
 
-
+    public static final String SYSTEM_USER = "mrawa";
 }

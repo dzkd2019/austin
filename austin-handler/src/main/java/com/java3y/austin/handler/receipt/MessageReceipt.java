@@ -18,11 +18,11 @@ import java.util.concurrent.TimeUnit;
  *
  * @author 3y
  */
-@Component
+//@Component
 @Slf4j
 public class MessageReceipt {
 
-    @Autowired
+//    @Autowired
     private List<ReceiptMessageStater> receiptMessageStaterList;
 
     /**
@@ -30,7 +30,7 @@ public class MessageReceipt {
      */
     private volatile boolean stop = false;
 
-    @PostConstruct
+//    @PostConstruct
     private void init() {
         SupportThreadPoolConfig.getPendingSingleThreadPool().execute(() -> {
             while (!stop) {
@@ -53,7 +53,7 @@ public class MessageReceipt {
     /**
      * 销毁调用
      */
-    @PreDestroy
+//    @PreDestroy
     public void onDestroy() {
         this.stop = true;
         SupportThreadPoolConfig.getPendingSingleThreadPool().shutdown();
