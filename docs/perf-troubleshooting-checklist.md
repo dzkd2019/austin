@@ -166,22 +166,72 @@ spring:
 
 ---
 
-## 5. 压测快速开始 Checklist
+## 5. 双场景 Grafana 核心监控指标（Reviewer 避坑清单）
+
+> **Reviewer 原则**：场景不同，死亡链路不同。A 场景死在 HTTP 层，B 场景死在 Kafka + 文件 IO。
+
+### 场景 A（实时 API 发送）：必盯 3 个指标
+
+| 优先级 | Grafana Panel / Prometheus 查询 | 死亡阈值 | 发生场景 & 后果 |
+|------|-------------------------------|--------|--------------|
+| ⚠️ **P1** | **HTTP P99 延迟**<br>`histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{uri="/send"}[1m]))` | > 500ms 持续 2 min | Semaphore 限流队列被撑满，请求开始排队等待而非快速拒绝。说明背压未生效，服务正在向雪崩滑落。立刻检查 Semaphore 配置和虚拟线程 Carrier pin 情况 |
+| ⚠️ **P1** | **非预期 5xx 错误率**<br>`rate(http_server_requests_seconds_count{uri="/send",status=~"5[0-9][0-9]"}[1m]) / rate(http_server_requests_seconds_count{uri="/send"}[1m])` | > 1% 持续 1 min | 非 429/503 的错误出现意味着 Kafka Producer 连接断开、消息体序列化异常或 DB 不可达。需立即排查 austin-handler 日志 |
+| 🔴 **P2** | **Kafka Consumer Lag 峰值增长速率**<br>`rate(kafka_consumer_group_lag{topic="austin"}[1m])` | 斜率 > 500条/min 持续 3min | Spike 阶段 Kafka 被瞬间打满，消费端追不上生产端。若 5 分钟内 Lag 不回落至 < 1000，说明 Consumer 处理能力不足，需扩分区或增加 Consumer 实例 |
+
+**场景 A 快速判断口诀**：
+- P99 正常 + 高 429 率 = 限流生效，正常现象 ✅
+- P99 飙高 + 低 429 率 = 限流失效，请求在死队列里排队，危险 ❌
+- P99 飙高 + 高 5xx 率 = 服务崩溃边缘，立刻停止压测并保留现场 🆘
+
+---
+
+### 场景 B（xxl-job 调度发送）：必盯 3 个指标
+
+| 优先级 | Grafana Panel / Prometheus 查询 | 死亡阈值 | 发生场景 & 后果 |
+|------|-------------------------------|--------|--------------|
+| ⚠️ **P1** | **Kafka Consumer Lag 断崖堆积**<br>`kafka_consumer_group_lag{topic="austin"}` | 1~2 分钟内从 0 跳升至 10万+ 且不下降 | xxl-job 触发 CronTaskHandler 后，批量从 CSV 读取数十万条记录并打入 Kafka，生产速率远超消费速率。Lag 断崖式增长且 `fetch_rate` 为 0，说明消费者已离线（Rebalance 超时或 max.poll.interval 违规）。这是场景 B 最常见的崩溃路径 |
+| ⚠️ **P1** | **HikariCP 连接池积压**<br>`hikaricp_connections_pending` | > 0 持续 30s | TaskHandlerImpl 在每个 Job 中都会查询 DB（MessageTemplate + 缓存 miss 时）。并发启动大量 Job 时，连接池被瞬间耗尽，后续请求开始排队。一旦 pending > 0，P99 将进入指数级恶化，最终触发 `ConnectionTimeoutException` |
+| 🔴 **P2** | **xxl-job Executor 线程数**<br>`jvm_threads_live_threads`（结合 JFR 查看 `jdk.VirtualThreadPinned`） | 平台线程数持续增长 > 初始值 × 2，或 VirtualThreadPinned 事件持续出现 | CronTaskHandler 同步执行 `taskHandler.handle()`，该方法在读取大文件时会阻塞 xxl-job 的 Executor 线程。若 CSV 文件极大（百万行），同时触发多个 Job 会导致 xxl-job Executor 线程全部被占满，新 Job 无法调度，且 synchronized 块（HikariCP 等）可能 pin 住 Carrier Thread |
+
+**场景 B 快速判断口诀**：
+- Kafka Lag 线性增长后平稳 = 正常，系统在消化积压 ✅
+- Kafka Lag 断崖 + `fetch_rate = 0` = Consumer 掉线，立刻检查 Rebalance 日志 ❌
+- HikariCP pending > 0 = 连接池告急，减少并发 Job 数量或扩大连接池 ⚡
+- xxl-job 线程持续增长 = CronTaskHandler 阻塞，考虑异步化文件读取（线程池隔离） 🔥
+
+---
+
+## 6. 压测快速开始 Checklist
 
 ```text
-[压测前]
+[压测前 - 通用]
 □ 确认 Prometheus + Grafana 已接入 Austin 的 Micrometer 端点（/actuator/prometheus）
 □ 确认 Kafka 消费组 Lag 监控面板已就绪
 □ JVM 启动参数加上 GC 日志：-Xlog:gc*:file=/tmp/gc.log:time,uptime:filecount=5,filesize=20m
-□ 生成测试数据：python3 scripts/generate_payloads.py --count 2000
 
-[压测中]
-□ 每 30s 截图一次 Grafana 全局大盘（Heap、CPU、HTTP P99、Kafka Lag）
-□ 若 Kafka Lag 突然上升，立即检查消费者日志是否有 Rebalance
-□ 若 HTTP 错误率 > 1%，立即检查是 429（限流正常）还是 500（程序错误）
+[压测前 - 场景 A]
+□ 生成单发数据：python3 scripts/generate_payloads.py --mode api --count 3000 --output data/api_payloads.json
+□ 生成批量发数据：python3 scripts/generate_payloads.py --mode api --batch --count 500 --output data/batch_payloads.json
+□ k6 run k6/api_stress_test.js
+
+[压测前 - 场景 B]
+□ 生成定时任务注册数据：python3 scripts/generate_payloads.py --mode cron --count 50 --output data/cron_payloads.json
+□ 确认 cronCrowdPath 指向的 CSV 文件存在且行数足够（建议 10 万行以上才能体现压力）
+□ 确认 xxl-job admin 服务已启动，且 Austin 的 xxl-job executor 已注册
+□ k6 run k6/job_trigger_test.js
+
+[压测中 - 场景 A]
+□ 盯住 HTTP P99（/send 接口），确认 Spike 阶段出现 429 而非 500
+□ 盯住 austin_rate_limited 指标（k6 自定义），确认限流比例合理
+□ 若 P99 > 500ms 且无 429，立刻暂停：背压失效，检查 Semaphore 配置
+
+[压测中 - 场景 B]
+□ 每 30s 查看 kafka_consumer_group_lag 趋势（增速不应持续上升）
+□ 若 Lag 断崖堆积：立刻执行 kafka-consumer-groups.sh --describe 查看分区状态
+□ 若 hikaricp_connections_pending > 0：减少并发 Job 数量，或临时扩大连接池
 
 [压测后]
-□ 导出 k6 results/summary.json，与 SLA 阈值对比
+□ 导出 k6 results/ 目录下的 summary JSON，与 SLA 阈值对比
 □ 分析 GC 日志：grep -E "GC\(|Pause" /tmp/gc.log | awk '{print $1, $2, $NF}' | tail -50
 □ 检查 Heap Dump（如有 OOM）：jmap -heap <PID>（或已保存的 .hprof 文件）
 □ 归档本次压测报告（场景、VUs、时长、P99、错误率、Kafka Lag 峰值）

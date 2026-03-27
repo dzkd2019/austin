@@ -22,10 +22,10 @@
  *   k6 run --out experimental-prometheus-rw k6/austin_stress_test.js
  */
 
-import http from "docs/k6/http";
+import http from "k6/http";
 import { check, sleep } from "k6";
-import { Counter, Rate, Trend } from "docs/k6/metrics";
-import { SharedArray } from "docs/k6/data";
+import { Counter, Rate, Trend } from "k6/metrics";
+import { SharedArray } from "k6/data";
 
 // ──────────────────────────────────────────────────────────────
 // CONFIG：按实际环境修改
