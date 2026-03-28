@@ -2,7 +2,6 @@ package com.java3y.austin.support.pending;
 
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.java3y.austin.support.utils.ThreadPoolUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
@@ -13,7 +12,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,8 +51,6 @@ public abstract class AbstractLazyPending<T> {
      */
     private volatile Boolean stop = false;
 
-    private final Semaphore inFlightBatches = new Semaphore(1000);
-
     /**
      * 单线程消费 阻塞队列的数据
      */
@@ -67,9 +63,7 @@ public abstract class AbstractLazyPending<T> {
 
             while (!Boolean.TRUE.equals(this.stop) || CollUtil.isNotEmpty(tasks) || !pendingParam.getQueue().isEmpty()) {
                 try {
-                    // 1. 【修复 take() 的假死问题】
-                    // 使用带有超时的 poll。假设最大等待时间是 pendingParam.getTimeThreshold()
-                    // 这样即使没新数据，线程也会周期性醒来，去执行下面的 dataReady() 时间判断！
+                    // 1. 使用带有超时的 poll，避免 take() 导致的假死问题
                     T obj = pendingParam.getQueue().poll(
                             pendingParam.getTimeThreshold(), TimeUnit.MILLISECONDS);
 
@@ -83,26 +77,14 @@ public abstract class AbstractLazyPending<T> {
                         tasks = new ArrayList<>(pendingParam.getNumThreshold());
                         lastHandleTime = System.currentTimeMillis();
 
-                        // 3. 【修复 Semaphore 失效问题】
-                        // 主线程在此处阻塞获取许可。如果下游满了，主线程会卡在这里，从而停止从 queue 中 poll 数据
-//                        inFlightBatches.acquire();
-                        if (!inFlightBatches.tryAcquire(30, TimeUnit.SECONDS)) {
-                            log.error("Pending Thread 等待许可超时，抛弃当前批次任务，批次大小: {}", taskRef.size());
-                        } else {
-                            // 提交异步任务
-                            ThreadPoolUtils.getVirtualExecutorService().execute(() -> {
-                                try {
-                                    // 真正的耗时网络 I/O 都在这个虚拟线程里执行
-                                    this.handle(taskRef);
-                                } catch (Exception e) {
-                                    log.error("处理定时发送任务的csv文件时出现错误，异常: {}", e.getMessage(), e);
-                                } finally {
-                                    // 【必须写在这里！】
-                                    // 只有当耗时任务真干完了（或报错了），才由该虚拟线程归还许可！
-                                    inFlightBatches.release();
-                                }
-                            });
-                        }
+                        // 提交异步任务；全局限流由 SendMqAction 中的 MqRateLimiter 统一管控
+                        ThreadPoolUtils.getVirtualExecutorService().execute(() -> {
+                            try {
+                                this.handle(taskRef);
+                            } catch (Exception e) {
+                                log.error("处理定时发送任务的csv文件时出现错误，异常: {}", e.getMessage(), e);
+                            }
+                        });
                     }
 
                 } catch (InterruptedException e) {
@@ -167,3 +149,4 @@ public abstract class AbstractLazyPending<T> {
     public abstract void doHandle(List<T> list);
 
 }
+
