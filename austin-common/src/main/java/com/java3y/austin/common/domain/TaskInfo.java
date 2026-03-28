@@ -86,5 +86,9 @@ public class TaskInfo implements Serializable, ProcessModel {
      */
     private Integer sendAccount;
 
+    /**
+     * 入队时间（毫秒时间戳），用于发送前超时检测
+     */
+    private long enqueueTime;
 
 }

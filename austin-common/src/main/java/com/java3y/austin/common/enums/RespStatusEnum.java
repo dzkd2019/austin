@@ -60,7 +60,13 @@ public enum RespStatusEnum {
     MESSAGE_IS_SHIELD("H0002", "消息匹配屏蔽规则，被丢弃"),
     MESSAGE_IS_SHIELD_NEXT_SEND("H0003", "消息匹配屏蔽规则，次日发送"),
     MESSAGE_IS_DEDUPLICATION("H0004", "消息被去重"),
-    MESSAGE_SEND_FAIL("H0005", "调用接口发送消息失败")
+    MESSAGE_SEND_FAIL("H0005", "调用接口发送消息失败"),
+
+    /**
+     * 限流 / 超时
+     */
+    SYSTEM_BUSY("C0001", "系统繁忙，请稍后再试"),
+    SYSTEM_TIMEOUT("C0002", "系统超时，请稍后再试")
     ;
 
     /**

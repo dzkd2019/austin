@@ -102,7 +102,8 @@ public class ConsumeServiceImpl implements ConsumeService {
                     getSuccessCounter(groupId).increment();
                 } catch (Exception e) {
                     getFailureCounter(groupId).increment();
-                    throw e;
+                    log.error("consume2Send: task execute failed, groupId={}, messageId={}, bizId={}",
+                            groupId, taskInfo.getMessageId(), taskInfo.getBizId(), e);
                 } finally {
                     // 记录处理时间，供巡航器使用
                     long rtNano = System.nanoTime() - startTime;
