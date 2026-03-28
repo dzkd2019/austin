@@ -32,6 +32,7 @@
             <!-- 输出所有 MDC 字段到 JSON（traceId / messageId / requestPath / userId / kafkaTopic 等） -->
             <includeMdcKeyName>traceId</includeMdcKeyName>
             <includeMdcKeyName>messageId</includeMdcKeyName>
+            <includeMdcKeyName>templateId</includeMdcKeyName>
             <includeMdcKeyName>requestPath</includeMdcKeyName>
             <includeMdcKeyName>businessId</includeMdcKeyName>
             <includeMdcKeyName>kafkaGroupId</includeMdcKeyName>

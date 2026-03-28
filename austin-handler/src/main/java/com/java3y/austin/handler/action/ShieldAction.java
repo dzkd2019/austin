@@ -12,6 +12,7 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.support.utils.LogUtils;
 import com.java3y.austin.support.utils.RedisUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
  * @author 3y
  */
 @Service
+@Slf4j
 public class ShieldAction implements BusinessProcess<TaskInfo> {
 
     private static final String NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY = "night_shield_send";
@@ -40,8 +42,8 @@ public class ShieldAction implements BusinessProcess<TaskInfo> {
 
     @Autowired
     private RedisUtils redisUtils;
-    @Autowired
-    private LogUtils logUtils;
+//    @Autowired
+//    private LogUtils logUtils;
 
 
     @Override
@@ -54,15 +56,17 @@ public class ShieldAction implements BusinessProcess<TaskInfo> {
 
         if (LocalDateTime.now().getHour() < NIGHT) {
             if (ShieldType.NIGHT_SHIELD.getCode().equals(taskInfo.getShieldType())) {
-                logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD.getCode())
-                        .bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+//                logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD.getCode())
+//                        .bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+                log.warn("消息被夜间拦截规则阻拦, messageId: {}, receivers: {}", taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
                 context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_SHIELD));
             }
             if (ShieldType.NIGHT_SHIELD_BUT_NEXT_DAY_SEND.getCode().equals(taskInfo.getShieldType())) {
                 redisUtils.lPush(NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY, JSON.toJSONString(taskInfo,
                                 JSONWriter.Feature.WriteClassName),
                         SECONDS_OF_A_DAY);
-                logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD_NEXT_SEND.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+//                logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD_NEXT_SEND.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+                log.warn("消息被夜间拦截，第二天再发送, messageId: {}, receivers: {}", taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
                 context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_SHIELD_NEXT_SEND));
             }
             context.setNeedBreak(true);

@@ -1,26 +1,21 @@
 package com.java3y.austin.handler.receiver.service.impl;
 
-import com.java3y.austin.common.domain.AnchorInfo;
-import com.java3y.austin.common.domain.LogParam;
 import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.domain.TaskInfo;
-import com.java3y.austin.common.enums.AnchorState;
 import com.java3y.austin.handler.backpressure.RtSensor;
 import com.java3y.austin.handler.backpressure.VirtualThreadBackPressureManager;
 import com.java3y.austin.handler.handler.HandlerHolder;
 import com.java3y.austin.handler.handler.Task;
 import com.java3y.austin.handler.receiver.service.ConsumeService;
-import com.java3y.austin.handler.utils.GroupIdMappingUtils;
-import com.java3y.austin.handler.utils.MdcUtil;
 import com.java3y.austin.support.config.ThreadPoolExecutorShutdownDefinition;
 import com.java3y.austin.support.constans.MdcConstant;
-import com.java3y.austin.support.utils.LogUtils;
+import com.java3y.austin.support.utils.GroupIdMappingUtils;
+import com.java3y.austin.support.utils.MdcUtil;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -44,26 +39,32 @@ public class ConsumeServiceImpl implements ConsumeService {
     private static final String TAG_RESULT = "result";
 
     private final ApplicationContext context;
-    private final LogUtils logUtils;
+    //    private final LogUtils logUtils;
     private final HandlerHolder handlerHolder;
     private final VirtualThreadBackPressureManager backPressureManager;
     private final RtSensor rtSensor;
     private final ThreadPoolExecutorShutdownDefinition threadPoolExecutorShutdownDefinition;
     private final MeterRegistry meterRegistry;
 
-    /** groupId -> success counter */
+    /**
+     * groupId -> success counter
+     */
     private final Map<String, Counter> successCounters = new ConcurrentHashMap<>();
-    /** groupId -> failure counter */
+    /**
+     * groupId -> failure counter
+     */
     private final Map<String, Counter> failureCounters = new ConcurrentHashMap<>();
-    /** groupId -> message processing timer */
+    /**
+     * groupId -> message processing timer
+     */
     private final Map<String, Timer> processTimers = new ConcurrentHashMap<>();
 
-    public ConsumeServiceImpl(ApplicationContext context, LogUtils logUtils,
+    public ConsumeServiceImpl(ApplicationContext context,
                               HandlerHolder handlerHolder, VirtualThreadBackPressureManager backPressureManager,
                               RtSensor rtSensor, ThreadPoolExecutorShutdownDefinition threadPoolExecutorShutdownDefinition,
                               MeterRegistry meterRegistry) {
         this.context = context;
-        this.logUtils = logUtils;
+//        this.logUtils = logUtils;
         this.handlerHolder = handlerHolder;
         this.backPressureManager = backPressureManager;
         this.rtSensor = rtSensor;
@@ -82,18 +83,19 @@ public class ConsumeServiceImpl implements ConsumeService {
     @Override
     public void consume2Send(List<TaskInfo> taskInfoLists) {
         String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfoLists.getFirst());
-        Map<String, String> mdcContext = new HashMap<>();
         for (TaskInfo taskInfo : taskInfoLists) {
             backPressureManager.incrementAndCheckPause(groupId);
             // 打点记录当前状态
-            logUtils.print(LogParam.builder().bizType(LOG_BIZ_TYPE).object(taskInfo).build(), AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).ids(taskInfo.getReceiver()).businessId(taskInfo.getBusinessId()).state(AnchorState.RECEIVE.getCode()).build());
+//            logUtils.print(LogParam.builder().bizType(LOG_BIZ_TYPE).object(taskInfo).build(), AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).ids(taskInfo.getReceiver()).businessId(taskInfo.getBusinessId()).state(AnchorState.RECEIVE.getCode()).build());
+            log.info("从Kafka消息队列中拉取到消息, messageId: {}, receivers: {}", taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
 
-            mdcContext.clear();
+            Map<String, String> mdcContext = new HashMap<>();
             mdcContext.put(MdcConstant.MDC_MESSAGE_ID, taskInfo.getMessageId());
             mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getBusinessId()));
             mdcContext.put(MdcConstant.MDC_KAFKA_GROUP_ID, groupId);
-            executor.execute(MdcUtil.wrap(new HashMap<>(mdcContext), () -> {
+            mdcContext.put(MdcConstant.MDC_TEMPLATE_ID, taskInfo.getMessageTemplateId().toString());
+            executor.execute(MdcUtil.wrap(mdcContext, () -> {
                 // startTime 必须在虚拟线程内部捕获，否则会将排队等待时间计入 RT，
                 // 导致 AIMD 控制器误判系统过载而触发不必要的降速。
                 long startTime = System.nanoTime();
@@ -119,7 +121,7 @@ public class ConsumeServiceImpl implements ConsumeService {
 
     @Override
     public void consume2recall(RecallTaskInfo recallTaskInfo) {
-        logUtils.print(LogParam.builder().bizType(LOG_BIZ_RECALL_TYPE).object(recallTaskInfo).build());
+//        logUtils.print(LogParam.builder().bizType(LOG_BIZ_RECALL_TYPE).object(recallTaskInfo).build());
         handlerHolder.route(recallTaskInfo.getSendChannel()).recall(recallTaskInfo);
     }
 
@@ -132,6 +134,7 @@ public class ConsumeServiceImpl implements ConsumeService {
                         .register(meterRegistry));
     }
 
+    //“同名 + 不同 Tag” 多维度指标，在 Prometheus 眼里，它们本质上是同一种业务行为（消费 Kafka 消息）的不同切面。
     private Counter getFailureCounter(String groupId) {
         return failureCounters.computeIfAbsent(groupId, gid ->
                 Counter.builder("austin.kafka.message.consumed")

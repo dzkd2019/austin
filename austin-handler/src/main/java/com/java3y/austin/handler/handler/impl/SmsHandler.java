@@ -7,6 +7,7 @@ import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.dto.account.sms.SmsAccount;
 import com.java3y.austin.common.dto.model.SmsContentModel;
 import com.java3y.austin.common.enums.ChannelType;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.handler.config.AustinMessageSendProperties;
 import com.java3y.austin.handler.domain.sms.MessageTypeSmsConfig;
 import com.java3y.austin.handler.domain.sms.SmsParam;
@@ -90,9 +91,9 @@ public class SmsHandler extends BaseHandler implements ApplicationContextAware {
                     return true;
                 }
             } catch (Exception e) {
-                log.error("发送短信失败，accountId: {}, phones: {}",
-                        messageTypeSmsConfig.getSendAccount(),
-                        smsParam.getPhones(), e);
+                String errMsg = String.format("在调用 %s 接口发送短信时出现异常，模板Id: %s, 发送账号: %s, 收信人: %s", messageTypeSmsConfig.getScriptName(), taskInfo.getMessageTemplateId(),
+                        messageTypeSmsConfig.getSendAccount(), taskInfo.getReceiver());
+                throw new CommonException(errMsg, e);
             }
 
         }

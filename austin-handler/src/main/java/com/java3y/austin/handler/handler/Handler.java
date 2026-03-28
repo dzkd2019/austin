@@ -14,7 +14,7 @@ public interface Handler {
      *
      * @param taskInfo
      */
-    void handle(TaskInfo taskInfo) throws InterruptedException;
+    void handle(TaskInfo taskInfo);
 
     /**
      * 撤回消息

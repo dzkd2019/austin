@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
+import com.java3y.austin.common.exception.RedisOperationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author 3y
@@ -48,7 +50,8 @@ public class RedisUtils {
                 }
             }
         } catch (Exception e) {
-            log.error("RedisUtils#mGet fail! e:{}", Throwables.getStackTraceAsString(e));
+            String errKeys = String.join(",", keys);
+            throw new RedisOperationException("通过 mget 读取Redis失败, keys: " + errKeys, e);
         }
         return result;
     }
@@ -58,9 +61,8 @@ public class RedisUtils {
         try {
             return redisTemplate.opsForHash().entries(key);
         } catch (Exception e) {
-            log.error("RedisUtils#hGetAll fail! e:{}", Throwables.getStackTraceAsString(e));
+            throw new RedisOperationException("通过 hGetAll 读取Redis失败, key: " + key, e);
         }
-        return new HashMap<>(2);
     }
 
     /**
@@ -71,9 +73,8 @@ public class RedisUtils {
         try {
             return redisTemplate.opsForList().range(key, start, end);
         } catch (Exception e) {
-            log.error("RedisUtils#lRange fail! e:{}", Throwables.getStackTraceAsString(e));
+            throw new RedisOperationException("通过 lRange 读取Redis失败, range: " + start + " - " + end, e);
         }
-        return new ArrayList<>();
     }
 
     /**
@@ -90,7 +91,8 @@ public class RedisUtils {
                 return null;
             });
         } catch (Exception e) {
-            log.error("RedisUtils#pipelineSetEx fail! e:{}", Throwables.getStackTraceAsString(e));
+            String errKeys = String.join(",", keyValues.keySet());
+            throw new RedisOperationException("pipeline向Redis写入失败, keys: " + errKeys, e);
         }
     }
 
@@ -106,7 +108,7 @@ public class RedisUtils {
                 return null;
             });
         } catch (Exception e) {
-            log.error("RedisUtils#lPush fail! e:{}", Throwables.getStackTraceAsString(e));
+            throw new RedisOperationException("通过 lPush 向Redis写入失败, key: " + key, e);
         }
     }
 
@@ -117,9 +119,9 @@ public class RedisUtils {
         try {
             return redisTemplate.opsForList().size(key);
         } catch (Exception e) {
-            log.error("RedisUtils#lLen fail! e:{}", Throwables.getStackTraceAsString(e));
+            throw new RedisOperationException("通过 lLen 读取Redis失败, key: " + key, e);
         }
-        return 0L;
+//        return 0L;
     }
 
     /**
@@ -129,9 +131,8 @@ public class RedisUtils {
         try {
             return redisTemplate.opsForList().leftPop(key);
         } catch (Exception e) {
-            log.error("RedisUtils#lPop fail! e:{}", Throwables.getStackTraceAsString(e));
+            throw new RedisOperationException("通过 lPop 从Redis读取失败, key: " + key, e);
         }
-        return "";
     }
 
     /**
@@ -153,7 +154,8 @@ public class RedisUtils {
                 return null;
             });
         } catch (Exception e) {
-            log.error("redis pipelineSetEX fail! e:{}", Throwables.getStackTraceAsString(e));
+            String errKeys = String.join(",", keyValues.keySet());
+            throw new RedisOperationException("pipeline向Redis写入失败, keys: " + errKeys, e);
         }
     }
 
@@ -173,11 +175,11 @@ public class RedisUtils {
         try {
             Long execute = redisTemplate.execute(redisScript, keys, (Object[]) argsArray);
             if (Objects.isNull(execute)) {
-                return false;
+                return true;
             }
             return CommonConstant.TRUE.equals(execute.intValue());
         } catch (Exception e) {
-            log.error("redis execLimitLua fail! e:{}", Throwables.getStackTraceAsString(e));
+            log.error("执行lua脚本时失败", e);
         }
         return false;
     }

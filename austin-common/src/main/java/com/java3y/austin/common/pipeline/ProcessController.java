@@ -2,8 +2,10 @@ package com.java3y.austin.common.pipeline;
 
 
 import com.java3y.austin.common.enums.RespStatusEnum;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.Objects;
  * @author 3y
  */
 @Data
+@Slf4j
 public class ProcessController {
 
     /**
@@ -36,21 +39,30 @@ public class ProcessController {
          */
         try {
             preCheck(context);
+
+
+            ProcessTemplate<T> template = (ProcessTemplate<T>) templateConfig.get(context.getCode());
+            List<BusinessProcess<T>> processList = template.getProcessList();
+            for (BusinessProcess<T> businessProcess : processList) {
+                businessProcess.process(context);
+                if (Boolean.TRUE.equals(context.getNeedBreak())) {
+                    break;
+                }
+            }
         } catch (ProcessException e) {
-            return (ProcessContext<T>) e.getProcessContext();
+            var processContext = (ProcessContext<T>) e.getProcessContext();
+            processContext.setNeedBreak(true);
+
+            BasicResultVO<?> response = processContext.getResponse();
+            log.error("流程执行异常，责任链业务代码: {}, 状态: {}, 错误信息: {}",
+                    context.getCode(), response.getStatus(), response.getMsg(), e);
+
+            throw new CommonException(response.getStatus(), "任务执行异常", e);
+        } catch (Exception e) {
+            log.error("执行过程中发生异常，责任链服务代码: {}", context.getCode(), e);
+            throw new CommonException(RespStatusEnum.SERVICE_ERROR.getCode(), "系统内部发生未知异常", e);
         }
 
-        /*
-          遍历流程节点
-         */
-        ProcessTemplate<T> template = (ProcessTemplate<T>) templateConfig.get(context.getCode());
-        List<BusinessProcess<T>> processList = template.getProcessList();
-        for (BusinessProcess<T> businessProcess : processList) {
-            businessProcess.process(context);
-            if (Boolean.TRUE.equals(context.getNeedBreak())) {
-                break;
-            }
-        }
         return context;
     }
 

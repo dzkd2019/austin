@@ -28,8 +28,8 @@ public abstract class AbstractDeduplicationService implements DeduplicationServi
 
     @Autowired
     private DeduplicationHolder deduplicationHolder;
-    @Autowired
-    private LogUtils logUtils;
+//    @Autowired
+//    private LogUtils logUtils;
 
     @PostConstruct
     private void init() {
@@ -45,7 +45,8 @@ public abstract class AbstractDeduplicationService implements DeduplicationServi
         // 剔除符合去重条件的用户
         if (CollUtil.isNotEmpty(filterReceiver)) {
             taskInfo.getReceiver().removeAll(filterReceiver);
-            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(filterReceiver).state(param.getAnchorState().getCode()).build());
+//            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(filterReceiver).state(param.getAnchorState().getCode()).build());
+            log.info("触发去重规则 {}，下列receivers被过滤：{}", type.name(), String.join(",", taskInfo.getReceiver()));
         }
     }
 

@@ -1,12 +1,10 @@
 package com.java3y.austin.handler.handler;
 
-import com.java3y.austin.common.domain.AnchorInfo;
 import com.java3y.austin.common.domain.TaskInfo;
-import com.java3y.austin.common.enums.AnchorState;
 import com.java3y.austin.handler.flowcontrol.FlowControlFactory;
 import com.java3y.austin.handler.flowcontrol.FlowControlParam;
-import com.java3y.austin.support.utils.LogUtils;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -18,6 +16,7 @@ import java.util.Objects;
  * @author 3y
  * 发送各个渠道的handler
  */
+@Slf4j
 public abstract class BaseHandler implements Handler {
     /**
      * 标识渠道的Code
@@ -31,8 +30,6 @@ public abstract class BaseHandler implements Handler {
     protected FlowControlParam flowControlParam;
     @Autowired
     private HandlerHolder handlerHolder;
-    @Autowired
-    private LogUtils logUtils;
     @Autowired
     private FlowControlFactory flowControlFactory;
     @Autowired
@@ -48,21 +45,17 @@ public abstract class BaseHandler implements Handler {
 
 
     @Override
-    public void handle(TaskInfo taskInfo) throws InterruptedException {
+    public void handle(TaskInfo taskInfo) {
         // 只有子类指定了限流参数，才需要限流
         if (Objects.nonNull(flowControlParam)) {
-            try {
-                flowControlFactory.flowControl(taskInfo, flowControlParam);
-            } catch (InterruptedException e) {
-                logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_FAIL.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
-                throw e;
-            }
+            flowControlFactory.flowControl(taskInfo, flowControlParam);
         }
         if (doHandle(taskInfo)) {
-            logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_SUCCESS.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+//            logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_SUCCESS.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+            log.info("调用接口发送成功");
             return;
         }
-        logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_FAIL.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+//        logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_FAIL.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
     }
 
 

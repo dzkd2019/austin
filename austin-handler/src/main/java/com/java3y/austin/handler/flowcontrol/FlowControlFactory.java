@@ -1,6 +1,7 @@
 package com.java3y.austin.handler.flowcontrol;
 
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.handler.enums.RateLimitStrategy;
 import com.java3y.austin.handler.flowcontrol.config.RateLimiterConfig;
 import com.java3y.austin.handler.flowcontrol.controller.FlowController;
@@ -29,7 +30,7 @@ public class FlowControlFactory {
      *
      * @param param Handler 声明的限流策略, 当前的限流配置 (可能是 Handler 的默认配置，也可能是来自 Nacos 的最新配置)
      */
-    public void flowControl(TaskInfo taskInfo, FlowControlParam param) throws InterruptedException {
+    public void flowControl(TaskInfo taskInfo, FlowControlParam param) {
         RateLimitStrategy strategy = param.getRateLimitStrategy();
         RateLimiterConfig config = param.getRateLimiterConfig();
         Integer channelId = taskInfo.getSendChannel();
@@ -51,9 +52,14 @@ public class FlowControlFactory {
 
         // 4. 执行限流阻塞（虚拟线程挂起）
 
-        double cost = controller.acquire();
-        log.info("渠道 [{}] 流量控制耗时: {} 毫秒", channelId, cost);
-
+        double cost = 0;
+        try {
+            cost = controller.acquire();
+            log.info("渠道 [{}] 流量控制耗时: {} 毫秒", channelId, cost);
+        } catch (InterruptedException e) {
+            log.error("在等待许可的过程中被中断，消息模板 {}, 发送渠道 {}", taskInfo.getMessageTemplateId(), taskInfo.getSendChannel(), e);
+            throw new CommonException("流量控制被中断", e);
+        }
     }
 
     /**

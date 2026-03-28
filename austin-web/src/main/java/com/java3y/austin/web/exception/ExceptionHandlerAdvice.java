@@ -3,6 +3,7 @@ package com.java3y.austin.web.exception;
 import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.common.exception.MessageTimeoutException;
+import com.java3y.austin.common.exception.RedisOperationException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,13 @@ public class ExceptionHandlerAdvice {
     @ResponseStatus(HttpStatus.OK)
     public BasicResultVO<String> handleException(Exception e) {
         log.error("Unhandled exception, traceId={}", MDC.get(MDC_TRACE_ID), e);
+        return BasicResultVO.fail(RespStatusEnum.ERROR_500);
+    }
+
+    @ExceptionHandler(RedisOperationException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public BasicResultVO<String> handleRedisOperationException(RedisOperationException e) {
+        log.error("RedisOperationException, traceId={}", MDC.get(MDC_TRACE_ID), e);
         return BasicResultVO.fail(RespStatusEnum.ERROR_500);
     }
 }

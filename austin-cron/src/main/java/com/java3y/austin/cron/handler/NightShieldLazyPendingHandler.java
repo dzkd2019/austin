@@ -2,8 +2,12 @@ package com.java3y.austin.cron.handler;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONWriter;
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.support.constans.MdcConstant;
+import com.java3y.austin.support.utils.GroupIdMappingUtils;
+import com.java3y.austin.support.utils.MdcUtil;
 import com.java3y.austin.support.utils.RedisUtils;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +16,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 
 /**
@@ -48,9 +53,9 @@ public class NightShieldLazyPendingHandler {
         // 1. 优化 Redis 拉取：无需 lLen，直接循环 lPop，直到为 null
         // (如果数据量极大，建议使用 lua 脚本或 lRange + lTrim 批量拉取 1000 条，这里保持原意用 lPop)
         List<String> taskInfos = new ArrayList<>();
-        String taskInfo;
-        while (CharSequenceUtil.isNotBlank(taskInfo = redisUtils.lPop(NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY))) {
-            taskInfos.add(taskInfo);
+        String stringInfo;
+        while (CharSequenceUtil.isNotBlank(stringInfo = redisUtils.lPop(NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY))) {
+            taskInfos.add(stringInfo);
         }
 
         if (taskInfos.isEmpty()) {
@@ -60,46 +65,50 @@ public class NightShieldLazyPendingHandler {
 
         log.info("共拉取到 {} 条待处理任务，开始并发推送到 Kafka...", taskInfos.size());
 
+        AtomicInteger successCount = new AtomicInteger(0);
+        var failed = new ConcurrentLinkedQueue<String>();
+
         // 2. 真正发挥虚拟线程的威力：并发 I/O！
         // 使用新特性 StructuredTaskScope 保证同生共死，或者直接使用 newVirtualThreadPerTaskExecutor()
         // 这里的 try-with-resources 会【阻塞当前 XXL-JOB 线程】，直到所有虚拟线程执行完毕！
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
             for (String info : taskInfos) {
-                // 为【每一条】消息单独提交一个虚拟线程去发送 Kafka
-                executor.submit(() -> {
-                    try {
-                        TaskInfo parsedTask = JSON.parseObject(info, TaskInfo.class);
-                        String message = JSON.toJSONString(Collections.singletonList(parsedTask), JSONWriter.Feature.WriteClassName);
+                try {
+                    TaskInfo taskInfo = JSON.parseObject(info, TaskInfo.class);
 
-                        // KafkaTemplate.send 默认是异步的，但它底层获取元数据时会阻塞。
-                        // 用 .get() 强制当前虚拟线程阻塞等待发送结果，确保绝对可靠。
-                        kafkaTemplate.send(topicName, message).get();
+                    Map<String, String> mdcContext = new HashMap<>();
+                    mdcContext.put(MdcConstant.MDC_MESSAGE_ID, taskInfo.getMessageId());
+                    mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getBusinessId()));
+                    mdcContext.put(MdcConstant.MDC_KAFKA_GROUP_ID, GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfo));
 
-                    } catch (Exception e) {
-                        // 这里可以记录失败的数据到另一个错误队列，或者抛出异常让 XXL-JOB 记录失败
-                        log.error("nightShieldLazyJob send kafka fail! params:{}", info, e);
-                    }
-                });
+                    // 为【每一条】消息单独提交一个虚拟线程去发送 Kafka
+                    // todo 这里向kafka发送消息避开了 SendMqAction 中的信号量限流
+                    executor.execute(MdcUtil.wrap(mdcContext, () -> {
+                        try {
+                            // 重新设置入队时间
+//                            taskInfo.setEnqueueTime(System.currentTimeMillis());
+                            String message = JSON.toJSONString(Collections.singletonList(taskInfo), JSONWriter.Feature.WriteClassName);
+
+                            // KafkaTemplate.send 默认是异步的，但它底层获取元数据时会阻塞。
+                            // 用 .get() 强制当前虚拟线程阻塞等待发送结果，确保绝对可靠。
+                            kafkaTemplate.send(topicName, message).get();
+                            successCount.incrementAndGet();
+                        } catch (Exception e) {
+                            // 这里可以记录失败的数据到另一个错误队列，或者抛出异常让 XXL-JOB 记录失败
+                            log.error("nightShieldLazyJob send kafka fail!", e);
+                            failed.add(taskInfo.getMessageId());
+                        }
+                    }));
+                } catch (JSONException e) {
+                    log.error("TaskInfo JSON 解析失败，跳过该条数据！ info={}", info, e);
+                }
             }
 
-        } // 离开 try 块时，主线程会自动等待所有 submit 的虚拟线程执行完毕！
-
-        log.info("NightShieldLazyPendingHandler#execute 执行完毕！");
+        }
+        // 离开 try 块时，主线程会自动等待所有 submit 的虚拟线程执行完毕！
+        String failedMessageIds = String.join(",", failed);
+        log.info("NightShieldLazyPendingHandler#execute 执行完毕！ 总条数：{}, 成功次数: {}, 失败消息：{}", taskInfos.size(), successCount.get(), failedMessageIds);
         // 只有所有消息都发完了（或报错了），这里才会结束，XXL-JOB 控制台才会显示真实的执行耗时。
-
-//        SupportThreadPoolConfig.getPendingSingleThreadPool().execute(() -> {
-//            while (redisUtils.lLen(NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY) > 0) {
-//                String taskInfo = redisUtils.lPop(NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY);
-//                if (CharSequenceUtil.isNotBlank(taskInfo)) {
-//                    try {
-//                        kafkaTemplate.send(topicName, JSON.toJSONString(Collections.singletonList(JSON.parseObject(taskInfo, TaskInfo.class))
-//                                , JSONWriter.Feature.WriteClassName));
-//                    } catch (Exception e) {
-//                        log.error("nightShieldLazyJob send kafka fail! e:{},params:{}", Throwables.getStackTraceAsString(e), taskInfo);
-//                    }
-//                }
-//            }
-//        });
     }
 }

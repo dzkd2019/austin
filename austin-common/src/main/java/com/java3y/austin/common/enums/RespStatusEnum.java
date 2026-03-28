@@ -66,7 +66,13 @@ public enum RespStatusEnum {
      * 限流 / 超时
      */
     SYSTEM_BUSY("C0001", "系统繁忙，请稍后再试"),
-    SYSTEM_TIMEOUT("C0002", "系统超时，请稍后再试")
+    SYSTEM_TIMEOUT("C0002", "系统超时，请稍后再试"),
+
+
+    /**
+     * Redis 请求错误
+     */
+    REDIS_ERROR("D0001", "Redis请求错误")
     ;
 
     /**

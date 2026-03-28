@@ -7,4 +7,5 @@ public class MdcConstant {
     public static final String MDC_REQUEST_IP = "requestIp";
     public static final String MDC_KAFKA_GROUP_ID = "kafkaGroupId";
     public static final String MDC_MESSAGE_ID = "messageId";
+    public static final String MDC_TEMPLATE_ID = "templateId";
 }

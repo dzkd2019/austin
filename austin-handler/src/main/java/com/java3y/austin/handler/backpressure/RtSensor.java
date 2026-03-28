@@ -1,6 +1,6 @@
 package com.java3y.austin.handler.backpressure;
 
-import com.java3y.austin.handler.utils.GroupIdMappingUtils;
+import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 

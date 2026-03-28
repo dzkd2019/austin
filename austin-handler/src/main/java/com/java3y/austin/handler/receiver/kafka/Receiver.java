@@ -6,7 +6,7 @@ import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.handler.receiver.MessageReceiver;
 import com.java3y.austin.handler.receiver.service.ConsumeService;
-import com.java3y.austin.handler.utils.GroupIdMappingUtils;
+import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import com.java3y.austin.support.constans.MessageQueuePipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -41,7 +41,7 @@ public class Receiver implements MessageReceiver {
     @KafkaListener(topics = "#{'${austin.business.topic.name}'}", containerFactory = "filterContainerFactory")
     public void consumer(ConsumerRecord<?, String> consumerRecord, @Header(KafkaHeaders.GROUP_ID) String topicGroupId) {
         Optional<String> kafkaMessage = Optional.ofNullable(consumerRecord.value());
-        if (!kafkaMessage.isPresent()) {
+        if (kafkaMessage.isEmpty()) {
             return;
         }
         try {
@@ -51,7 +51,7 @@ public class Receiver implements MessageReceiver {
                 log.warn("consumer: received empty or unparseable message, offset={}", consumerRecord.offset());
                 return;
             }
-            TaskInfo first = taskInfoLists.get(0);
+            TaskInfo first = taskInfoLists.getFirst();
             String messageGroupId = GroupIdMappingUtils.getGroupIdByTaskInfo(first);
             /*
               每个消费者组 只消费 他们自身关心的消息

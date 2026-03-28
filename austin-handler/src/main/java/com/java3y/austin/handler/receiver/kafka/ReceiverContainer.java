@@ -1,6 +1,6 @@
 package com.java3y.austin.handler.receiver.kafka;
 
-import com.java3y.austin.handler.utils.GroupIdMappingUtils;
+import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import jakarta.annotation.PostConstruct;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeansException;
