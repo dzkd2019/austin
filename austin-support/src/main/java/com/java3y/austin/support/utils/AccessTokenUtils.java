@@ -10,7 +10,6 @@ import com.dingtalk.api.DefaultDingTalkClient;
 import com.dingtalk.api.DingTalkClient;
 import com.dingtalk.api.request.OapiGettokenRequest;
 import com.dingtalk.api.response.OapiGettokenResponse;
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.constant.SendChanelUrlConstant;
 import com.java3y.austin.common.dto.account.DingDingWorkNoticeAccount;
@@ -73,7 +72,7 @@ public class AccessTokenUtils {
                 redisTemplate.opsForValue().set(accessTokenPrefix + accountId, resultToken, expireTime, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
-            log.error("AccessTokenUtils#getAccessToken fail,sendChannel:[{}],accountId:[{}],error mgs:{}", sendChannel, accountId, Throwables.getStackTraceAsString(e));
+            log.error("AccessTokenUtils#getAccessToken fail,sendChannel:[{}],accountId:[{}]", sendChannel, accountId, e);
         }
         return resultToken;
 
@@ -97,7 +96,7 @@ public class AccessTokenUtils {
             OapiGettokenResponse rsp = client.execute(req);
             accessToken = rsp.getAccessToken();
         } catch (Exception e) {
-            log.error("AccessTokenUtils#getDingDingAccessToken fail:{}", Throwables.getStackTraceAsString(e));
+            log.error("AccessTokenUtils#getDingDingAccessToken fail", e);
         }
         return accessToken;
     }
@@ -129,7 +128,7 @@ public class AccessTokenUtils {
                 accessToken = geTuiTokenResultDTO.getData().getToken();
             }
         } catch (Exception e) {
-            log.error("AccessTokenUtils#getGeTuiAccessToken fail:{}", Throwables.getStackTraceAsString(e));
+            log.error("AccessTokenUtils#getGeTuiAccessToken fail", e);
         }
         return accessToken;
     }

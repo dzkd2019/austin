@@ -5,7 +5,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.text.csv.*;
 import cn.hutool.core.util.CharsetUtil;
-import com.google.common.base.Throwables;
 import com.java3y.austin.cron.csv.CountFileRowHandler;
 import com.java3y.austin.cron.vo.CrowdInfoVo;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +44,8 @@ public class ReadFileUtils {
                 new CsvReadConfig().setContainsHeader(true))) {
             reader.read(csvRowHandler);
         } catch (Exception e) {
-            log.error("ReadFileUtils#getCsvRow fail!{}", Throwables.getStackTraceAsString(e));
+            log.error("ReadFileUtils#getCsvRow fail, path:{}", path, e);
+            throw new IllegalStateException("read csv row fail", e);
         }
     }
 
@@ -64,7 +64,8 @@ public class ReadFileUtils {
 
             reader.read(countFileRowHandler);
         } catch (Exception e) {
-            log.error("ReadFileUtils#getCsvRow fail!{}", Throwables.getStackTraceAsString(e));
+            log.error("ReadFileUtils#countCsvRow fail, path:{}", path, e);
+            throw new IllegalStateException("count csv row fail", e);
         }
         return countFileRowHandler.getRowSize();
     }
@@ -119,7 +120,8 @@ public class ReadFileUtils {
             }
 
         } catch (Exception e) {
-            log.error("ReadFileUtils#getCsvRowList fail!{}", Throwables.getStackTraceAsString(e));
+            log.error("ReadFileUtils#getCsvRowList fail, path:{}", path, e);
+            throw new IllegalStateException("read csv row list fail", e);
         }
         return result;
     }

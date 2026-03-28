@@ -1,5 +1,7 @@
 package com.java3y.austin.support.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
@@ -9,14 +11,15 @@ import java.util.function.Function;
  * @description ConcurrentHashMap util
  * @date 2023/2/6 10:01
  */
+@Slf4j
 public class ConcurrentHashMapUtils {
     private static boolean IS_JAVA8;
 
     static {
         try {
             IS_JAVA8 = System.getProperty("java.version").startsWith("1.8.");
-        } catch (Exception ignore) {
-            // exception is ignored
+        } catch (Exception e) {
+            log.error("init java version check fail, fallback to java8 mode", e);
             IS_JAVA8 = true;
         }
     }

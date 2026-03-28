@@ -77,7 +77,7 @@ public class CrowdBatchTaskPending extends AbstractLazyPending<CrowdInfoVo> {
         try {
             RetryUtils.executeWithRetry(3, 1000, () -> sendService.batchSend(batchSendRequest));
         } catch (Exception e) {
-            log.error("批量发送消息失败，batchSendRequest: {}, error: {}", batchSendRequest, e.getMessage());
+            throw new IllegalStateException("batch send fail", e);
         }
     }
 

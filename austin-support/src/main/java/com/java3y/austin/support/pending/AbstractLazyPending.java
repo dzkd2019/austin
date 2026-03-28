@@ -1,7 +1,6 @@
 package com.java3y.austin.support.pending;
 
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.base.Throwables;
 import com.java3y.austin.support.utils.ThreadPoolUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
@@ -107,8 +106,8 @@ public abstract class AbstractLazyPending<T> {
         try {
             pendingParam.getQueue().put(t);
         } catch (InterruptedException e) {
-            log.error("Pending#pending error:{}", Throwables.getStackTraceAsString(e));
             Thread.currentThread().interrupt();
+            throw new IllegalStateException("Pending#pending interrupted", e);
         }
     }
 
@@ -124,7 +123,7 @@ public abstract class AbstractLazyPending<T> {
         try {
             doHandle(t);
         } catch (Exception e) {
-            log.error("Pending#handle failed:{}", Throwables.getStackTraceAsString(e));
+            throw new IllegalStateException("Pending#handle failed", e);
         }
     }
 

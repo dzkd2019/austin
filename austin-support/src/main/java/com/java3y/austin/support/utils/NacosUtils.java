@@ -5,7 +5,6 @@ import com.alibaba.nacos.api.annotation.NacosInjected;
 import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.exception.NacosException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -37,7 +36,7 @@ public class NacosUtils {
                 properties.load(new StringReader(property));
             }
         } catch (Exception e) {
-            log.error("Nacos error:{}", ExceptionUtils.getStackTrace(e));
+            log.error("load nacos properties fail", e);
         }
         String property = properties.getProperty(key);
         return CharSequenceUtil.isBlank(property) ? defaultValue : property;
@@ -48,7 +47,7 @@ public class NacosUtils {
         try {
             context = configService.getConfig(nacosDataId, nacosGroup, 5000);
         } catch (NacosException e) {
-            log.error("Nacos error:{}", ExceptionUtils.getStackTrace(e));
+            log.error("get nacos config fail, dataId:{}, group:{}", nacosDataId, nacosGroup, e);
         }
         return context;
     }

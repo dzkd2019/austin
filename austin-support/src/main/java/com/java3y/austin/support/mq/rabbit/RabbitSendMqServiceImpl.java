@@ -1,7 +1,6 @@
 package com.java3y.austin.support.mq.rabbit;
 
 import cn.hutool.core.util.IdUtil;
-import com.google.common.base.Throwables;
 import com.java3y.austin.support.constans.MessageQueuePipeline;
 import com.java3y.austin.support.mq.SendMqService;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +45,7 @@ public class RabbitSendMqServiceImpl implements SendMqService {
         CorrelationData correlationData = new CorrelationData(IdUtil.getSnowflake().nextIdStr());
         correlationData.getFuture().whenComplete((result, err) -> {
             if(err != null) {
-                log.error("消息处理异常，{}", Throwables.getStackTraceAsString(err));
+                log.error("消息处理异常", err);
                 return;
             }
             if (result.isAck()) {

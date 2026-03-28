@@ -1,6 +1,5 @@
 package com.java3y.austin.service.api.impl.action.recall;
 
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.enums.RespStatusEnum;
@@ -49,7 +48,7 @@ public class RecallAssembleAction implements BusinessProcess<RecallTaskModel> {
 
         } catch (Exception e) {
             context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR));
-            log.error("assemble recall task fail! templateId:{}, e:{}", messageTemplateId, Throwables.getStackTraceAsString(e));
+            log.error("assemble recall task fail! templateId:{}", messageTemplateId, e);
         }
     }
 

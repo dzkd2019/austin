@@ -3,7 +3,6 @@ package com.java3y.austin.support.utils;
 import cn.monitor4all.logRecord.bean.LogDTO;
 import cn.monitor4all.logRecord.service.CustomLogListener;
 import com.alibaba.fastjson2.JSON;
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.domain.AnchorInfo;
 import com.java3y.austin.common.domain.LogParam;
 import com.java3y.austin.support.mq.SendMqService;
@@ -54,8 +53,7 @@ public class LogUtils extends CustomLogListener {
         try {
             sendMqService.send(topicName, message);
         } catch (Exception e) {
-            log.error("LogUtils#print send mq fail! e:{},params:{}", Throwables.getStackTraceAsString(e)
-                    , JSON.toJSONString(anchorInfo));
+            log.error("LogUtils#print send mq fail! params:{}", JSON.toJSONString(anchorInfo), e);
         }
     }
 

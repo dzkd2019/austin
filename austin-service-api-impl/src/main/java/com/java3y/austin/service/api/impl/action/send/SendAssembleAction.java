@@ -6,7 +6,6 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.dto.model.ContentModel;
@@ -98,7 +97,7 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
             sendTaskModel.setTaskInfo(taskInfos);
         } catch (Exception e) {
             context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR));
-            log.error("assemble task fail! templateId:{}, e:{}", messageTemplateId, Throwables.getStackTraceAsString(e));
+            log.error("assemble task fail! templateId:{}", messageTemplateId, e);
         }
 
     }

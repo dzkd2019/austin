@@ -1,7 +1,6 @@
 package com.java3y.austin.support.utils;
 
 import cn.hutool.core.map.MapUtil;
-import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
 
 import okhttp3.*;
@@ -181,10 +180,9 @@ public class OkHttpUtils {
                 return String.valueOf(response.body());
             }
         } catch (Exception e) {
-            log.error(Throwables.getStackTraceAsString(e));
+            log.error("OkHttpUtils#execute fail, request:{}", request.url(), e);
         }
         return "";
     }
 
 }
-

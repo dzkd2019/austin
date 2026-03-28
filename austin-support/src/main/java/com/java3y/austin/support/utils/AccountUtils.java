@@ -5,7 +5,6 @@ import cn.binarywang.wx.miniapp.api.WxMaService;
 import cn.binarywang.wx.miniapp.api.impl.WxMaServiceImpl;
 import cn.binarywang.wx.miniapp.config.impl.WxMaRedisBetterConfigImpl;
 import com.alibaba.fastjson2.JSON;
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.dto.account.WeChatMiniProgramAccount;
 import com.java3y.austin.common.dto.account.WeChatOfficialAccount;
@@ -86,7 +85,7 @@ public class AccountUtils {
                 }
             }
         } catch (Exception e) {
-            log.error("AccountUtils#getAccount fail! e:{}", Throwables.getStackTraceAsString(e));
+            log.error("AccountUtils#getAccount fail! sendAccountId:{}, clazz:{}", sendAccountId, clazz, e);
         }
         return null;
     }
@@ -109,11 +108,11 @@ public class AccountUtils {
                         return JSON.parseObject(channelAccount.getAccountConfig(), clazz);
                     }
                 } catch (Exception e) {
-                    log.error("AccountUtils#getSmsAccount parse fail! e:{},account:{}", Throwables.getStackTraceAsString(e), JSON.toJSONString(channelAccount));
+                    log.error("AccountUtils#getSmsAccount parse fail! account:{}", JSON.toJSONString(channelAccount), e);
                 }
             }
         } catch (Exception e) {
-            log.error("AccountUtils#getSmsAccount fail! e:{}", Throwables.getStackTraceAsString(e));
+            log.error("AccountUtils#getSmsAccount fail! scriptName:{}", scriptName, e);
         }
         log.error("AccountUtils#getSmsAccount not found!:{}", scriptName);
         return null;
