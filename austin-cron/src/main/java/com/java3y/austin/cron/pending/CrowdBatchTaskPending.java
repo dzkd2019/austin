@@ -2,10 +2,9 @@ package com.java3y.austin.cron.pending;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.StrPool;
-import com.java3y.austin.common.constant.AustinConstant;
 import com.java3y.austin.cron.config.CronAsyncThreadPoolConfig;
 import com.java3y.austin.cron.constants.PendingConstant;
-import com.java3y.austin.cron.vo.CrowdInfoVo;
+import com.java3y.austin.support.vo.CrowdInfoVo;
 import com.java3y.austin.service.api.domain.BatchSendRequest;
 import com.java3y.austin.service.api.domain.MessageParam;
 import com.java3y.austin.service.api.enums.BusinessCode;
@@ -74,11 +73,7 @@ public class CrowdBatchTaskPending extends AbstractLazyPending<CrowdInfoVo> {
                 .messageParamList(messageParams)
                 .messageTemplateId(CollUtil.getFirst(crowdInfoVos.iterator()).getMessageTemplateId())
                 .build();
-        try {
-            RetryUtils.executeWithRetry(3, 1000, () -> sendService.batchSend(batchSendRequest));
-        } catch (Exception e) {
-            log.error("批量发送消息失败，batchSendRequest: {}, error: {}", batchSendRequest, e.getMessage());
-        }
+        RetryUtils.executeWithRetry(3, 1000, () -> sendService.batchSend(batchSendRequest));
     }
 
 }

@@ -89,7 +89,11 @@ public class SendServiceImpl implements SendService {
         var response = process.getResponse();
 
         if (!"0".equals(response.getStatus())) {
-            throw new CommonException(RespStatusEnum.getByCode(response.getStatus()));
+            RespStatusEnum code = RespStatusEnum.getByCode(response.getStatus());
+            if (code == null) {
+                throw new CommonException(response.getStatus(), response.getMsg());
+            }
+            throw new CommonException(code);
         }
 
         return new SendResponse(process.getResponse().getStatus(), process.getResponse().getMsg(), (List<SimpleTaskInfo>) process.getResponse().getData());

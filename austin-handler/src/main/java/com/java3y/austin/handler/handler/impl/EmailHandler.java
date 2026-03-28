@@ -7,7 +7,6 @@ import cn.hutool.core.text.StrPool;
 import cn.hutool.extra.mail.MailAccount;
 import cn.hutool.extra.mail.MailUtil;
 import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.RateLimiter;
 import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.dto.model.EmailContentModel;
@@ -34,7 +33,7 @@ import java.util.List;
  */
 @Component
 @Slf4j
-public class EmailHandler extends BaseHandler{
+public class EmailHandler extends BaseHandler {
 
     @Autowired
     private AccountUtils accountUtils;
@@ -64,12 +63,12 @@ public class EmailHandler extends BaseHandler{
                 MailUtil.send(account, taskInfo.getReceiver(), emailContentModel.getTitle(), emailContentModel.getContent(), true, files.toArray(new File[0]));
             }
 
-
+            log.info("调用接口发送邮件成功, receivers: {}", String.join(",", taskInfo.getReceiver()));
+            return true;
         } catch (Exception e) {
-            log.error("EmailHandler#handler fail!{},params:{}", Throwables.getStackTraceAsString(e), taskInfo);
+            log.error("调用接口发送邮件失败, receivers: {}", String.join(",", taskInfo.getReceiver()), e);
             return false;
         }
-        return true;
     }
 
     /**
@@ -92,6 +91,7 @@ public class EmailHandler extends BaseHandler{
 
     /**
      * 邮箱 api 不支持撤回消息
+     *
      * @param recallTaskInfo
      */
     @Override

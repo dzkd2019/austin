@@ -27,9 +27,11 @@ import org.springframework.stereotype.Component;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class Task implements Runnable {
     private TaskInfo taskInfo;
-    @Autowired
-    @Qualifier("handlerProcessController")
-    private ProcessController processController;
+    private final ProcessController processController;
+
+    public Task(@Qualifier("handlerProcessController") ProcessController processController) {
+        this.processController = processController;
+    }
 
     @Override
     public void run() {

@@ -1,4 +1,4 @@
-package com.java3y.austin.cron.vo;
+package com.java3y.austin.support.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

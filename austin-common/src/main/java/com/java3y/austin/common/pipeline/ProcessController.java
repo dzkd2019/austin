@@ -3,6 +3,8 @@ package com.java3y.austin.common.pipeline;
 
 import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.exception.CommonException;
+import com.java3y.austin.common.exception.MessageTimeoutException;
+import com.java3y.austin.common.exception.NetWorkTimeoutException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -49,18 +51,23 @@ public class ProcessController {
                     break;
                 }
             }
-        } catch (ProcessException e) {
+        }
+        catch (NetWorkTimeoutException e) {
+            throw e;
+        }
+        catch (ProcessException e) {
             var processContext = (ProcessContext<T>) e.getProcessContext();
             processContext.setNeedBreak(true);
 
             BasicResultVO<?> response = processContext.getResponse();
-            log.error("流程执行异常，责任链业务代码: {}, 状态: {}, 错误信息: {}",
-                    context.getCode(), response.getStatus(), response.getMsg(), e);
 
-            throw new CommonException(response.getStatus(), "任务执行异常", e);
+            String errMsg = String.format("流程执行异常，责任链业务代码: %s, 状态: %s",
+                    context.getCode(), response.getStatus());
+
+            throw new CommonException(response.getStatus(), errMsg, e);
         } catch (Exception e) {
-            log.error("执行过程中发生异常，责任链服务代码: {}", context.getCode(), e);
-            throw new CommonException(RespStatusEnum.SERVICE_ERROR.getCode(), "系统内部发生未知异常", e);
+            String errMsg = String.format("流程执行发生未知异常，责任链业务代码: %s", context.getCode());
+            throw new CommonException(RespStatusEnum.SERVICE_ERROR.getCode(), errMsg, e);
         }
 
         return context;

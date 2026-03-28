@@ -146,3 +146,23 @@ xxl:
       logretentiondays: 30
     accessToken: ${austin.xxl.job.accessToken:default_token}
 
+logging:
+  level:
+    # 1. 全局默认级别保持 INFO
+    root: INFO
+
+    # --- 下面开始给啰嗦的框架“封口” ---
+
+    # 2. 让 Kafka 安静下来 (只允许它报警告和错误)
+    org.apache.kafka: WARN
+    org.springframework.kafka: WARN
+
+    # 3. 顺手把 Spring 底层容器启动时的絮叨也关了 (可选)
+    org.springframework.context: WARN
+    org.springframework.beans: WARN
+    org.springframework.boot.autoconfigure: WARN
+
+    # 4. 如果你的 austin 用了 Lettuce 连接 Redis，它的底层通信日志也可以静音
+    io.lettuce.core: WARN
+
+    com.java3y.austin: INFO

@@ -2,13 +2,18 @@ package com.java3y.austin.support.pending;
 
 import cn.hutool.core.collection.CollUtil;
 import com.google.common.base.Throwables;
+import com.java3y.austin.support.constans.MdcConstant;
+import com.java3y.austin.support.utils.MdcUtil;
 import com.java3y.austin.support.utils.ThreadPoolUtils;
+import com.java3y.austin.support.vo.CrowdInfoVo;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,14 +69,19 @@ public abstract class AbstractLazyPending<T> {
                         tasks = new ArrayList<>(pendingParam.getNumThreshold());
                         lastHandleTime = System.currentTimeMillis();
 
+                        Map<String, String> mdcContext = new HashMap<>();
+                        T ref = taskRef.getFirst();
+                        if(ref instanceof CrowdInfoVo crowd){
+                            mdcContext.put(MdcConstant.MDC_TEMPLATE_ID, crowd.getMessageTemplateId().toString());
+                        }
                         // 提交异步任务；全局限流由 SendMqAction 中的 MqRateLimiter 统一管控
-                        ThreadPoolUtils.getVirtualExecutorService().execute(() -> {
+                        ThreadPoolUtils.getVirtualExecutorService().execute(MdcUtil.wrap(mdcContext, () -> {
                             try {
                                 this.handle(taskRef);
                             } catch (Exception e) {
-                                log.error("处理定时发送任务的csv文件时出现错误，异常: {}", e.getMessage(), e);
+                                log.error("处理定时发送任务时出现错误", e);
                             }
-                        });
+                        }));
                     }
 
                 } catch (InterruptedException e) {
@@ -107,8 +117,9 @@ public abstract class AbstractLazyPending<T> {
         try {
             pendingParam.getQueue().put(t);
         } catch (InterruptedException e) {
-            log.error("Pending#pending error:{}", Throwables.getStackTraceAsString(e));
             Thread.currentThread().interrupt();
+            log.error("Pending#pending interrupted while enqueue task", e);
+            throw new IllegalStateException("enqueue pending task interrupted", e);
         }
     }
 
@@ -121,11 +132,8 @@ public abstract class AbstractLazyPending<T> {
         if (t.isEmpty()) {
             return;
         }
-        try {
-            doHandle(t);
-        } catch (Exception e) {
-            log.error("Pending#handle failed:{}", Throwables.getStackTraceAsString(e));
-        }
+
+        doHandle(t);
     }
 
     /**

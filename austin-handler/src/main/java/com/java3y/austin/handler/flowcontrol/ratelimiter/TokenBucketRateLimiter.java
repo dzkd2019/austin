@@ -85,6 +85,6 @@ public class TokenBucketRateLimiter {
             Thread.sleep(sleepTimeMs);
         }
 
-        return storedTokens;
+        return sleepTimeMs;
     }
 }

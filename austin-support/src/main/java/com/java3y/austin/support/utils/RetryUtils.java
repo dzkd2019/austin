@@ -1,10 +1,11 @@
 package com.java3y.austin.support.utils;
 
+import com.java3y.austin.common.exception.CommonException;
+import com.java3y.austin.common.exception.NetWorkTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
-import com.java3y.austin.common.exception.CommonException;
 
 @Slf4j
 public class RetryUtils {
@@ -19,22 +20,13 @@ public class RetryUtils {
      * @param action      真正要执行的云端调用逻辑
      */
     public static void executeWithRetry(int maxRetries, long baseDelayMs, Runnable action) {
-        try {
-            submitWithRetry(maxRetries, baseDelayMs, () -> {
-                action.run();
-                return null; // Callable 需要返回值，对于 Runnable 我们直接返回 null 即可
-            });
-        } catch (Exception e) {
-            // 注意：Runnable.run() 本身不抛出受检异常（Checked Exception）
-            // 因为 submitWithRetry 会抛出 Exception，我们需要在这里做一个异常转换
-            if (e instanceof RuntimeException) {
-                throw (RuntimeException) e;
-            }
-            throw new RuntimeException("重试执行任务时发生非预期异常", e);
-        }
+        submitWithRetry(maxRetries, baseDelayMs, () -> {
+            action.run();
+            return null; // Callable 需要返回值，对于 Runnable 我们直接返回 null 即可
+        });
     }
 
-    public static <T> T submitWithRetry(int maxRetries, long baseDelayMs, Callable<T> action) throws Exception {
+    public static <T> T submitWithRetry(int maxRetries, long baseDelayMs, Callable<T> action) {
         int attempt = 0;
 
         while (true) {
@@ -47,12 +39,12 @@ public class RetryUtils {
                 // 2. 异常拦截与判断
                 if (!isRetriable(e)) {
                     log.error("遇到不可重试的致命异常，直接放弃发送！异常: {}", e.getMessage());
-                    throw e;
+                    throw new RuntimeException("不可重试的异常", e); // 直接抛出，不再重试
                 }
 
                 if (attempt >= maxRetries) {
                     log.error("云服务调用失败，已达到最大重试次数 {}，放弃重试。最后一次异常: {}", maxRetries, e.getMessage());
-                    throw e; // 重试耗尽，抛出异常交由上层处理（如写入死信队列）
+                    throw new RuntimeException("达到最大重试次数，放弃重试", e);
                 }
 
                 // 3. 计算退避时间 (指数退避 + 随机抖动)
@@ -89,13 +81,14 @@ public class RetryUtils {
         // SocketTimeoutException 覆盖读写超时；
         // NoRouteToHostException 是 SocketException 的子类，无需单独列出。
         if (e instanceof java.net.SocketTimeoutException
-                || e instanceof java.net.ConnectException
-                || e instanceof java.net.SocketException) {
+                || e instanceof java.net.SocketException
+                || e instanceof NetWorkTimeoutException) {
+
             return true;
         }
         if (e instanceof CommonException ce) {
             String code = ce.getCode();
-            return switch(code) {
+            return switch (code) {
                 case "-1", "500" -> true;
                 default -> false;
             };

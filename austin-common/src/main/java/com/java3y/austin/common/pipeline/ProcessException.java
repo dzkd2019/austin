@@ -27,6 +27,11 @@ public class ProcessException extends RuntimeException {
         this.processContext = processContext;
     }
 
+    public  ProcessException(String message, ProcessContext<? extends ProcessModel> processContext, Throwable cause) {
+        super(message, cause);
+        this.processContext = processContext;
+    }
+
     @Override
     public String getMessage() {
         if (Objects.nonNull(this.processContext)) {

@@ -35,8 +35,8 @@ public class PrepareTestDataTest {
 
     private static final String UPLOAD_PREFIX = "/home/mrawa/code/austin/data/upload/crowd/";
 
-    private static final WeightedRandomUtils<Integer> msgTypeRandom = new WeightedRandomUtils<>();
-    private static final WeightedRandomUtils<Integer> shieldTypeRandom = new WeightedRandomUtils<>();
+    private static final com.java3y.austin.support.utils.WeightedRandomUtils<Integer> msgTypeRandom = new com.java3y.austin.support.utils.WeightedRandomUtils<>();
+    private static final com.java3y.austin.support.utils.WeightedRandomUtils<Integer> shieldTypeRandom = new com.java3y.austin.support.utils.WeightedRandomUtils<>();
 
     @Test
     public void batchInsertData() throws FileNotFoundException {

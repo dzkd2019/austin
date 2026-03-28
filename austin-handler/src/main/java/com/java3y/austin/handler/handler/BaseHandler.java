@@ -50,12 +50,8 @@ public abstract class BaseHandler implements Handler {
         if (Objects.nonNull(flowControlParam)) {
             flowControlFactory.flowControl(taskInfo, flowControlParam);
         }
-        if (doHandle(taskInfo)) {
-//            logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_SUCCESS.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
-            log.info("调用接口发送成功");
-            return;
-        }
-//        logUtils.print(AnchorInfo.builder().state(AnchorState.SEND_FAIL.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+
+        doHandle(taskInfo);
     }
 
 

@@ -6,6 +6,8 @@ import com.alibaba.fastjson2.JSONException;
 import com.alibaba.fastjson2.JSONWriter;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.support.constans.MdcConstant;
+import com.java3y.austin.support.mq.MqRateLimiter;
+import com.java3y.austin.support.mq.kafka.KafkaSendMqServiceImpl;
 import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import com.java3y.austin.support.utils.MdcUtil;
 import com.java3y.austin.support.utils.RedisUtils;
@@ -20,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 
 /**
@@ -40,8 +41,21 @@ public class NightShieldLazyPendingHandler {
     private KafkaTemplate<String, String> kafkaTemplate;
     @Value("${austin.business.topic.name}")
     private String topicName;
+
+    @Value("austin.business.tagId.value")
+    private String tagId;
+
+    @Value("${austin.mq.pending-timeout-ms:" + DEFAULT_PENDING_TIMEOUT_MS + "}")
+    private long pendingTimeoutMs;
+
     @Autowired
     private RedisUtils redisUtils;
+
+    private MqRateLimiter mqRateLimiter;
+
+    private KafkaSendMqServiceImpl sendMqService;
+
+    private static final long DEFAULT_PENDING_TIMEOUT_MS = 3000L;
 
     /**
      * 处理 夜间屏蔽(次日早上9点发送的任务)
@@ -82,17 +96,22 @@ public class NightShieldLazyPendingHandler {
                     mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getBusinessId()));
                     mdcContext.put(MdcConstant.MDC_KAFKA_GROUP_ID, GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfo));
 
+                    taskInfo.setEnqueueTime(System.currentTimeMillis());
                     // 为【每一条】消息单独提交一个虚拟线程去发送 Kafka
-                    // todo 这里向kafka发送消息避开了 SendMqAction 中的信号量限流
                     executor.execute(MdcUtil.wrap(mdcContext, () -> {
                         try {
-                            // 重新设置入队时间
-//                            taskInfo.setEnqueueTime(System.currentTimeMillis());
+                            long waitMs = System.currentTimeMillis() - taskInfo.getEnqueueTime();
+                            if (waitMs > pendingTimeoutMs) {
+                                log.warn("message timeout before mq send, waitMs={}ms, threshold={}ms",
+                                        waitMs, pendingTimeoutMs);
+                                return;
+                            }
+
                             String message = JSON.toJSONString(Collections.singletonList(taskInfo), JSONWriter.Feature.WriteClassName);
 
                             // KafkaTemplate.send 默认是异步的，但它底层获取元数据时会阻塞。
                             // 用 .get() 强制当前虚拟线程阻塞等待发送结果，确保绝对可靠。
-                            kafkaTemplate.send(topicName, message).get();
+                            sendMqService.send(topicName, message, tagId, true);
                             successCount.incrementAndGet();
                         } catch (Exception e) {
                             // 这里可以记录失败的数据到另一个错误队列，或者抛出异常让 XXL-JOB 记录失败

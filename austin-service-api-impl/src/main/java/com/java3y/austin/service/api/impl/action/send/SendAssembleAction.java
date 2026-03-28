@@ -14,6 +14,7 @@ import com.java3y.austin.common.enums.ChannelType;
 import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
+import com.java3y.austin.common.pipeline.ProcessException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.domain.MessageParam;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
@@ -98,7 +99,8 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
             sendTaskModel.setTaskInfo(taskInfos);
         } catch (Exception e) {
             context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR));
-            log.error("assemble task fail! templateId:{}, e:{}", messageTemplateId, Throwables.getStackTraceAsString(e));
+//            log.error("assemble task fail! templateId:{}", messageTemplateId, e);
+            throw new ProcessException("组装TaskInfo时发生错误", context, e);
         }
 
     }

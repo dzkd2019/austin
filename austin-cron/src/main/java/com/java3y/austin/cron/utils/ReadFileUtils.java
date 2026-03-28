@@ -7,7 +7,7 @@ import cn.hutool.core.text.csv.*;
 import cn.hutool.core.util.CharsetUtil;
 import com.google.common.base.Throwables;
 import com.java3y.austin.cron.csv.CountFileRowHandler;
-import com.java3y.austin.cron.vo.CrowdInfoVo;
+import com.java3y.austin.support.vo.CrowdInfoVo;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStreamReader;

@@ -4,15 +4,12 @@ import cn.hutool.core.util.ObjectUtil;
 import com.google.common.collect.Sets;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.enums.ChannelType;
-import com.java3y.austin.common.enums.RespStatusEnum;
-import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.pipeline.ProcessException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.handler.handler.HandlerHolder;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -48,10 +45,9 @@ public class SendMessageAction implements BusinessProcess<TaskInfo> {
             }
 
             context.setResponse(BasicResultVO.success());
-        } catch (CommonException e) {
+        } catch (Exception e) {
             context.setNeedBreak(true);
-            context.setResponse(BasicResultVO.fail(e.getRespStatusEnum(), e.getMessage()));
-
+            context.setResponse(BasicResultVO.fail("调用云服务发送失败"));
             throw new ProcessException(context, e);
         }
     }

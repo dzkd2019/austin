@@ -7,7 +7,7 @@ import com.java3y.austin.cron.csv.CountFileRowHandler;
 import com.java3y.austin.cron.pending.CrowdBatchTaskPending;
 import com.java3y.austin.cron.service.TaskHandler;
 import com.java3y.austin.cron.utils.ReadFileUtils;
-import com.java3y.austin.cron.vo.CrowdInfoVo;
+import com.java3y.austin.support.vo.CrowdInfoVo;
 import com.java3y.austin.support.cache.MessageTemplateCaching;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.support.pending.AbstractLazyPending;
@@ -82,7 +82,7 @@ public class TaskHandlerImpl implements TaskHandler {
     private void onComplete(CsvRow row, long countCsvRow, AbstractLazyPending<?> crowdBatchTaskPending, Long messageTemplateId) {
         if (row.getOriginalLineNumber() == countCsvRow) {
             crowdBatchTaskPending.setStop(true);
-            log.info("messageTemplate:[{}] read csv file complete!", messageTemplateId);
+            log.debug("messageTemplate:[{}] read csv file complete!", messageTemplateId);
         }
     }
 }

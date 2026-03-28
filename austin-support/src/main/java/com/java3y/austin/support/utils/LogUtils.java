@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class LogUtils extends CustomLogListener {
 
-    @Autowired
-    private SendMqService sendMqService;
+//    @Autowired
+//    private SendMqService sendMqService;
 
     @Value("${austin.business.log.topic.name}")
     private String topicName;
@@ -51,12 +51,12 @@ public class LogUtils extends CustomLogListener {
         String message = JSON.toJSONString(anchorInfo);
         log.info(message);
 
-        try {
-            sendMqService.send(topicName, message);
-        } catch (Exception e) {
-            log.error("LogUtils#print send mq fail! e:{},params:{}", Throwables.getStackTraceAsString(e)
-                    , JSON.toJSONString(anchorInfo));
-        }
+//        try {
+//            sendMqService.send(topicName, message);
+//        } catch (Exception e) {
+//            log.error("LogUtils#print send mq fail! e:{},params:{}", Throwables.getStackTraceAsString(e)
+//                    , JSON.toJSONString(anchorInfo));
+//        }
     }
 
     /**

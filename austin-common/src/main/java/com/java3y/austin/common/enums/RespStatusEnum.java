@@ -72,9 +72,10 @@ public enum RespStatusEnum {
     /**
      * Redis 请求错误
      */
-    REDIS_ERROR("D0001", "Redis请求错误")
-    ;
+    REDIS_ERROR("D0001", "Redis请求错误"),
 
+    KAFKA_TIMEOUT("D0002", "Kafka请求超时")
+    ;
     /**
      * 响应状态
      */
