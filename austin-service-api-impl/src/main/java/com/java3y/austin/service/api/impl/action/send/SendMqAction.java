@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@RefreshScope
 public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
     /** MDC 中存放 traceId 的 key，与 MdcEnrichFilter 保持一致 */
@@ -109,5 +111,4 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
     }
 
 }
-
 

@@ -8,10 +8,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,14 +19,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Data
 public abstract class AbstractLazyPending<T> {
-
-    /**
-     * 全局 Pending 实例注册表，供监控指标采集器使用。
-     * 所有实例均由 Spring 容器管理生命周期，此处持有强引用不会导致内存泄漏。
-     */
-    @SuppressWarnings("rawtypes")
-    public static final Set<AbstractLazyPending> PENDING_REGISTRY =
-            Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     /**
      * 子类构造方法必须初始化该参数
@@ -56,8 +45,6 @@ public abstract class AbstractLazyPending<T> {
      */
     @PostConstruct
     public void initConsumePending() {
-        // 注册到全局 Pending 注册表，供监控指标采集
-        PENDING_REGISTRY.add(this);
         tasks = new ArrayList<>(pendingParam.getNumThreshold());
         Thread.ofVirtual().name("Pending Thread").start(() -> {
 
@@ -149,4 +136,3 @@ public abstract class AbstractLazyPending<T> {
     public abstract void doHandle(List<T> list);
 
 }
-
