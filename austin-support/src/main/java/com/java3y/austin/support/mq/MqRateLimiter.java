@@ -2,6 +2,7 @@ package com.java3y.austin.support.mq;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Semaphore;
@@ -16,6 +17,7 @@ import java.util.concurrent.Semaphore;
  * @author 3y
  */
 @Component
+@RefreshScope
 public class MqRateLimiter {
 
     /** 默认最大并发发送许可数 */
