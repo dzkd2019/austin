@@ -88,6 +88,7 @@ public class NightShieldLazyPendingHandler {
             sendMqService.send(topicName, message, tagId);
         } catch (Exception e) {
             log.error("nightShieldLazyJob send mq fail! params:{}", info, e);
+            throw new IllegalStateException("nightShieldLazyJob send mq fail", e);
         } finally {
             if (acquired) {
                 mqRateLimiter.getSemaphore().release();

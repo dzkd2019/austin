@@ -107,6 +107,7 @@ public abstract class AbstractLazyPending<T> {
             pendingParam.getQueue().put(t);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            log.error("Pending#pending interrupted while enqueue task", e);
             throw new IllegalStateException("Pending#pending interrupted", e);
         }
     }
@@ -123,6 +124,7 @@ public abstract class AbstractLazyPending<T> {
         try {
             doHandle(t);
         } catch (Exception e) {
+            log.error("Pending#handle failed", e);
             throw new IllegalStateException("Pending#handle failed", e);
         }
     }
