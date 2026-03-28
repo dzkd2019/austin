@@ -125,6 +125,7 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
                     .msgType(messageTemplate.getMsgType())
                     .shieldType(messageTemplate.getShieldType())
                     .sendAccount(messageTemplate.getSendAccount())
+                    .enqueueTime(System.currentTimeMillis())
                     .contentModel(getContentModelValue(messageTemplate, messageParam)).build();
 
             if (CharSequenceUtil.isBlank(taskInfo.getBizId())) {
