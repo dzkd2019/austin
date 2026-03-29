@@ -32,6 +32,8 @@ public class CrowdInfoVo implements Serializable {
      */
     private String receiver;
 
+    private Long xxlJobId;
+
     /**
      * 参数信息
      */

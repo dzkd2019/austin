@@ -58,15 +58,15 @@ public class AustinAspect {
         this.printRequestLog(methodSignature, joinPoint.getArgs());
     }
 
-    /**
-     * 异常通知
-     *
-     * @param ex
-     */
-    @AfterThrowing(value = "executeService()", throwing = "ex")
-    public void doAfterThrowingAdvice(Throwable ex) {
-        printExceptionLog(ex);
-    }
+//    /**
+//     * 异常通知
+//     *
+//     * @param ex
+//     */
+//    @AfterThrowing(value = "executeService()", throwing = "ex")
+//    public void doAfterThrowingAdvice(Throwable ex) {
+//        printExceptionLog(ex);
+//    }
 
     /**
      * 打印请求日志
@@ -76,9 +76,7 @@ public class AustinAspect {
      */
     public void printRequestLog(MethodSignature methodSignature, Object[] argObs) {
         RequestLogDTO logVo = new RequestLogDTO();
-        //设置请求唯一ID
-        logVo.setId(IdUtil.fastUUID());
-        request.setAttribute(REQUEST_ID_KEY, logVo.getId());
+
         logVo.setUri(request.getRequestURI());
         logVo.setMethod(request.getMethod());
         List<Object> args = Lists.newArrayList();
@@ -99,14 +97,12 @@ public class AustinAspect {
         log.info(JSON.toJSONString(logVo));
     }
 
-    /**
-     * 打印异常日志
-     *
-     * @param ex
-     */
-    public void printExceptionLog(Throwable ex) {
-        JSONObject logVo = new JSONObject();
-        logVo.put("id", request.getAttribute(REQUEST_ID_KEY));
-        log.error(JSON.toJSONString(logVo), ex);
-    }
+//    /**
+//     * 打印异常日志
+//     *
+//     * @param ex
+//     */
+//    public void printExceptionLog(Throwable ex) {
+//        log.error("请求发生异常，异常信息：{}", ex.getMessage(), ex);
+//    }
 }

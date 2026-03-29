@@ -99,7 +99,6 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
             sendTaskModel.setTaskInfo(taskInfos);
         } catch (Exception e) {
             context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR));
-//            log.error("assemble task fail! templateId:{}", messageTemplateId, e);
             throw new ProcessException("组装TaskInfo时发生错误", context, e);
         }
 

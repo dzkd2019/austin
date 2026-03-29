@@ -10,7 +10,6 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.impl.domain.RecallTaskModel;
 import com.java3y.austin.support.mq.SendMqService;
-import com.java3y.austin.support.mq.kafka.KafkaSendMqServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RecallMqAction implements BusinessProcess<RecallTaskModel> {
     @Autowired
-    private KafkaSendMqServiceImpl sendMqService;
+    private SendMqService sendMqService;
 
     @Value("${austin.business.recall.topic.name}")
     private String austinRecall;

@@ -38,5 +38,4 @@ public class PendingParam<T> {
      * batch 触发执行的时间阈值，单位毫秒【必填】
      */
     private Long timeThreshold;
-
 }

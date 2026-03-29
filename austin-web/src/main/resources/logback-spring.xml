@@ -31,11 +31,11 @@
             <customFields>{"app":"austin","env":"${springProfile}"}</customFields>
             <!-- 输出所有 MDC 字段到 JSON（traceId / messageId / requestPath / userId / kafkaTopic 等） -->
             <includeMdcKeyName>traceId</includeMdcKeyName>
-            <includeMdcKeyName>messageId</includeMdcKeyName>
             <includeMdcKeyName>templateId</includeMdcKeyName>
-            <includeMdcKeyName>requestPath</includeMdcKeyName>
+            <includeMdcKeyName>messageId</includeMdcKeyName>
             <includeMdcKeyName>businessId</includeMdcKeyName>
             <includeMdcKeyName>kafkaGroupId</includeMdcKeyName>
+            <includeMdcKeyName>xxlJobId</includeMdcKeyName>
             <!-- 不记录调用方行号，避免高并发下的额外栈帧解析开销 -->
             <includeCallerData>false</includeCallerData>
         </encoder>

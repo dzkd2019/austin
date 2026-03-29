@@ -7,10 +7,11 @@ import com.java3y.austin.cron.csv.CountFileRowHandler;
 import com.java3y.austin.cron.pending.CrowdBatchTaskPending;
 import com.java3y.austin.cron.service.TaskHandler;
 import com.java3y.austin.cron.utils.ReadFileUtils;
-import com.java3y.austin.support.vo.CrowdInfoVo;
 import com.java3y.austin.support.cache.MessageTemplateCaching;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.support.pending.AbstractLazyPending;
+import com.java3y.austin.support.vo.CrowdInfoVo;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -47,11 +48,14 @@ public class TaskHandlerImpl implements TaskHandler {
             return;
         }
 
+
         // 1. 获取文件行数大小
         long countCsvRow = ReadFileUtils.countCsvRow(messageTemplate.getCronCrowdPath(), new CountFileRowHandler());
 
         // 2. 读取文件得到每一行记录给到队列做lazy batch处理
         CrowdBatchTaskPending crowdBatchTaskPending = context.getBean(CrowdBatchTaskPending.class);
+        long jobId = XxlJobHelper.getJobId();
+
         ReadFileUtils.getCsvRow(messageTemplate.getCronCrowdPath(), row -> {
             if (CollUtil.isEmpty(row.getFieldMap())
                     || CharSequenceUtil.isBlank(row.getFieldMap().get(ReadFileUtils.RECEIVER_KEY))) {
@@ -60,13 +64,14 @@ public class TaskHandlerImpl implements TaskHandler {
 
             // 3. 每一行处理交给LazyPending
             Map<String, String> params = ReadFileUtils.getParamFromLine(row.getFieldMap());
-            CrowdInfoVo crowdInfoVo = CrowdInfoVo.builder().receiver(row.getFieldMap().get(ReadFileUtils.RECEIVER_KEY))
+            CrowdInfoVo crowdInfoVo = CrowdInfoVo.builder().receiver(row.getFieldMap().get(ReadFileUtils.RECEIVER_KEY)).xxlJobId(jobId)
                     .params(params).messageTemplateId(messageTemplateId).build();
             crowdBatchTaskPending.pending(crowdInfoVo);
 
             // 4. 判断是否读取文件完成回收资源且更改状态
             onComplete(row, countCsvRow, crowdBatchTaskPending, messageTemplateId);
         });
+
     }
 
     /**

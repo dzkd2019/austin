@@ -16,6 +16,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
@@ -90,7 +91,7 @@ public class ConsumeServiceImpl implements ConsumeService {
             log.info("从Kafka消息队列中拉取到消息, messageId: {}, receivers: {}", taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
 
-            Map<String, String> mdcContext = new HashMap<>();
+            Map<String, String> mdcContext = MDC.getCopyOfContextMap();
             mdcContext.put(MdcConstant.MDC_MESSAGE_ID, taskInfo.getMessageId());
             mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getBusinessId()));
             mdcContext.put(MdcConstant.MDC_KAFKA_GROUP_ID, groupId);

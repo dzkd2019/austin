@@ -1,6 +1,7 @@
 package com.java3y.austin.support.pending;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.google.common.base.Throwables;
 import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.utils.MdcUtil;
@@ -73,7 +74,9 @@ public abstract class AbstractLazyPending<T> {
                         T ref = taskRef.getFirst();
                         if(ref instanceof CrowdInfoVo crowd){
                             mdcContext.put(MdcConstant.MDC_TEMPLATE_ID, crowd.getMessageTemplateId().toString());
+                            mdcContext.put(MdcConstant.XXL_JOB_ID, String.valueOf(crowd.getXxlJobId()));
                         }
+                        mdcContext.put(MdcConstant.MDC_TRACE_ID, IdUtil.fastSimpleUUID());
                         // 提交异步任务；全局限流由 SendMqAction 中的 MqRateLimiter 统一管控
                         ThreadPoolUtils.getVirtualExecutorService().execute(MdcUtil.wrap(mdcContext, () -> {
                             try {

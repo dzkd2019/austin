@@ -8,4 +8,5 @@ public class MdcConstant {
     public static final String MDC_KAFKA_GROUP_ID = "kafkaGroupId";
     public static final String MDC_MESSAGE_ID = "messageId";
     public static final String MDC_TEMPLATE_ID = "templateId";
+    public static final String XXL_JOB_ID = "xxlJobId";
 }

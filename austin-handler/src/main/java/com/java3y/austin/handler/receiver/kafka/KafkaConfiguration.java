@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ConditionalOnProperty(name = "austin.mq.pipeline", havingValue = MessageQueuePipeline.KAFKA)
 @EnableKafka
 @Slf4j
-public class ReceiverStart {
+public class KafkaConfiguration {
 
     /**
      * receiver的消费方法常量
@@ -72,11 +72,13 @@ public class ReceiverStart {
      */
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> filterContainerFactory(@Value("${austin.business.tagId.key}") String tagIdKey,
-                                                                                          @Value("${austin.business.tagId.value}") String tagIdValue) {
+                                                                                          @Value("${austin.business.tagId.value}") String tagIdValue,
+                                                                                          MdcInterceptor mdcInterceptor) {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setAckDiscarded(true);
 
+        factory.setRecordInterceptor(mdcInterceptor);
         factory.setRecordFilterStrategy(consumerRecord -> {
             for (Header header : consumerRecord.headers()) {
                 if (header.key().equals(tagIdKey) &&

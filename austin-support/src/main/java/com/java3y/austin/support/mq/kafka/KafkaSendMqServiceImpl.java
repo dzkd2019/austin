@@ -3,8 +3,10 @@ package com.java3y.austin.support.mq.kafka;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.java3y.austin.common.exception.SystemBusyException;
 import com.java3y.austin.support.backpressure.RemoteCircuitBreakerManager;
+import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.constans.MessageQueuePipeline;
 import com.java3y.austin.support.mq.MqRateLimiter;
+import com.java3y.austin.support.mq.SendMqService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
@@ -16,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -28,7 +31,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 @Service
 @ConditionalOnProperty(name = "austin.mq.pipeline", havingValue = MessageQueuePipeline.KAFKA)
-public class KafkaSendMqServiceImpl {
+public class KafkaSendMqServiceImpl implements SendMqService {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final MqRateLimiter mqRateLimiter;
@@ -49,18 +52,18 @@ public class KafkaSendMqServiceImpl {
         this.remoteCircuitBreakerManager = remoteCircuitBreakerManager;
     }
 
-    public boolean send(String topic, String jsonValue, String tagId) {
-        return send(topic, jsonValue, tagId, false);
+    public void send(String topic, String jsonValue, String tagId) {
+        send(topic, jsonValue, tagId, false);
     }
 
-    public boolean send(String topic, String jsonValue) {
-        return send(topic, jsonValue, null, false);
+    public void send(String topic, String jsonValue) {
+        send(topic, jsonValue, null, false);
     }
 
-    public boolean send(String topic, String jsonValue, String tagId, boolean blocked) {
+    public void send(String topic, String jsonValue, String tagId, boolean blocked) {
         String traceId = MDC.get(MDC_TRACE_ID);
 
-        if(remoteCircuitBreakerManager.isPaused(topic)) {
+        if (remoteCircuitBreakerManager.isPaused(topic)) {
             log.warn("消费端报告压力过大，暂时停止发送消息");
             throw new SystemBusyException("系统繁忙，请稍后再试");
         }
@@ -68,19 +71,28 @@ public class KafkaSendMqServiceImpl {
         boolean acquired = mqRateLimiter.getSemaphore().tryAcquire();
         try {
             if (!acquired) {
-                log.warn("mq rate-limiter permits exhausted, traceId={}", traceId);
+                log.warn("全局限流生效，无法获取发送许可，拒绝发送消息");
                 throw new SystemBusyException("系统繁忙，请稍后再试");
             }
 
             if (CharSequenceUtil.isNotBlank(tagId)) {
-                List<Header> headers = Collections.singletonList(new RecordHeader(tagIdKey, tagId.getBytes(StandardCharsets.UTF_8)));
+
+                List<Header> headers = new ArrayList<>();
+                headers.add(new RecordHeader(tagIdKey, tagId.getBytes(StandardCharsets.UTF_8)));
+                headers.add(new RecordHeader(MDC_TRACE_ID, traceId.getBytes(StandardCharsets.UTF_8)));
+
+                String xxlJobId = MDC.get(MdcConstant.XXL_JOB_ID);
+                if(xxlJobId != null) {
+                    headers.add(new RecordHeader(MdcConstant.XXL_JOB_ID, xxlJobId.getBytes(StandardCharsets.UTF_8)));
+                }
+                
                 if (blocked) {
                     kafkaTemplate.send(new ProducerRecord<>(topic, null, null, null, jsonValue, headers))
                             .get();
                 } else {
                     kafkaTemplate.send(new ProducerRecord<>(topic, null, null, null, jsonValue, headers));
                 }
-                return true;
+                return;
             }
 
             if (blocked) {
@@ -89,7 +101,6 @@ public class KafkaSendMqServiceImpl {
             } else {
                 kafkaTemplate.send(new ProducerRecord<>(topic, null, null, null, jsonValue));
             }
-            return true;
         } catch (ExecutionException e) {
             throw new RuntimeException("向Kafka主题发送消息失败：" + topic, e);
         } catch (InterruptedException e) {

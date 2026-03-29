@@ -15,7 +15,7 @@ import com.java3y.austin.common.pipeline.ProcessException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
 import com.java3y.austin.support.mq.MqRateLimiter;
-import com.java3y.austin.support.mq.kafka.KafkaSendMqServiceImpl;
+import com.java3y.austin.support.mq.SendMqService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,7 +49,7 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
     private static final long DEFAULT_PENDING_TIMEOUT_MS = 3000L;
 
     @Autowired
-    private KafkaSendMqServiceImpl sendMqService;
+    private SendMqService sendMqService;
 
     @Value("${austin.business.topic.name}")
     private String sendMessageTopic;
@@ -87,11 +87,7 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
         try {
             String message = JSON.toJSONString(sendTaskModel.getTaskInfo(), JSONWriter.Feature.WriteClassName);
-            if (!sendMqService.send(sendMessageTopic, message, tagId)) {
-                log.warn("mq rate-limiter permits exhausted, traceId={}", traceId);
-                context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.SYSTEM_BUSY));
-                return;
-            }
+            sendMqService.send(sendMessageTopic, message, tagId);
 
             context.setResponse(BasicResultVO.success(taskInfo.stream()
                     .map(v -> SimpleTaskInfo.builder()
@@ -100,11 +96,9 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
                             .bizId(v.getBizId())
                             .build())
                     .collect(Collectors.toList())));
-        }
-        catch (NetWorkTimeoutException | SystemBusyException e) {
+        } catch (NetWorkTimeoutException | SystemBusyException e) {
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.SERVICE_ERROR));
             throw new ProcessException(context, e);
         }

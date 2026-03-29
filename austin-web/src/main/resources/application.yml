@@ -3,6 +3,9 @@ spring:
     active: test
   application:
     name: austin
+  threads:
+    virtual:
+      enabled: true
 
   # ==================== Database Configuration ====================
   datasource:
