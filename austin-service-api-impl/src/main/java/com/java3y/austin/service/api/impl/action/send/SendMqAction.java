@@ -14,8 +14,10 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.pipeline.ProcessException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
+import com.java3y.austin.support.constans.MessageQueuePipeline;
 import com.java3y.austin.support.mq.MqRateLimiter;
 import com.java3y.austin.support.mq.SendMqService;
+import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +89,12 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
         try {
             String message = JSON.toJSONString(sendTaskModel.getTaskInfo(), JSONWriter.Feature.WriteClassName);
-            sendMqService.send(sendMessageTopic, message, tagId);
+            if (MessageQueuePipeline.KAFKA.equals(mqPipeline)) {
+                String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(first);
+                sendMqService.send(groupId, message, tagId);
+            } else {
+                sendMqService.send(sendMessageTopic, message, tagId);
+            }
 
             context.setResponse(BasicResultVO.success(taskInfo.stream()
                     .map(v -> SimpleTaskInfo.builder()
@@ -105,4 +112,3 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
     }
 
 }
-

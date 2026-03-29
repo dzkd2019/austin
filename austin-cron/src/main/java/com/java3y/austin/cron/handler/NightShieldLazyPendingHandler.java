@@ -39,9 +39,6 @@ public class NightShieldLazyPendingHandler {
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
-    @Value("${austin.business.topic.name}")
-    private String topicName;
-
     @Value("austin.business.tagId.value")
     private String tagId;
 
@@ -111,6 +108,7 @@ public class NightShieldLazyPendingHandler {
 
                             // KafkaTemplate.send 默认是异步的，但它底层获取元数据时会阻塞。
                             // 用 .get() 强制当前虚拟线程阻塞等待发送结果，确保绝对可靠。
+                            String topicName = GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfo);
                             sendMqService.send(topicName, message, tagId, true);
                             successCount.incrementAndGet();
                         } catch (Exception e) {
