@@ -50,8 +50,8 @@ VARIABLE_KEYS_SMS = ["code", "name", "amount", "order_no"]
 VARIABLE_KEYS_EMAIL = ["username", "product", "expire_date", "order_id"]
 
 # 对应 MessageTemplate.idType 枚举值
-ID_TYPE_PHONE = 1
-ID_TYPE_EMAIL = 3
+ID_TYPE_PHONE = 30
+ID_TYPE_EMAIL = 50
 
 
 # ──────────────────────────────────────────────────────────────

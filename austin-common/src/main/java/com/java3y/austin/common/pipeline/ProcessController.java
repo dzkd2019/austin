@@ -5,6 +5,7 @@ import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.common.exception.MessageTimeoutException;
 import com.java3y.austin.common.exception.NetWorkTimeoutException;
+import com.java3y.austin.common.exception.SystemBusyException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,7 @@ public class ProcessController {
                 }
             }
         }
-        catch (NetWorkTimeoutException e) {
+        catch (NetWorkTimeoutException | SystemBusyException e) {
             throw e;
         }
         catch (ProcessException e) {

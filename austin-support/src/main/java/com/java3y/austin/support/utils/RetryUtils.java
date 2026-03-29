@@ -1,7 +1,9 @@
 package com.java3y.austin.support.utils;
 
 import com.java3y.austin.common.exception.CommonException;
+import com.java3y.austin.common.exception.MessageTimeoutException;
 import com.java3y.austin.common.exception.NetWorkTimeoutException;
+import com.java3y.austin.common.exception.SystemBusyException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Callable;
@@ -35,7 +37,11 @@ public class RetryUtils {
                 // 1. 执行真实的业务逻辑
                 return action.call(); // 如果成功，直接结束并返回
 
-            } catch (Exception e) {
+            }
+            catch (MessageTimeoutException | SystemBusyException e) {
+                throw e; // 这些异常属于全局限流或超时，直接抛出，不进行重试
+            }
+            catch (Exception e) {
                 // 2. 异常拦截与判断
                 if (!isRetriable(e)) {
                     log.error("遇到不可重试的致命异常，直接放弃发送！异常: {}", e.getMessage());

@@ -4,6 +4,7 @@ import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.common.exception.MessageTimeoutException;
 import com.java3y.austin.common.exception.RedisOperationException;
+import com.java3y.austin.common.exception.SystemBusyException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,17 +35,24 @@ public class ExceptionHandlerAdvice {
      * 消息超时 / 限流快速失败：系统超时，请稍后再试
      */
     @ExceptionHandler(MessageTimeoutException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.REQUEST_TIMEOUT)
     public BasicResultVO<String> handleMessageTimeout(MessageTimeoutException e) {
         log.warn("MessageTimeoutException, traceId={}, message={}", MDC.get(MDC_TRACE_ID), e.getMessage());
         return BasicResultVO.fail(RespStatusEnum.SYSTEM_TIMEOUT);
+    }
+
+    @ExceptionHandler(SystemBusyException.class)
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    public BasicResultVO<String> handleSystemBusyException(SystemBusyException e) {
+        log.warn("SystemBusyException, traceId={}, message={}", MDC_TRACE_ID, e.getMessage());
+        return BasicResultVO.fail(RespStatusEnum.SYSTEM_BUSY);
     }
 
     /**
      * 业务异常：返回业务状态码与脱敏信息
      */
     @ExceptionHandler(CommonException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public BasicResultVO<RespStatusEnum> handleCommonException(CommonException e) {
         log.error("CommonException, traceId={}", MDC.get(MDC_TRACE_ID), e);
         return new BasicResultVO<>(e.getCode(), e.getMessage(), e.getRespStatusEnum());
@@ -54,14 +62,14 @@ public class ExceptionHandlerAdvice {
      * 兜底异常：记录完整堆栈，返回通用系统错误提示
      */
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public BasicResultVO<String> handleException(Exception e) {
         log.error("Unhandled exception, traceId={}", MDC.get(MDC_TRACE_ID), e);
         return BasicResultVO.fail(RespStatusEnum.ERROR_500);
     }
 
     @ExceptionHandler(RedisOperationException.class)
-    @ResponseStatus(HttpStatus.OK)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public BasicResultVO<String> handleRedisOperationException(RedisOperationException e) {
         log.error("RedisOperationException, traceId={}", MDC.get(MDC_TRACE_ID), e);
         return BasicResultVO.fail(RespStatusEnum.ERROR_500);

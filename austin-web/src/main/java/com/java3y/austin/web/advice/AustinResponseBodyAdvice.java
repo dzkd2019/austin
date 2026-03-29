@@ -30,7 +30,7 @@ public class AustinResponseBodyAdvice implements ResponseBodyAdvice<Object> {
     @Override
     public Object beforeBodyWrite(Object data, MethodParameter methodParameter, MediaType mediaType, Class aClass,
                                   ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse) {
-        if (Objects.nonNull(data) && Objects.nonNull(data.getClass())) {
+        if (Objects.nonNull(data)) {
             String simpleName = data.getClass().getSimpleName();
             if (RETURN_CLASS.equalsIgnoreCase(simpleName)) {
                 return data;

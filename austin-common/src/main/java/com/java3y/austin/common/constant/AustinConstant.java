@@ -59,4 +59,6 @@ public class AustinConstant {
     }
 
     public static final String SYSTEM_USER = "mrawa";
+
+    public static final String REDIS_BACKPRESSURE_TOPIC = "austin-backpressure-topic";
 }

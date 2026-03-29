@@ -1,6 +1,8 @@
 package com.java3y.austin.support.mq.kafka;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.java3y.austin.common.exception.SystemBusyException;
+import com.java3y.austin.support.backpressure.RemoteCircuitBreakerManager;
 import com.java3y.austin.support.constans.MessageQueuePipeline;
 import com.java3y.austin.support.mq.MqRateLimiter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +32,7 @@ public class KafkaSendMqServiceImpl {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final MqRateLimiter mqRateLimiter;
-
-//    private static final WeightedRandomUtils<String> random =  new WeightedRandomUtils<>();
+    private final RemoteCircuitBreakerManager remoteCircuitBreakerManager;
 
     @Value("${austin.business.tagId.key}")
     private String tagIdKey;
@@ -41,16 +42,11 @@ public class KafkaSendMqServiceImpl {
      */
     private static final String MDC_TRACE_ID = "traceId";
 
-//    @PostConstruct
-//    public void init() {
-//        random.add(96, "success");
-//        random.add(2, "fail");
-//        random.add(2, "timeout");
-//    }
 
-    public KafkaSendMqServiceImpl(KafkaTemplate<String, String> kafkaTemplate, MqRateLimiter mqRateLimiter) {
+    public KafkaSendMqServiceImpl(KafkaTemplate<String, String> kafkaTemplate, MqRateLimiter mqRateLimiter, RemoteCircuitBreakerManager remoteCircuitBreakerManager) {
         this.kafkaTemplate = kafkaTemplate;
         this.mqRateLimiter = mqRateLimiter;
+        this.remoteCircuitBreakerManager = remoteCircuitBreakerManager;
     }
 
     public boolean send(String topic, String jsonValue, String tagId) {
@@ -64,22 +60,17 @@ public class KafkaSendMqServiceImpl {
     public boolean send(String topic, String jsonValue, String tagId, boolean blocked) {
         String traceId = MDC.get(MDC_TRACE_ID);
 
-//        String status = random.next();
-
+        if(remoteCircuitBreakerManager.isPaused(topic)) {
+            log.warn("消费端报告压力过大，暂时停止发送消息");
+            throw new SystemBusyException("系统繁忙，请稍后再试");
+        }
 
         boolean acquired = mqRateLimiter.getSemaphore().tryAcquire();
         try {
             if (!acquired) {
                 log.warn("mq rate-limiter permits exhausted, traceId={}", traceId);
-                return false;
+                throw new SystemBusyException("系统繁忙，请稍后再试");
             }
-
-//            if("timeout".equals(status)) {
-//                throw new NetWorkTimeoutException("发送消息到Kafka超时");
-//            }
-//            else if("fail".equals(status)) {
-//                throw new ExecutionException("模拟发送消息到Kafka失败", new RuntimeException("模拟Kafka发送失败"));
-//            }
 
             if (CharSequenceUtil.isNotBlank(tagId)) {
                 List<Header> headers = Collections.singletonList(new RecordHeader(tagIdKey, tagId.getBytes(StandardCharsets.UTF_8)));

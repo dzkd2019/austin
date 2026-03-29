@@ -1,8 +1,10 @@
 package com.java3y.austin.handler.backpressure;
 
+import com.java3y.austin.common.constant.AustinConstant;
 import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.stereotype.Component;
@@ -43,11 +45,13 @@ public class VirtualThreadBackPressureManager {
      */
     private final Map<String, GroupContext> groupContexts = new ConcurrentHashMap<>();
     private final KafkaListenerEndpointRegistry registry;
+    private final StringRedisTemplate redisTemplate;
 
     // ==================== 构造函数 =====================
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    public VirtualThreadBackPressureManager(KafkaListenerEndpointRegistry registry) {
+    public VirtualThreadBackPressureManager(KafkaListenerEndpointRegistry registry, StringRedisTemplate redisTemplate) {
         this.registry = registry;
+        this.redisTemplate = redisTemplate;
     }
 
     @PostConstruct
@@ -77,6 +81,7 @@ public class VirtualThreadBackPressureManager {
                 log.warn("Group [{}] 触及高水位 ({} / {})，正式下达暂停消费指令",
                         groupId, current, highWaterMark);
                 container.pause();
+                redisTemplate.convertAndSend(AustinConstant.REDIS_BACKPRESSURE_TOPIC, groupId + ":pause");
             }
         }
     }
@@ -95,6 +100,7 @@ public class VirtualThreadBackPressureManager {
                 log.info("Group [{}] 水位回落至低水位 ({} / {})，恢复拉取消费",
                         groupId, current, lowWaterMark);
                 container.resume();
+                redisTemplate.convertAndSend(AustinConstant.REDIS_BACKPRESSURE_TOPIC, groupId + ":resume");
             }
         }
     }

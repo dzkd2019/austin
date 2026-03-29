@@ -8,6 +8,7 @@ import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.exception.MessageTimeoutException;
 import com.java3y.austin.common.exception.NetWorkTimeoutException;
+import com.java3y.austin.common.exception.SystemBusyException;
 import com.java3y.austin.common.pipeline.BusinessProcess;
 import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.pipeline.ProcessException;
@@ -100,7 +101,7 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
                             .build())
                     .collect(Collectors.toList())));
         }
-        catch (NetWorkTimeoutException e) {
+        catch (NetWorkTimeoutException | SystemBusyException e) {
             throw e;
         }
         catch (Exception e) {
