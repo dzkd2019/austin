@@ -16,6 +16,7 @@ import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
 import com.java3y.austin.support.mq.MqRateLimiter;
 import com.java3y.austin.support.mq.SendMqService;
+import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,14 +52,8 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
     @Autowired
     private SendMqService sendMqService;
 
-    @Value("${austin.business.topic.name}")
-    private String sendMessageTopic;
-
     @Value("${austin.business.tagId.value}")
     private String tagId;
-
-    @Value("${austin.mq.pipeline}")
-    private String mqPipeline;
 
     /**
      * 消息在队列中等待发往 MQ 的最大超时阈值（毫秒），可通过配置覆盖
@@ -74,9 +69,9 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
         // 1. 超时校验：同一批次所有 TaskInfo 在 SendAssembleAction 中同时组装，enqueueTime 一致；
         //    取首个元素作为代表进行超时判断即可。
-        TaskInfo first = CollUtil.getFirst(taskInfo.iterator());
-        if (first != null && first.getEnqueueTime() > 0) {
-            long waitMs = System.currentTimeMillis() - first.getEnqueueTime();
+        TaskInfo firstTaskInfo = CollUtil.getFirst(taskInfo.iterator());
+        if (firstTaskInfo != null && firstTaskInfo.getEnqueueTime() > 0) {
+            long waitMs = System.currentTimeMillis() - firstTaskInfo.getEnqueueTime();
             if (waitMs > pendingTimeoutMs) {
                 log.warn("message timeout before mq send, traceId={}, waitMs={}ms, threshold={}ms",
                         traceId, waitMs, pendingTimeoutMs);
@@ -87,7 +82,11 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
         try {
             String message = JSON.toJSONString(sendTaskModel.getTaskInfo(), JSONWriter.Feature.WriteClassName);
-            sendMqService.send(sendMessageTopic, message, tagId);
+            if (firstTaskInfo == null) {
+                throw new IllegalStateException("taskInfo is empty when routing topic by groupId");
+            }
+            String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(firstTaskInfo);
+            sendMqService.send(groupId, message, tagId);
 
             context.setResponse(BasicResultVO.success(taskInfo.stream()
                     .map(v -> SimpleTaskInfo.builder()
@@ -105,4 +104,3 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
     }
 
 }
-
