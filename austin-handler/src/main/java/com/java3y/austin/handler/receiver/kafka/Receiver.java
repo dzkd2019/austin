@@ -7,10 +7,13 @@ import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.handler.receiver.MessageReceiver;
 import com.java3y.austin.handler.receiver.service.ConsumeService;
 import com.java3y.austin.support.constans.MessageQueuePipeline;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Scope;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -23,15 +26,36 @@ import java.util.Optional;
  */
 @Slf4j
 @Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @ConditionalOnProperty(name = "austin.mq.pipeline", havingValue = MessageQueuePipeline.KAFKA)
 public class Receiver implements MessageReceiver {
     @Autowired
     private ConsumeService consumeService;
 
+    @Getter
+    private final String topic;
+    @Getter
+    private final String groupId;
+    @Getter
+    private final String id;
+
+    public Receiver() {
+        topic = "austin";
+        groupId = "austin";
+        id = "default-austin-consumer";
+    }
+
+    public Receiver(String id, String topic, String groupId) {
+        this.id = id;
+        this.topic = topic;
+        this.groupId = groupId;
+    }
+
     /**
      * 发送消息
      * todo 解析mdc
      */
+    @KafkaListener(topics = "#{__listener.topic}", groupId = "#{__listener.groupId}", id = "#{__listener.id}", containerFactory = "filterContainerFactory")
     public void consumer(ConsumerRecord<?, String> consumerRecord) {
         Optional<String> kafkaMessage = Optional.ofNullable(consumerRecord.value());
         if (kafkaMessage.isEmpty()) {
