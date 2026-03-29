@@ -57,7 +57,9 @@ public class KafkaConfiguration {
             if (element instanceof Method) {
                 String name = ((Method) element).getDeclaringClass().getSimpleName() + StrPool.DOT + ((Method) element).getName();
                 if (RECEIVER_METHOD_NAME.equals(name)) {
-                    attrs.put("groupId", GROUP_IDS.get(index.getAndIncrement()));
+                    String groupId = GROUP_IDS.get(index.getAndIncrement());
+                    attrs.put("groupId", groupId);
+                    attrs.put("topics", new String[]{groupId});
                 }
             }
             return attrs;

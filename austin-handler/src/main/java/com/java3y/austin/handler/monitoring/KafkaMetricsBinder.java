@@ -55,9 +55,6 @@ public class KafkaMetricsBinder implements MeterBinder {
     private final List<String> allGroupIds;
     private final long lagRefreshIntervalSeconds;
 
-    @Value("${austin.business.topic.name:austinBusiness}")
-    private String businessTopic;
-
     /** 复用的 AdminClient（懒加载，首次刷新时初始化） */
     private volatile AdminClient adminClient;
     private final Object adminClientLock = new Object();
@@ -90,7 +87,7 @@ public class KafkaMetricsBinder implements MeterBinder {
                             lagCache, cache -> cache.getOrDefault(groupId, 0.0))
                     .description("Kafka 消费者组 Lag（消息积压量）")
                     .tag(TAG_GROUP_ID, groupId)
-                    .tag(TAG_TOPIC, businessTopic)
+                    .tag(TAG_TOPIC, groupId)
                     .register(registry);
         }
 
