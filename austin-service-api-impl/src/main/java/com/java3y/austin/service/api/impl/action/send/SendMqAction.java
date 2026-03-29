@@ -14,7 +14,6 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.pipeline.ProcessException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
-import com.java3y.austin.support.constans.MessageQueuePipeline;
 import com.java3y.austin.support.mq.MqRateLimiter;
 import com.java3y.austin.support.mq.SendMqService;
 import com.java3y.austin.support.utils.GroupIdMappingUtils;
@@ -53,14 +52,8 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
     @Autowired
     private SendMqService sendMqService;
 
-    @Value("${austin.business.topic.name}")
-    private String sendMessageTopic;
-
     @Value("${austin.business.tagId.value}")
     private String tagId;
-
-    @Value("${austin.mq.pipeline}")
-    private String mqPipeline;
 
     /**
      * 消息在队列中等待发往 MQ 的最大超时阈值（毫秒），可通过配置覆盖
@@ -89,15 +82,11 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
         try {
             String message = JSON.toJSONString(sendTaskModel.getTaskInfo(), JSONWriter.Feature.WriteClassName);
-            if (MessageQueuePipeline.KAFKA.equals(mqPipeline)) {
-                if (firstTaskInfo == null) {
-                    throw new IllegalStateException("taskInfo is empty when routing kafka topic by groupId");
-                }
-                String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(firstTaskInfo);
-                sendMqService.send(groupId, message, tagId);
-            } else {
-                sendMqService.send(sendMessageTopic, message, tagId);
+            if (firstTaskInfo == null) {
+                throw new IllegalStateException("taskInfo is empty when routing topic by groupId");
             }
+            String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(firstTaskInfo);
+            sendMqService.send(groupId, message, tagId);
 
             context.setResponse(BasicResultVO.success(taskInfo.stream()
                     .map(v -> SimpleTaskInfo.builder()

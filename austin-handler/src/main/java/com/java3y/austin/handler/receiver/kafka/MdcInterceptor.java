@@ -6,7 +6,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.listener.RecordInterceptor;
 import org.springframework.stereotype.Component;
 
@@ -14,9 +13,6 @@ import java.nio.charset.StandardCharsets;
 
 @Component
 public class MdcInterceptor implements RecordInterceptor<String, String> {
-
-    @Value("${austin.business.topic.name}")
-    private String topic;
 
     @Override
     public @Nullable ConsumerRecord<String, String> intercept(ConsumerRecord<String, String> record, Consumer<String, String> consumer) {
