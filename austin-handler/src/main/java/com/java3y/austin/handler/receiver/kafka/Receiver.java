@@ -35,7 +35,6 @@ public class Receiver implements MessageReceiver {
      * 发送消息
      * todo 解析mdc
      */
-    @KafkaListener(topics = "#{T(com.java3y.austin.support.utils.GroupIdMappingUtils).getAllGroupIds()}", containerFactory = "filterContainerFactory")
     public void consumer(ConsumerRecord<?, String> consumerRecord) {
         Optional<String> kafkaMessage = Optional.ofNullable(consumerRecord.value());
         if (kafkaMessage.isEmpty()) {

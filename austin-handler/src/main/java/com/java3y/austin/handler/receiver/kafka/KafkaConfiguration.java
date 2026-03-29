@@ -1,7 +1,5 @@
 package com.java3y.austin.handler.receiver.kafka;
 
-import cn.hutool.core.text.StrPool;
-import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import com.java3y.austin.support.constans.MessageQueuePipeline;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.header.Header;
@@ -11,14 +9,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.kafka.annotation.KafkaListenerAnnotationBeanPostProcessor;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 启动消费者
@@ -32,39 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public class KafkaConfiguration {
 
-    /**
-     * receiver的消费方法常量
-     */
-    private static final String RECEIVER_METHOD_NAME = "Receiver.consumer";
-    /**
-     * 获取得到所有的groupId
-     */
-    private static final List<String> GROUP_IDS = GroupIdMappingUtils.getAllGroupIds();
-    /**
-     * 下标(用于迭代groupIds位置)
-     */
-    private static final AtomicInteger index = new AtomicInteger(0);
-
     @Autowired
     private ConsumerFactory<String, String> consumerFactory;
-
-    /**
-     * 给每个Receiver对象的consumer方法 @KafkaListener赋值相应的groupId
-     */
-    @Bean
-    public static KafkaListenerAnnotationBeanPostProcessor.AnnotationEnhancer groupIdEnhancer() {
-        return (attrs, element) -> {
-            if (element instanceof Method) {
-                String name = ((Method) element).getDeclaringClass().getSimpleName() + StrPool.DOT + ((Method) element).getName();
-                if (RECEIVER_METHOD_NAME.equals(name)) {
-                    String groupId = GROUP_IDS.get(index.getAndIncrement());
-                    attrs.put("groupId", groupId);
-                    attrs.put("topics", new String[]{groupId});
-                }
-            }
-            return attrs;
-        };
-    }
 
     /**
      * 针对tag消息过滤
