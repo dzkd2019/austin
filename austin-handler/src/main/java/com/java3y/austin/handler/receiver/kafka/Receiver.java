@@ -2,7 +2,6 @@ package com.java3y.austin.handler.receiver.kafka;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson2.JSON;
-import com.java3y.austin.common.constant.KafkaTopicConstants;
 import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.handler.receiver.MessageReceiver;
@@ -36,7 +35,7 @@ public class Receiver implements MessageReceiver {
      * 发送消息
      * todo 解析mdc
      */
-    @KafkaListener(topics = KafkaTopicConstants.IM_NOTICE, containerFactory = "filterContainerFactory")
+    @KafkaListener(topics = "#{'${austin.business.topic.name}'}", containerFactory = "filterContainerFactory")
     public void consumer(ConsumerRecord<?, String> consumerRecord) {
         Optional<String> kafkaMessage = Optional.ofNullable(consumerRecord.value());
         if (kafkaMessage.isEmpty()) {

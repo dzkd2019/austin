@@ -2,6 +2,7 @@ package com.java3y.austin.support.utils;
 
 
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.common.constant.KafkaTopicConstants;
 import com.java3y.austin.common.enums.ChannelType;
 import com.java3y.austin.common.enums.EnumUtil;
 import com.java3y.austin.common.enums.MessageType;
@@ -23,13 +24,7 @@ public class GroupIdMappingUtils {
      * (不同的渠道不同的消息类型拥有自己的groupId)
      */
     public static List<String> getAllGroupIds() {
-        List<String> groupIds = new ArrayList<>();
-        for (ChannelType channelType : ChannelType.values()) {
-            for (MessageType messageType : MessageType.values()) {
-                groupIds.add(channelType.getCodeEn() + "." + messageType.getCodeEn());
-            }
-        }
-        return groupIds;
+        return KafkaTopicConstants.getAllBusinessTopics();
     }
 
 

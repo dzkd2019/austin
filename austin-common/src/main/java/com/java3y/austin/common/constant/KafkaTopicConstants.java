@@ -42,9 +42,9 @@ public final class KafkaTopicConstants {
     public static final String DING_DING_ROBOT_MARKETING = "ding_ding_robot.marketing";
     public static final String DING_DING_ROBOT_AUTH_CODE = "ding_ding_robot.auth_code";
 
-    public static final String DING_DING_WORK_NOTICE_NOTICE = "ding_ding_work_notice.notice";
-    public static final String DING_DING_WORK_NOTICE_MARKETING = "ding_ding_work_notice.marketing";
-    public static final String DING_DING_WORK_NOTICE_AUTH_CODE = "ding_ding_work_notice.auth_code";
+    public static final String DING_DING_WORK_NOTICE = "ding_ding_work_notice.notice";
+    public static final String DING_DING_WORK_MARKETING = "ding_ding_work_notice.marketing";
+    public static final String DING_DING_WORK_AUTH_CODE = "ding_ding_work_notice.auth_code";
 
     public static final String ENTERPRISE_WE_CHAT_ROBOT_NOTICE = "enterprise_we_chat_robot.notice";
     public static final String ENTERPRISE_WE_CHAT_ROBOT_MARKETING = "enterprise_we_chat_robot.marketing";
@@ -68,7 +68,7 @@ public final class KafkaTopicConstants {
                 MINI_PROGRAM_NOTICE, MINI_PROGRAM_MARKETING, MINI_PROGRAM_AUTH_CODE,
                 ENTERPRISE_WE_CHAT_NOTICE, ENTERPRISE_WE_CHAT_MARKETING, ENTERPRISE_WE_CHAT_AUTH_CODE,
                 DING_DING_ROBOT_NOTICE, DING_DING_ROBOT_MARKETING, DING_DING_ROBOT_AUTH_CODE,
-                DING_DING_WORK_NOTICE_NOTICE, DING_DING_WORK_NOTICE_MARKETING, DING_DING_WORK_NOTICE_AUTH_CODE,
+                DING_DING_WORK_NOTICE, DING_DING_WORK_MARKETING, DING_DING_WORK_AUTH_CODE,
                 ENTERPRISE_WE_CHAT_ROBOT_NOTICE, ENTERPRISE_WE_CHAT_ROBOT_MARKETING, ENTERPRISE_WE_CHAT_ROBOT_AUTH_CODE,
                 FEI_SHU_ROBOT_NOTICE, FEI_SHU_ROBOT_MARKETING, FEI_SHU_ROBOT_AUTH_CODE,
                 ALIPAY_MINI_PROGRAM_NOTICE, ALIPAY_MINI_PROGRAM_MARKETING, ALIPAY_MINI_PROGRAM_AUTH_CODE

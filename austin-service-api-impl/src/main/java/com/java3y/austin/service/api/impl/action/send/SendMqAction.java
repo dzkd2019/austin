@@ -76,9 +76,9 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
         // 1. 超时校验：同一批次所有 TaskInfo 在 SendAssembleAction 中同时组装，enqueueTime 一致；
         //    取首个元素作为代表进行超时判断即可。
-        TaskInfo first = CollUtil.getFirst(taskInfo.iterator());
-        if (first != null && first.getEnqueueTime() > 0) {
-            long waitMs = System.currentTimeMillis() - first.getEnqueueTime();
+        TaskInfo firstTaskInfo = CollUtil.getFirst(taskInfo.iterator());
+        if (firstTaskInfo != null && firstTaskInfo.getEnqueueTime() > 0) {
+            long waitMs = System.currentTimeMillis() - firstTaskInfo.getEnqueueTime();
             if (waitMs > pendingTimeoutMs) {
                 log.warn("message timeout before mq send, traceId={}, waitMs={}ms, threshold={}ms",
                         traceId, waitMs, pendingTimeoutMs);
@@ -90,7 +90,10 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
         try {
             String message = JSON.toJSONString(sendTaskModel.getTaskInfo(), JSONWriter.Feature.WriteClassName);
             if (MessageQueuePipeline.KAFKA.equals(mqPipeline)) {
-                String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(first);
+                if (firstTaskInfo == null) {
+                    throw new IllegalStateException("taskInfo is empty when routing kafka topic by groupId");
+                }
+                String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(firstTaskInfo);
                 sendMqService.send(groupId, message, tagId);
             } else {
                 sendMqService.send(sendMessageTopic, message, tagId);
