@@ -14,6 +14,7 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.pipeline.ProcessException;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
+import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.mq.MqRateLimiter;
 import com.java3y.austin.support.mq.SendMqService;
 import com.java3y.austin.support.utils.GroupIdMappingUtils;
@@ -38,12 +39,6 @@ import java.util.stream.Collectors;
 @Service
 @RefreshScope
 public class SendMqAction implements BusinessProcess<SendTaskModel> {
-
-    /**
-     * MDC 中存放 traceId 的 key，与 MdcEnrichFilter 保持一致
-     */
-    private static final String MDC_TRACE_ID = "traceId";
-
     /**
      * 默认超时阈值（毫秒）
      */
@@ -65,7 +60,7 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
     public void process(ProcessContext<SendTaskModel> context) {
         SendTaskModel sendTaskModel = context.getProcessModel();
         List<TaskInfo> taskInfo = sendTaskModel.getTaskInfo();
-        String traceId = MDC.get(MDC_TRACE_ID);
+        String traceId = MDC.get(MdcConstant.MDC_TRACE_ID);
 
         // 1. 超时校验：同一批次所有 TaskInfo 在 SendAssembleAction 中同时组装，enqueueTime 一致；
         //    取首个元素作为代表进行超时判断即可。
@@ -73,17 +68,17 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
         if (firstTaskInfo != null && firstTaskInfo.getEnqueueTime() > 0) {
             long waitMs = System.currentTimeMillis() - firstTaskInfo.getEnqueueTime();
             if (waitMs > pendingTimeoutMs) {
-                log.warn("message timeout before mq send, traceId={}, waitMs={}ms, threshold={}ms",
+                log.warn("MQ发送前消息超时，追踪ID={}，等待时长={}毫秒，阈值={}毫秒",
                         traceId, waitMs, pendingTimeoutMs);
                 context.setNeedBreak(true).setResponse(BasicResultVO.fail(RespStatusEnum.SYSTEM_TIMEOUT));
-                throw new MessageTimeoutException("message timeout before mq send, traceId=" + traceId + ", waitMs=" + waitMs + "ms, threshold=" + pendingTimeoutMs + "ms");
+                throw new MessageTimeoutException("message timeout before mq send, traceId=%s, waitMs=%dms, threshold=%dms".formatted(traceId, waitMs, pendingTimeoutMs));
             }
         }
 
         try {
             String message = JSON.toJSONString(sendTaskModel.getTaskInfo(), JSONWriter.Feature.WriteClassName);
             if (firstTaskInfo == null) {
-                throw new IllegalStateException("taskInfo is empty when routing topic by groupId");
+                throw new IllegalStateException("当通过groupId进行 topic 路由时，taskInfo为空。");
             }
             String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(firstTaskInfo);
             sendMqService.send(groupId, message, tagId);

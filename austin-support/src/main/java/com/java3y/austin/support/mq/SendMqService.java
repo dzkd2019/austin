@@ -24,4 +24,12 @@ public interface SendMqService {
      */
     void send(String topic, String jsonValue);
 
+
+    default void asyncSend(String topic, String jsonValue, String tagId) {
+        send(topic, jsonValue, tagId);
+    }
+
+    default void asyncSend(String topic, String jsonValue) {
+        send(topic, jsonValue);
+    }
 }

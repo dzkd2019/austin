@@ -1,6 +1,7 @@
 package com.java3y.austin.support.mq.kafka;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.java3y.austin.common.exception.CommonException;
 import com.java3y.austin.common.exception.SystemBusyException;
 import com.java3y.austin.support.backpressure.RemoteCircuitBreakerManager;
 import com.java3y.austin.support.constans.MdcConstant;
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -40,11 +40,6 @@ public class KafkaSendMqServiceImpl implements SendMqService {
     @Value("${austin.business.tagId.key}")
     private String tagIdKey;
 
-    /**
-     * MDC 中存放 traceId 的 key，与 MdcEnrichFilter 保持一致
-     */
-    private static final String MDC_TRACE_ID = "traceId";
-
 
     public KafkaSendMqServiceImpl(KafkaTemplate<String, String> kafkaTemplate, MqRateLimiter mqRateLimiter, RemoteCircuitBreakerManager remoteCircuitBreakerManager) {
         this.kafkaTemplate = kafkaTemplate;
@@ -52,17 +47,27 @@ public class KafkaSendMqServiceImpl implements SendMqService {
         this.remoteCircuitBreakerManager = remoteCircuitBreakerManager;
     }
 
+    @Override
     public void send(String topic, String jsonValue, String tagId) {
+        send(topic, jsonValue, tagId, true);
+    }
+
+    @Override
+    public void send(String topic, String jsonValue) {
+        send(topic, jsonValue, null, true);
+    }
+
+    @Override
+    public void asyncSend(String topic, String jsonValue, String tagId) {
         send(topic, jsonValue, tagId, false);
     }
 
-    public void send(String topic, String jsonValue) {
+    @Override
+    public void asyncSend(String topic, String jsonValue) {
         send(topic, jsonValue, null, false);
     }
 
-    public void send(String topic, String jsonValue, String tagId, boolean blocked) {
-        String traceId = MDC.get(MDC_TRACE_ID);
-
+    private void send(String topic, String jsonValue, String tagId, boolean blocked) {
         if (remoteCircuitBreakerManager.isPaused(topic)) {
             log.warn("消费端报告压力过大，暂时停止发送消息");
             throw new SystemBusyException("系统繁忙，请稍后再试");
@@ -75,36 +80,39 @@ public class KafkaSendMqServiceImpl implements SendMqService {
                 throw new SystemBusyException("系统繁忙，请稍后再试");
             }
 
-            if (CharSequenceUtil.isNotBlank(tagId)) {
+            List<Header> headers = new ArrayList<>();
+            String traceId = MDC.get(MdcConstant.MDC_TRACE_ID);
+            String xxlJobId = MDC.get(MdcConstant.XXL_JOB_ID);
 
-                List<Header> headers = new ArrayList<>();
+            if (CharSequenceUtil.isNotEmpty(tagId)) {
                 headers.add(new RecordHeader(tagIdKey, tagId.getBytes(StandardCharsets.UTF_8)));
-                headers.add(new RecordHeader(MDC_TRACE_ID, traceId.getBytes(StandardCharsets.UTF_8)));
-
-                String xxlJobId = MDC.get(MdcConstant.XXL_JOB_ID);
-                if(xxlJobId != null) {
-                    headers.add(new RecordHeader(MdcConstant.XXL_JOB_ID, xxlJobId.getBytes(StandardCharsets.UTF_8)));
-                }
-                
-                if (blocked) {
-                    kafkaTemplate.send(new ProducerRecord<>(topic, null, null, null, jsonValue, headers))
-                            .get();
-                } else {
-                    kafkaTemplate.send(new ProducerRecord<>(topic, null, null, null, jsonValue, headers));
-                }
-                return;
             }
+            if (CharSequenceUtil.isNotBlank(traceId)) {
+                headers.add(new RecordHeader(MdcConstant.MDC_TRACE_ID, traceId.getBytes(StandardCharsets.UTF_8)));
+            }
+
+            if (CharSequenceUtil.isNotBlank(xxlJobId)) {
+                headers.add(new RecordHeader(MdcConstant.XXL_JOB_ID, xxlJobId.getBytes(StandardCharsets.UTF_8)));
+            }
+
+            var record = new ProducerRecord<String, String>(topic, null, null, null, jsonValue, headers);
+
 
             if (blocked) {
-                kafkaTemplate.send(new ProducerRecord<>(topic, null, null, null, jsonValue))
-                        .get();
+                kafkaTemplate.send(record).get();
             } else {
-                kafkaTemplate.send(new ProducerRecord<>(topic, null, null, null, jsonValue));
+                kafkaTemplate.send(record)
+                        .whenComplete((_, ex) -> {
+                            if (ex != null) {
+                                log.error("向Kafka主题发送消息失败，topic={}, traceId={}", topic, traceId, ex);
+                            }
+                        });
             }
         } catch (ExecutionException e) {
-            throw new RuntimeException("向Kafka主题发送消息失败：" + topic, e);
+            throw new CommonException("向Kafka主题发送消息失败：" + topic, e);
         } catch (InterruptedException e) {
-            throw new RuntimeException("线程在等待Kafka发送结果时被中断了", e);
+            Thread.currentThread().interrupt();
+            throw new CommonException("线程在等待Kafka发送结果时被中断了", e);
         } finally {
             if (acquired) {
                 mqRateLimiter.getSemaphore().release();

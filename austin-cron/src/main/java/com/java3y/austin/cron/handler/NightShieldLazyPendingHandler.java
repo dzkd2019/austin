@@ -7,6 +7,7 @@ import com.alibaba.fastjson2.JSONWriter;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.mq.MqRateLimiter;
+import com.java3y.austin.support.mq.SendMqService;
 import com.java3y.austin.support.mq.kafka.KafkaSendMqServiceImpl;
 import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import com.java3y.austin.support.utils.MdcUtil;
@@ -50,7 +51,7 @@ public class NightShieldLazyPendingHandler {
 
     private MqRateLimiter mqRateLimiter;
 
-    private KafkaSendMqServiceImpl sendMqService;
+    private SendMqService sendMqService;
 
     private static final long DEFAULT_PENDING_TIMEOUT_MS = 3000L;
 
@@ -109,7 +110,8 @@ public class NightShieldLazyPendingHandler {
                             // KafkaTemplate.send 默认是异步的，但它底层获取元数据时会阻塞。
                             // 用 .get() 强制当前虚拟线程阻塞等待发送结果，确保绝对可靠。
                             String topicName = GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfo);
-                            sendMqService.send(topicName, message, tagId, true);
+//                            sendMqService.send(topicName, message, tagId, true);
+                            sendMqService.send(topicName, message, tagId);
                             successCount.incrementAndGet();
                         } catch (Exception e) {
                             // 这里可以记录失败的数据到另一个错误队列，或者抛出异常让 XXL-JOB 记录失败
