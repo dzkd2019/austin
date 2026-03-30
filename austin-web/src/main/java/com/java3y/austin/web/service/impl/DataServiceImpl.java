@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Service
 public class DataServiceImpl implements DataService {
 
-    private final RedisUtils redisUtils;
+//    private final RedisUtils redisUtils;
 
     private final SmsRecordDao smsRecordDao;
 
@@ -48,8 +48,8 @@ public class DataServiceImpl implements DataService {
 
     private final MessageTemplateService messageTemplateService;
 
-    public DataServiceImpl(RedisUtils redisUtils, SmsRecordDao smsRecordDao, TraceService traceService, MessageTemplateService messageTemplateService) {
-        this.redisUtils = redisUtils;
+    public DataServiceImpl(SmsRecordDao smsRecordDao, TraceService traceService, MessageTemplateService messageTemplateService) {
+//        this.redisUtils = redisUtils;
         this.smsRecordDao = smsRecordDao;
         this.traceService = traceService;
         this.messageTemplateService = messageTemplateService;
@@ -58,56 +58,60 @@ public class DataServiceImpl implements DataService {
 
     @Override
     public UserTimeLineVo getTraceMessageInfo(String messageId) {
-        TraceResponse traceResponse = traceService.traceByMessageId(messageId);
-        if (CollUtil.isEmpty(traceResponse.getData())) {
-            return UserTimeLineVo.builder().items(new ArrayList<>()).build();
-        }
-        return buildUserTimeLineVo(traceResponse.getData());
+//        TraceResponse traceResponse = traceService.traceByMessageId(messageId);
+//        if (CollUtil.isEmpty(traceResponse.getData())) {
+//            return UserTimeLineVo.builder().items(new ArrayList<>()).build();
+//        }
+//        return buildUserTimeLineVo(traceResponse.getData());
+        return buildUserTimeLineVo(List.of());
     }
 
     @Override
     public UserTimeLineVo getTraceUserInfo(String receiver) {
-        List<String> userInfoList = redisUtils.lRange(receiver, 0, -1);
-        if (CollUtil.isEmpty(userInfoList)) {
-            return UserTimeLineVo.builder().items(new ArrayList<>()).build();
-        }
-
-        // 0. 按时间排序
-        List<SimpleAnchorInfo> sortAnchorList = userInfoList.stream().map(s -> JSON.parseObject(s, SimpleAnchorInfo.class)).sorted(Comparator.comparing(SimpleAnchorInfo::getTimestamp).reversed()).collect(Collectors.toList());
-        return buildUserTimeLineVo(sortAnchorList);
+//        List<String> userInfoList = redisUtils.lRange(receiver, 0, -1);
+//        if (CollUtil.isEmpty(userInfoList)) {
+//            return UserTimeLineVo.builder().items(new ArrayList<>()).build();
+//        }
+//
+//        // 0. 按时间排序
+//        List<SimpleAnchorInfo> sortAnchorList = userInfoList.stream().map(s -> JSON.parseObject(s, SimpleAnchorInfo.class)).sorted(Comparator.comparing(SimpleAnchorInfo::getTimestamp).reversed()).collect(Collectors.toList());
+//        return buildUserTimeLineVo(sortAnchorList);
+        return buildUserTimeLineVo(List.of());
     }
 
     @Override
     public EchartsVo getTraceMessageTemplateInfo(String businessId) {
 
-        // 获取businessId并获取模板信息
-        businessId = getRealBusinessId(businessId);
-        MessageTemplate template = messageTemplateService.queryById(TaskInfoUtils.getMessageTemplateIdFromBusinessId(Long.valueOf(businessId)));
-        if (template == null) {
-            return null;
-        }
-
-        /*
-          获取redis清洗好的数据
-          key：state
-          value:stateCount
-         */
-        Map<Object, Object> anchorResult = redisUtils.hGetAll(getRealBusinessId(businessId));
-
-        return Convert4Amis.getEchartsVo(anchorResult, template, businessId);
+//        // 获取businessId并获取模板信息
+//        businessId = getRealBusinessId(businessId);
+//        MessageTemplate template = messageTemplateService.queryById(TaskInfoUtils.getMessageTemplateIdFromBusinessId(Long.valueOf(businessId)));
+//        if (template == null) {
+//            return null;
+//        }
+//
+//        /*
+//          获取redis清洗好的数据
+//          key：state
+//          value:stateCount
+//         */
+//        Map<Object, Object> anchorResult = redisUtils.hGetAll(getRealBusinessId(businessId));
+//
+//        return Convert4Amis.getEchartsVo(anchorResult, template, businessId);
+        return Convert4Amis.getEchartsVo(Map.of(),null, businessId);
     }
 
     @Override
     public SmsTimeLineVo getTraceSmsInfo(DataParam dataParam) {
 
-        Integer sendDate = Integer.valueOf(DateUtil.format(new Date(dataParam.getDateTime() * 1000L), DatePattern.PURE_DATE_PATTERN));
-        List<SmsRecord> smsRecordList = smsRecordDao.findByPhoneAndSendDate(Long.valueOf(dataParam.getReceiver()), sendDate);
-        if (CollUtil.isEmpty(smsRecordList)) {
-            return SmsTimeLineVo.builder().items(Collections.singletonList(SmsTimeLineVo.ItemsVO.builder().build())).build();
-        }
-
-        Map<String, List<SmsRecord>> maps = smsRecordList.stream().collect(Collectors.groupingBy(o -> o.getPhone() + o.getSeriesId()));
-        return Convert4Amis.getSmsTimeLineVo(maps);
+//        Integer sendDate = Integer.valueOf(DateUtil.format(new Date(dataParam.getDateTime() * 1000L), DatePattern.PURE_DATE_PATTERN));
+//        List<SmsRecord> smsRecordList = smsRecordDao.findByPhoneAndSendDate(Long.valueOf(dataParam.getReceiver()), sendDate);
+//        if (CollUtil.isEmpty(smsRecordList)) {
+//            return SmsTimeLineVo.builder().items(Collections.singletonList(SmsTimeLineVo.ItemsVO.builder().build())).build();
+//        }
+//
+//        Map<String, List<SmsRecord>> maps = smsRecordList.stream().collect(Collectors.groupingBy(o -> o.getPhone() + o.getSeriesId()));
+//        return Convert4Amis.getSmsTimeLineVo(maps);
+        return Convert4Amis.getSmsTimeLineVo(Map.of());
     }
 
     /**

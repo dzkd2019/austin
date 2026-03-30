@@ -12,6 +12,7 @@ import com.java3y.austin.service.api.domain.SendRequest;
 import com.java3y.austin.service.api.domain.SendResponse;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
 import com.java3y.austin.service.api.service.SendService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -26,6 +27,7 @@ import java.util.List;
  * @author 3y
  */
 @Service
+@Slf4j
 public class SendServiceImpl implements SendService {
 
     /**
@@ -39,7 +41,6 @@ public class SendServiceImpl implements SendService {
 
     @Override
     @SuppressWarnings("unchecked")
-    @OperationLog(bizType = "SendService#send", bizId = "#sendRequest.messageTemplateId", msg = "#sendRequest")
     public SendResponse send(SendRequest sendRequest) {
         if (ObjectUtils.isEmpty(sendRequest)) {
             return new SendResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(), RespStatusEnum.CLIENT_BAD_PARAMETERS.getMsg(), null);
@@ -63,19 +64,24 @@ public class SendServiceImpl implements SendService {
 
     @SuppressWarnings("unchecked")
     @Override
-    @OperationLog(bizType = "SendService#batchSend", bizId = "#batchSendRequest.messageTemplateId", msg = "#batchSendRequest")
     public SendResponse batchSend(BatchSendRequest batchSendRequest) {
         if (ObjectUtils.isEmpty(batchSendRequest)) {
             return new SendResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(), RespStatusEnum.CLIENT_BAD_PARAMETERS.getMsg(), null);
         }
-        if (batchSendRequest.getMessageParamList() != null
-                && batchSendRequest.getMessageParamList().size() > MAX_BATCH_SIZE) {
+        if(batchSendRequest.getMessageParamList() == null) {
+            return new SendResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(), "批量发送至少需要一条消息参数", null);
+        }
+        if (batchSendRequest.getMessageParamList().size() > MAX_BATCH_SIZE) {
             return new SendResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(),
                     "批量发送每次最多支持 " + MAX_BATCH_SIZE + " 条，当前: " + batchSendRequest.getMessageParamList().size(), null);
         }
 
+        Long templateId = batchSendRequest.getMessageTemplateId();
+        int batchSize = batchSendRequest.getMessageParamList().size();
+        log.info("处理批量发送请求，模板ID: {}, 批次大小: {}", templateId, batchSize);
+
         SendTaskModel sendTaskModel = SendTaskModel.builder()
-                .messageTemplateId(batchSendRequest.getMessageTemplateId())
+                .messageTemplateId(templateId)
                 .messageParamList(batchSendRequest.getMessageParamList())
                 .build();
 

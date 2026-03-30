@@ -32,24 +32,24 @@ public class LogUtils extends CustomLogListener {
      */
     @Override
     public void createLog(LogDTO logDTO){
-        log.info(JSON.toJSONString(logDTO));
+//        log.info(JSON.toJSONString(logDTO));
     }
 
     /**
      * 记录当前对象信息
      */
     public void print(LogParam logParam) {
-        logParam.setTimestamp(System.currentTimeMillis());
-        log.info(JSON.toJSONString(logParam));
+//        logParam.setTimestamp(System.currentTimeMillis());
+//        log.info(JSON.toJSONString(logParam));
     }
 
     /**
      * 记录打点信息
      */
     public void print(AnchorInfo anchorInfo) {
-        anchorInfo.setLogTimestamp(System.currentTimeMillis());
-        String message = JSON.toJSONString(anchorInfo);
-        log.info(message);
+//        anchorInfo.setLogTimestamp(System.currentTimeMillis());
+//        String message = JSON.toJSONString(anchorInfo);
+//        log.info(message);
 
 //        try {
 //            sendMqService.send(topicName, message);
@@ -63,7 +63,7 @@ public class LogUtils extends CustomLogListener {
      * 记录当前对象信息和打点信息
      */
     public void print(LogParam logParam, AnchorInfo anchorInfo) {
-        print(anchorInfo);
-        print(logParam);
+//        print(anchorInfo);
+//        print(logParam);
     }
 }

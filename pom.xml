@@ -12,8 +12,6 @@
         <module>austin-support</module>
         <module>austin-handler</module>
         <module>austin-cron</module>
-        <module>austin-stream</module>
-        <module>austin-data-house</module>
     </modules>
 
     <parent>
@@ -50,22 +48,15 @@
         <fastjson2.version>2.0.61</fastjson2.version>
         <tencentcloud-sdk-java.version>3.1.1421</tencentcloud-sdk-java.version>
         <nacos.version>3.2.0-BETA</nacos.version>
-        <apollo-client.version>2.5.0</apollo-client.version>
         <log-record-starter.version>1.0.4.1</log-record-starter.version>
         <jakarta.mail.version>2.1.3</jakarta.mail.version>
         <springdoc-openapi.version>3.0.2</springdoc-openapi.version>
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version>
         <xxl-job-core.version>3.0.0</xxl-job-core.version>
-        <scala.binary.version>2.12</scala.binary.version>
-        <flink.kafka.version>4.0.1-2.0</flink.kafka.version>
-        <flink.version>2.2.0</flink.version>
-        <flink-connector-hive.version>3.0.0-1.20</flink-connector-hive.version>
-        <hive-exec.version>4.1.0</hive-exec.version>
         <weixin-java.version>4.8.2.B</weixin-java.version>
-        <dynamic-tp-spring-boot-starter-apollo.version>1.2.2-x</dynamic-tp-spring-boot-starter-apollo.version>
         <alipay-sdk-java.version>4.39.19.ALL</alipay-sdk-java.version>
         <alibaba-dingtalk-service-sdk.version>2.0.0</alibaba-dingtalk-service-sdk.version>
-        <rocketmq-spring-boot-starter.version>2.3.0</rocketmq-spring-boot-starter.version>
+        <rocketmq-spring-boot-starter.version>2.3.5</rocketmq-spring-boot-starter.version>
         <nacos-spring-clouder-starter.version>2025.1.0.0</nacos-spring-clouder-starter.version>
         <spring-boot-configuration-processor.version>4.0.4</spring-boot-configuration-processor.version>
         <spring-boot-starter-cache.version>4.0.4</spring-boot-starter-cache.version>
@@ -177,13 +168,6 @@
                 <scope>compile</scope>
             </dependency>
 
-            <!--apollo-->
-            <dependency>
-                <groupId>com.ctrip.framework.apollo</groupId>
-                <artifactId>apollo-client</artifactId>
-                <version>${apollo-client.version}</version>
-            </dependency>
-
             <!--注解打印日志-->
             <dependency>
                 <groupId>cn.monitor4all</groupId>
@@ -224,47 +208,6 @@
                 <version>${xxl-job-core.version}</version>
             </dependency>
 
-            <!--flink相关依赖 (Java 17+ compatible)-->
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-walkthrough-common</artifactId>
-                <version>${flink.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-streaming-java</artifactId>
-                <version>${flink.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-clients</artifactId>
-                <version>${flink.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-connector-kafka</artifactId>
-                <version>${flink.kafka.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-connector-hive_2.12</artifactId>
-                <version>${flink-connector-hive.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.flink</groupId>
-                <artifactId>flink-table-api-java-bridge</artifactId>
-                <version>${flink.version}</version>
-            </dependency>
-
-            <!--Hive exec-->
-            <dependency>
-                <groupId>org.apache.hive</groupId>
-                <artifactId>hive-exec</artifactId>
-                <version>${hive-exec.version}</version>
-            </dependency>
-
             <!--微信服务号第三方SDK-->
             <dependency>
                 <groupId>com.github.binarywang</groupId>
@@ -284,13 +227,6 @@
                 <groupId>com.github.binarywang</groupId>
                 <artifactId>weixin-java-cp</artifactId>
                 <version>${weixin-java.version}</version>
-            </dependency>
-
-            <!--动态线程池引入-->
-            <dependency>
-                <groupId>org.dromara.dynamictp</groupId>
-                <artifactId>dynamic-tp-spring-boot-starter-apollo</artifactId>
-                <version>${dynamic-tp-spring-boot-starter-apollo.version}</version>
             </dependency>
 
             <!--支付宝sdk-->

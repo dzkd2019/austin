@@ -27,23 +27,23 @@ import java.util.stream.Collectors;
 @Primary
 public class TraceServiceImpl implements TraceService {
 
-    @Autowired
-    private RedisUtils redisUtils;
+//    @Autowired
+//    private RedisUtils redisUtils;
 
     @Override
     public TraceResponse traceByMessageId(String messageId) {
-        if (CharSequenceUtil.isBlank(messageId)) {
-            return new TraceResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(), RespStatusEnum.CLIENT_BAD_PARAMETERS.getMsg(), null);
-        }
-        String redisMessageKey = CharSequenceUtil.join(StrUtil.COLON, AustinConstant.CACHE_KEY_PREFIX, AustinConstant.MESSAGE_ID, messageId);
-        List<String> messageList = redisUtils.lRange(redisMessageKey, 0, -1);
-        if (CollUtil.isEmpty(messageList)) {
-            return new TraceResponse(RespStatusEnum.FAIL.getCode(), RespStatusEnum.FAIL.getMsg(), null);
-        }
+//        if (CharSequenceUtil.isBlank(messageId)) {
+//            return new TraceResponse(RespStatusEnum.CLIENT_BAD_PARAMETERS.getCode(), RespStatusEnum.CLIENT_BAD_PARAMETERS.getMsg(), null);
+//        }
+//        String redisMessageKey = CharSequenceUtil.join(StrUtil.COLON, AustinConstant.CACHE_KEY_PREFIX, AustinConstant.MESSAGE_ID, messageId);
+//        List<String> messageList = redisUtils.lRange(redisMessageKey, 0, -1);
+//        if (CollUtil.isEmpty(messageList)) {
+//            return new TraceResponse(RespStatusEnum.FAIL.getCode(), RespStatusEnum.FAIL.getMsg(), null);
+//        }
+//
+//        // 0. 按时间排序
+//        List<SimpleAnchorInfo> sortAnchorList = messageList.stream().map(s -> JSON.parseObject(s, SimpleAnchorInfo.class)).sorted((o1, o2) -> Math.toIntExact(o1.getTimestamp() - o2.getTimestamp())).collect(Collectors.toList());
 
-        // 0. 按时间排序
-        List<SimpleAnchorInfo> sortAnchorList = messageList.stream().map(s -> JSON.parseObject(s, SimpleAnchorInfo.class)).sorted((o1, o2) -> Math.toIntExact(o1.getTimestamp() - o2.getTimestamp())).collect(Collectors.toList());
-
-        return new TraceResponse(RespStatusEnum.SUCCESS.getCode(), RespStatusEnum.SUCCESS.getMsg(), sortAnchorList);
+        return new TraceResponse(RespStatusEnum.SUCCESS.getCode(), RespStatusEnum.SUCCESS.getMsg(), List.of());
     }
 }

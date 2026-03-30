@@ -37,14 +37,14 @@ public class ExceptionHandlerAdvice {
     @ExceptionHandler(MessageTimeoutException.class)
     @ResponseStatus(HttpStatus.REQUEST_TIMEOUT)
     public BasicResultVO<String> handleMessageTimeout(MessageTimeoutException e) {
-        log.warn("MessageTimeoutException, traceId={}, message={}", MDC.get(MDC_TRACE_ID), e.getMessage());
+        log.error("消息在发送到 MQ 之前超时", e);
         return BasicResultVO.fail(RespStatusEnum.SYSTEM_TIMEOUT);
     }
 
     @ExceptionHandler(SystemBusyException.class)
     @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
     public BasicResultVO<String> handleSystemBusyException(SystemBusyException e) {
-        log.warn("SystemBusyException, traceId={}, message={}", MDC_TRACE_ID, e.getMessage());
+        log.error("消息在发送到 MQ 之前获取 Semaphore 失败，系统繁忙", e);
         return BasicResultVO.fail(RespStatusEnum.SYSTEM_BUSY);
     }
 
@@ -54,7 +54,7 @@ public class ExceptionHandlerAdvice {
     @ExceptionHandler(CommonException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public BasicResultVO<RespStatusEnum> handleCommonException(CommonException e) {
-        log.error("CommonException, traceId={}", MDC.get(MDC_TRACE_ID), e);
+        log.error("业务处理中发生异常", e);
         return new BasicResultVO<>(e.getCode(), e.getMessage(), e.getRespStatusEnum());
     }
 
@@ -64,7 +64,7 @@ public class ExceptionHandlerAdvice {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public BasicResultVO<String> handleException(Exception e) {
-        log.error("Unhandled exception, traceId={}", MDC.get(MDC_TRACE_ID), e);
+        log.error("未处理的异常", e);
         return BasicResultVO.fail(RespStatusEnum.ERROR_500);
     }
 
