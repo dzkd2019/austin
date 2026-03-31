@@ -55,6 +55,16 @@ public enum AnchorState implements PowerfulEnum {
     SEND_FAIL(70, "消息下发失败"),
 
     /**
+     * 拉取回执，确认消息下发成功
+     */
+    CLOUD_SERVICE_SUCCESS(62, "调用实际发送接口下发成功"),
+
+    /**
+     * 拉取回执，确认消息下发失败
+     */
+    CLOUD_SERVICE_FAIL(72, "调用实际接口下发失败"),
+
+    /**
      * 点击（下发的消息被点击）
      */
     CLICK(64, "消息被点击");

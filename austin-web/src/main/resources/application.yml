@@ -122,9 +122,9 @@ austin:
         name: austinRecall
       group:
         name: recallGroupId
-    log:
+    trace:
       topic:
-        name: austinTraceLog
+        name: austin_biz_trace
     tagId:
       key: kafka_tag_id
       value: com.java3y.austin.3y

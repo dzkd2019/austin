@@ -6,7 +6,6 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.google.common.base.Throwables;
 import com.java3y.austin.common.constant.CommonConstant;
 import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.common.dto.model.ContentModel;
@@ -19,11 +18,12 @@ import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.service.api.domain.MessageParam;
 import com.java3y.austin.service.api.impl.domain.SendTaskModel;
 import com.java3y.austin.support.cache.MessageTemplateCaching;
+import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.domain.MessageTemplate;
 import com.java3y.austin.support.utils.ContentHolderUtil;
 import com.java3y.austin.support.utils.TaskInfoUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
@@ -112,13 +112,16 @@ public class SendAssembleAction implements BusinessProcess<SendTaskModel> {
         List<MessageParam> messageParamList = sendTaskModel.getMessageParamList();
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
+        String traceId = MDC.get(MdcConstant.MDC_TRACE_ID);
+        String bizId = MDC.get(MdcConstant.MDC_BUSINESS_ID);
+
         for (MessageParam messageParam : messageParamList) {
 
             TaskInfo taskInfo = TaskInfo.builder()
                     .messageId(TaskInfoUtils.generateMessageId())
-                    .bizId(messageParam.getBizId())
+                    .bizId(bizId)
                     .messageTemplateId(messageTemplate.getId())
-                    .businessId(TaskInfoUtils.generateBusinessId(messageTemplate.getId(), messageTemplate.getTemplateType()))
+                    .traceId(traceId)
                     .receiver(new HashSet<>(Arrays.asList(messageParam.getReceiver().split(String.valueOf(StrPool.C_COMMA)))))
                     .idType(messageTemplate.getIdType())
                     .sendChannel(messageTemplate.getSendChannel())

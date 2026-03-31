@@ -36,10 +36,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -152,13 +149,20 @@ public class MessageTemplateController {
     /**
      * 获取需要测试的模板占位符，透出给Amis
      */
+//    @PostMapping("test/content")
+//    @Operation(summary = "获取测试模板占位符")
+//    public CommonAmisVo test(Long id) {
+//        MessageTemplate messageTemplate = messageTemplateService.queryById(id);
+//        return Convert4Amis.getTestContent(messageTemplate.getMsgContent());
+//    }
+
     @PostMapping("test/content")
     @Operation(summary = "获取测试模板占位符")
-    public CommonAmisVo test(Long id) {
+    public Set<String> test(@RequestBody Map<String, Long> param) {
+        Long id = param.get("id");
         MessageTemplate messageTemplate = messageTemplateService.queryById(id);
-        return Convert4Amis.getTestContent(messageTemplate.getMsgContent());
+        return messageTemplateService.getTestContent(messageTemplate.getMsgContent());
     }
-
 
     /**
      * 撤回接口（根据模板id撤回）

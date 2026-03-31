@@ -2,6 +2,8 @@ package com.java3y.austin.handler.receiver.service.impl;
 
 import com.java3y.austin.common.domain.RecallTaskInfo;
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.common.domain.TraceInfo;
+import com.java3y.austin.common.enums.AnchorState;
 import com.java3y.austin.handler.backpressure.RtSensor;
 import com.java3y.austin.handler.backpressure.VirtualThreadBackPressureManager;
 import com.java3y.austin.handler.handler.HandlerHolder;
@@ -11,6 +13,7 @@ import com.java3y.austin.support.config.ThreadPoolExecutorShutdownDefinition;
 import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import com.java3y.austin.support.utils.MdcUtil;
+import com.java3y.austin.support.utils.TraceUtils;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -21,7 +24,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +48,7 @@ public class ConsumeServiceImpl implements ConsumeService {
     private final RtSensor rtSensor;
     private final ThreadPoolExecutorShutdownDefinition threadPoolExecutorShutdownDefinition;
     private final MeterRegistry meterRegistry;
+    private final TraceUtils traceUtils;
 
     /**
      * groupId -> success counter
@@ -63,7 +66,7 @@ public class ConsumeServiceImpl implements ConsumeService {
     public ConsumeServiceImpl(ApplicationContext context,
                               HandlerHolder handlerHolder, VirtualThreadBackPressureManager backPressureManager,
                               RtSensor rtSensor, ThreadPoolExecutorShutdownDefinition threadPoolExecutorShutdownDefinition,
-                              MeterRegistry meterRegistry) {
+                              MeterRegistry meterRegistry, TraceUtils traceUtils) {
         this.context = context;
 //        this.logUtils = logUtils;
         this.handlerHolder = handlerHolder;
@@ -71,6 +74,7 @@ public class ConsumeServiceImpl implements ConsumeService {
         this.rtSensor = rtSensor;
         this.threadPoolExecutorShutdownDefinition = threadPoolExecutorShutdownDefinition;
         this.meterRegistry = meterRegistry;
+        this.traceUtils = traceUtils;
     }
 
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
@@ -86,14 +90,17 @@ public class ConsumeServiceImpl implements ConsumeService {
         String groupId = GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfoLists.getFirst());
         for (TaskInfo taskInfo : taskInfoLists) {
             backPressureManager.incrementAndCheckPause(groupId);
-            // 打点记录当前状态
-//            logUtils.print(LogParam.builder().bizType(LOG_BIZ_TYPE).object(taskInfo).build(), AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).ids(taskInfo.getReceiver()).businessId(taskInfo.getBusinessId()).state(AnchorState.RECEIVE.getCode()).build());
+
             log.info("从Kafka消息队列中拉取到消息, messageId: {}, receivers: {}", taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
+
             Task task = context.getBean(Task.class).setTaskInfo(taskInfo);
+
+
+            traceUtils.trace(new TraceInfo(taskInfo, AnchorState.RECEIVE));
 
             Map<String, String> mdcContext = MDC.getCopyOfContextMap();
             mdcContext.put(MdcConstant.MDC_MESSAGE_ID, taskInfo.getMessageId());
-            mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getBusinessId()));
+            mdcContext.put(MdcConstant.MDC_BUSINESS_ID, taskInfo.getMessageId());
             mdcContext.put(MdcConstant.MDC_KAFKA_GROUP_ID, groupId);
             mdcContext.put(MdcConstant.MDC_TEMPLATE_ID, taskInfo.getMessageTemplateId().toString());
             executor.execute(MdcUtil.wrap(mdcContext, () -> {

@@ -7,6 +7,7 @@ import com.java3y.austin.web.vo.MessageTemplateParam;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 消息模板管理 接口
@@ -65,6 +66,8 @@ public interface MessageTemplateService {
      * @param id
      */
     void copy(Long id);
+
+    Set<String> getTestContent(String msgContent);
 
     /**
      * 启动模板的定时任务

@@ -68,7 +68,7 @@ public class EnterpriseWeChatHandler extends BaseHandler{
                 saveRecallInfo(WE_CHAT_RECALL_KEY_PREFIX, taskInfo.getMessageTemplateId(), String.valueOf(result.getMsgId()), CommonConstant.ONE_DAY_SECOND);
                 return true;
             }
-            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).state(result.getErrCode()).build());
+//            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getTraceId()).ids(taskInfo.getReceiver()).state(result.getErrCode()).build());
         } catch (Exception e) {
             log.error("EnterpriseWeChatHandler#handler fail:{},params:{}",
                     Throwables.getStackTraceAsString(e), JSON.toJSONString(taskInfo));

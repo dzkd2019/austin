@@ -8,7 +8,6 @@ import com.java3y.austin.common.domain.TaskInfo;
 import com.java3y.austin.support.constans.MdcConstant;
 import com.java3y.austin.support.mq.MqRateLimiter;
 import com.java3y.austin.support.mq.SendMqService;
-import com.java3y.austin.support.mq.kafka.KafkaSendMqServiceImpl;
 import com.java3y.austin.support.utils.GroupIdMappingUtils;
 import com.java3y.austin.support.utils.MdcUtil;
 import com.java3y.austin.support.utils.RedisUtils;
@@ -91,7 +90,7 @@ public class NightShieldLazyPendingHandler {
 
                     Map<String, String> mdcContext = new HashMap<>();
                     mdcContext.put(MdcConstant.MDC_MESSAGE_ID, taskInfo.getMessageId());
-                    mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getBusinessId()));
+                    mdcContext.put(MdcConstant.MDC_BUSINESS_ID, String.valueOf(taskInfo.getTraceId()));
                     mdcContext.put(MdcConstant.MDC_KAFKA_GROUP_ID, GroupIdMappingUtils.getGroupIdByTaskInfo(taskInfo));
 
                     taskInfo.setEnqueueTime(System.currentTimeMillis());

@@ -26,9 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
@@ -135,6 +133,11 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
             MessageTemplate saved = messageTemplateDao.save(clone);
             cache.put(saved);
         }
+    }
+
+    @Override
+    public Set<String> getTestContent(String msgContent) {
+        return getPlaceholderList(msgContent);
     }
 
     @Override
@@ -288,5 +291,62 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
         }
     }
 
+    private Set<String> getPlaceholderList(String content) {
+
+        // 内容为空，直接返回
+        if (content == null || content.isEmpty()) {
+            return Collections.emptySet();
+        }
+        
+        int ignore_tg = 0;
+        int start_tg = 1;
+        int read_tg = 2;
+
+        StringBuilder sb = new StringBuilder();
+        Set<String> placeholderSet = new HashSet<>();
+        int modeTg = ignore_tg;
+
+        for (char c : content.toCharArray()) {
+            switch (c) {
+                case '{':
+                    if (modeTg == ignore_tg) {
+                        sb.append(c);
+                        modeTg = start_tg;
+                    }
+                    break;
+                case '$':
+                    if (modeTg == start_tg) {
+                        sb.append(c);
+                        modeTg = read_tg;
+                    } else {
+                        sb.setLength(0);
+                        modeTg = ignore_tg;
+                    }
+                    break;
+                case '}':
+                    if (modeTg == read_tg) {
+                        sb.append(c);
+                        String placeholder = sb.toString();
+                        placeholderSet.add(placeholder.replaceAll("[\\{\\$\\}]", ""));
+                        sb.setLength(0);
+                        modeTg = ignore_tg;
+                    } else if (modeTg == start_tg) {
+                        sb.setLength(0);
+                        modeTg = ignore_tg;
+                    }
+                    break;
+                default:
+                    if (modeTg == read_tg) {
+                        sb.append(c);
+                    } else if (modeTg == start_tg) {
+                        sb.setLength(0);
+                        modeTg = ignore_tg;
+                    }
+                    break;
+            }
+        }
+
+        return placeholderSet;
+    }
 
 }

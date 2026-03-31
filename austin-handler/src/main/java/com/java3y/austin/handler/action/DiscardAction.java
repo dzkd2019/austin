@@ -2,6 +2,7 @@ package com.java3y.austin.handler.action;
 
 import com.java3y.austin.common.domain.AnchorInfo;
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.common.domain.TraceInfo;
 import com.java3y.austin.common.enums.AnchorState;
 import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.pipeline.BusinessProcess;
@@ -9,6 +10,7 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.handler.config.AustinMessageSendProperties;
 import com.java3y.austin.support.utils.LogUtils;
+import com.java3y.austin.support.utils.TraceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -25,11 +27,12 @@ import java.util.List;
 @Slf4j
 public class DiscardAction implements BusinessProcess<TaskInfo> {
 
-//    private final LogUtils logUtils;
+    private final TraceUtils traceUtils;
 
     private final AustinMessageSendProperties messageSendProperties;
 
-    public DiscardAction(AustinMessageSendProperties messageSendProperties) {
+    public DiscardAction(TraceUtils traceUtils, AustinMessageSendProperties messageSendProperties) {
+        this.traceUtils = traceUtils;
 //        this.logUtils = logUtils;
         this.messageSendProperties = messageSendProperties;
     }
@@ -40,7 +43,7 @@ public class DiscardAction implements BusinessProcess<TaskInfo> {
 
         List<Long> discardTemplateIds = messageSendProperties.getDiscardMsgIds();
         if (discardTemplateIds.contains(taskInfo.getMessageTemplateId())) {
-//            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).state(AnchorState.DISCARD.getCode()).build());
+            traceUtils.trace(new TraceInfo(taskInfo, AnchorState.DISCARD));
             log.warn("消息匹配丢弃规则，丢弃消息。模板Id: {}, messageId: {}, receivers: {}", taskInfo.getMessageTemplateId(), taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
             context.setNeedBreak(true);
             context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_DISCARDED));

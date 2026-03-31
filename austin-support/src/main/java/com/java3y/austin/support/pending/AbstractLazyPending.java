@@ -52,6 +52,8 @@ public abstract class AbstractLazyPending<T> {
     @PostConstruct
     public void initConsumePending() {
         tasks = new ArrayList<>(pendingParam.getNumThreshold());
+        String bizId = IdUtil.fastSimpleUUID();
+
         Thread.ofVirtual().name("Pending Thread").start(() -> {
 
             while (!Boolean.TRUE.equals(this.stop) || CollUtil.isNotEmpty(tasks) || !pendingParam.getQueue().isEmpty()) {
@@ -77,6 +79,7 @@ public abstract class AbstractLazyPending<T> {
                             mdcContext.put(MdcConstant.XXL_JOB_ID, String.valueOf(crowd.getXxlJobId()));
                         }
                         mdcContext.put(MdcConstant.MDC_TRACE_ID, IdUtil.fastSimpleUUID());
+                        mdcContext.put(MdcConstant.MDC_BUSINESS_ID, bizId);
                         // 提交异步任务；全局限流由 SendMqAction 中的 MqRateLimiter 统一管控
                         ThreadPoolUtils.getVirtualExecutorService().execute(MdcUtil.wrap(mdcContext, () -> {
                             try {

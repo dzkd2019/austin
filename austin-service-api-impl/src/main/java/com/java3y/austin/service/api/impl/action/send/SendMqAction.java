@@ -85,7 +85,7 @@ public class SendMqAction implements BusinessProcess<SendTaskModel> {
 
             context.setResponse(BasicResultVO.success(taskInfo.stream()
                     .map(v -> SimpleTaskInfo.builder()
-                            .businessId(v.getBusinessId())
+                            .traceId(v.getTraceId())
                             .messageId(v.getMessageId())
                             .bizId(v.getBizId())
                             .build())

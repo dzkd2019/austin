@@ -56,8 +56,8 @@ public class EnterpriseWeChatRobotHandler extends BaseHandler{
             if (Integer.valueOf(WxCpErrorMsgEnum.CODE_0.getCode()).equals(weChatRootResult.getErrcode())) {
                 return true;
             }
-            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId())
-                    .ids(taskInfo.getReceiver()).state(weChatRootResult.getErrcode()).build());
+//            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getTraceId())
+//                    .ids(taskInfo.getReceiver()).state(weChatRootResult.getErrcode()).build());
         } catch (Exception e) {
             log.error("EnterpriseWeChatRobotHandler#handler fail!e:{},params:{}", Throwables.getStackTraceAsString(e), JSON.toJSONString(taskInfo));
         }

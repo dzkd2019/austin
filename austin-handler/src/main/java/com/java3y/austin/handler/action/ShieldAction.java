@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONWriter;
 import com.java3y.austin.common.domain.AnchorInfo;
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.common.domain.TraceInfo;
 import com.java3y.austin.common.enums.AnchorState;
 import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.common.enums.ShieldType;
@@ -12,6 +13,7 @@ import com.java3y.austin.common.pipeline.ProcessContext;
 import com.java3y.austin.common.vo.BasicResultVO;
 import com.java3y.austin.support.utils.LogUtils;
 import com.java3y.austin.support.utils.RedisUtils;
+import com.java3y.austin.support.utils.TraceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,11 +42,14 @@ public class ShieldAction implements BusinessProcess<TaskInfo> {
      */
     private static final int NIGHT = 8;
 
-    @Autowired
-    private RedisUtils redisUtils;
-//    @Autowired
-//    private LogUtils logUtils;
+    private final RedisUtils redisUtils;
 
+    private final TraceUtils traceUtils;
+
+    public ShieldAction(RedisUtils redisUtils, TraceUtils traceUtils) {
+        this.redisUtils = redisUtils;
+        this.traceUtils = traceUtils;
+    }
 
     @Override
     public void process(ProcessContext<TaskInfo> context) {
@@ -56,8 +61,7 @@ public class ShieldAction implements BusinessProcess<TaskInfo> {
 
         if (LocalDateTime.now().getHour() < NIGHT) {
             if (ShieldType.NIGHT_SHIELD.getCode().equals(taskInfo.getShieldType())) {
-//                logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD.getCode())
-//                        .bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+                traceUtils.trace(new TraceInfo(taskInfo, AnchorState.NIGHT_SHIELD));
                 log.warn("消息被夜间拦截规则阻拦, messageId: {}, receivers: {}", taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
                 context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_SHIELD));
             }
@@ -65,7 +69,7 @@ public class ShieldAction implements BusinessProcess<TaskInfo> {
                 redisUtils.lPush(NIGHT_SHIELD_BUT_NEXT_DAY_SEND_KEY, JSON.toJSONString(taskInfo,
                                 JSONWriter.Feature.WriteClassName),
                         SECONDS_OF_A_DAY);
-//                logUtils.print(AnchorInfo.builder().state(AnchorState.NIGHT_SHIELD_NEXT_SEND.getCode()).bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(taskInfo.getReceiver()).build());
+                traceUtils.trace(new TraceInfo(taskInfo, AnchorState.NIGHT_SHIELD_NEXT_SEND));
                 log.warn("消息被夜间拦截，第二天再发送, messageId: {}, receivers: {}", taskInfo.getMessageId(), String.join(",", taskInfo.getReceiver()));
                 context.setResponse(BasicResultVO.fail(RespStatusEnum.MESSAGE_IS_SHIELD_NEXT_SEND));
             }

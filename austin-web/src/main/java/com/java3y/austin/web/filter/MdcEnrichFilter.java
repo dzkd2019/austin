@@ -1,6 +1,7 @@
 package com.java3y.austin.web.filter;
 
 import cn.hutool.core.util.IdUtil;
+import com.java3y.austin.support.constans.MdcConstant;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,10 +34,7 @@ import java.io.IOException;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class MdcEnrichFilter extends OncePerRequestFilter {
 
-    public static final String MDC_TRACE_ID = "traceId";
-    public static final String MDC_PATH = "path";
     public static final String MDC_USER_ID = "userId";
-    public static final String MDC_REQUEST_IP = "requestIp";
 
     private static final String HEADER_TRACE_ID = "X-Trace-Id";
     private static final String HEADER_USER_ID = "X-User-Id";
@@ -52,10 +50,11 @@ public class MdcEnrichFilter extends OncePerRequestFilter {
             if (traceId == null || traceId.isBlank()) {
                 traceId = IdUtil.fastSimpleUUID();
             }
-            MDC.put(MDC_TRACE_ID, traceId);
+            MDC.put(MdcConstant.MDC_TRACE_ID, traceId);
+            MDC.put(MdcConstant.MDC_BUSINESS_ID, traceId);
 
             // 2. 请求路径
-            MDC.put(MDC_PATH, request.getRequestURI());
+            MDC.put(MdcConstant.MDC_PATH, request.getRequestURI());
 
             // 3. 用户标识（业务层从 Token 解析后放入 header，此处透传）
             String userId = request.getHeader(HEADER_USER_ID);
@@ -72,7 +71,7 @@ public class MdcEnrichFilter extends OncePerRequestFilter {
             } else {
                 ip = request.getRemoteAddr();
             }
-            MDC.put(MDC_REQUEST_IP, ip);
+            MDC.put(MdcConstant.MDC_REQUEST_IP, ip);
 
             // 将 traceId 写回响应头，方便前端日志关联
             response.setHeader(HEADER_TRACE_ID, traceId);
@@ -80,10 +79,11 @@ public class MdcEnrichFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             // 【关键】必须在 finally 中清理 MDC，防止虚拟线程/线程池复用时 MDC 污染
-            MDC.remove(MDC_TRACE_ID);
-            MDC.remove(MDC_PATH);
+            MDC.remove(MdcConstant.MDC_TRACE_ID);
+            MDC.remove(MdcConstant.MDC_BUSINESS_ID);
             MDC.remove(MDC_USER_ID);
-            MDC.remove(MDC_REQUEST_IP);
+            MDC.remove(MdcConstant.MDC_PATH);
+            MDC.remove(MdcConstant.MDC_REQUEST_IP);
         }
     }
 }

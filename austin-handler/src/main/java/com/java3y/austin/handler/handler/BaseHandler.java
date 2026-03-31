@@ -1,8 +1,11 @@
 package com.java3y.austin.handler.handler;
 
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.common.domain.TraceInfo;
+import com.java3y.austin.common.enums.AnchorState;
 import com.java3y.austin.handler.flowcontrol.FlowControlFactory;
 import com.java3y.austin.handler.flowcontrol.FlowControlParam;
+import com.java3y.austin.support.utils.TraceUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,8 @@ public abstract class BaseHandler implements Handler {
     private FlowControlFactory flowControlFactory;
     @Autowired
     private StringRedisTemplate redisTemplate;
+    @Autowired
+    protected TraceUtils traceUtils;
 
     /**
      * 初始化渠道与Handler的映射关系
@@ -52,6 +57,7 @@ public abstract class BaseHandler implements Handler {
         }
 
         doHandle(taskInfo);
+        traceUtils.trace(new TraceInfo(taskInfo, AnchorState.SEND_SUCCESS));
     }
 
 

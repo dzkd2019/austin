@@ -41,7 +41,7 @@ public class TaskInfo implements Serializable, ProcessModel {
      * 业务Id(数据追踪使用)
      * 生成逻辑参考 TaskInfoUtils
      */
-    private Long businessId;
+    private String traceId;
 
     /**
      * 接收者

@@ -78,9 +78,9 @@ public class AccountUtils {
             if (optionalChannelAccount.isPresent()) {
                 ChannelAccount channelAccount = optionalChannelAccount.get();
                 if (clazz.equals(WxMaService.class)) {
-                    return (T) ConcurrentHashMapUtils.computeIfAbsent(miniProgramServiceMap, channelAccount, account -> initMiniProgramService(JSON.parseObject(account.getAccountConfig(), WeChatMiniProgramAccount.class)));
+                    return (T) miniProgramServiceMap.computeIfAbsent(channelAccount, account -> initMiniProgramService(JSON.parseObject(account.getAccountConfig(), WeChatMiniProgramAccount.class)));
                 } else if (clazz.equals(WxMpService.class)) {
-                    return (T) ConcurrentHashMapUtils.computeIfAbsent(officialAccountServiceMap, channelAccount, account -> initOfficialAccountService(JSON.parseObject(account.getAccountConfig(), WeChatOfficialAccount.class)));
+                    return (T) officialAccountServiceMap.computeIfAbsent(channelAccount, account -> initOfficialAccountService(JSON.parseObject(account.getAccountConfig(), WeChatOfficialAccount.class)));
                 } else {
                     return JSON.parseObject(channelAccount.getAccountConfig(), clazz);
                 }

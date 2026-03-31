@@ -3,11 +3,13 @@ package com.java3y.austin.handler.deduplication.service;
 import cn.hutool.core.collection.CollUtil;
 import com.java3y.austin.common.domain.AnchorInfo;
 import com.java3y.austin.common.domain.TaskInfo;
+import com.java3y.austin.common.domain.TraceInfo;
 import com.java3y.austin.handler.deduplication.DeduplicationHolder;
 import com.java3y.austin.handler.deduplication.DeduplicationParam;
 import com.java3y.austin.handler.deduplication.DeduplicationType;
 import com.java3y.austin.handler.deduplication.limit.LimitService;
 import com.java3y.austin.support.utils.LogUtils;
+import com.java3y.austin.support.utils.TraceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -28,8 +30,10 @@ public abstract class AbstractDeduplicationService implements DeduplicationServi
 
     @Autowired
     private DeduplicationHolder deduplicationHolder;
-//    @Autowired
-//    private LogUtils logUtils;
+
+    @Autowired
+    private TraceUtils traceUtils;
+
 
     @PostConstruct
     private void init() {
@@ -44,8 +48,8 @@ public abstract class AbstractDeduplicationService implements DeduplicationServi
 
         // 剔除符合去重条件的用户
         if (CollUtil.isNotEmpty(filterReceiver)) {
+            traceUtils.trace(new TraceInfo(taskInfo, param.getAnchorState(), filterReceiver));
             taskInfo.getReceiver().removeAll(filterReceiver);
-//            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId()).ids(filterReceiver).state(param.getAnchorState().getCode()).build());
             log.info("触发去重规则 {}，下列receivers被过滤：{}", type.name(), String.join(",", taskInfo.getReceiver()));
         }
     }

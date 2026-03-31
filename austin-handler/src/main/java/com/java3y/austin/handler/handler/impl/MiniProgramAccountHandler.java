@@ -50,8 +50,8 @@ public class MiniProgramAccountHandler extends BaseHandler{
             wxMaService.getSubscribeService().sendSubscribeMsg(message);
             return true;
         } catch (WxErrorException e) {
-            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getBusinessId())
-                    .ids(taskInfo.getReceiver()).state(e.getError().getErrorCode()).build());
+//            logUtils.print(AnchorInfo.builder().bizId(taskInfo.getBizId()).messageId(taskInfo.getMessageId()).businessId(taskInfo.getTraceId())
+//                    .ids(taskInfo.getReceiver()).state(e.getError().getErrorCode()).build());
         } catch (Exception e) {
             log.error("MiniProgramAccountHandler#handler fail:{},params:{}", Throwables.getStackTraceAsString(e), JSON.toJSONString(taskInfo));
         }
