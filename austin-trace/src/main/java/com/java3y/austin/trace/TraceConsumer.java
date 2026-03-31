@@ -1,7 +1,8 @@
 package com.java3y.austin.trace;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._helpers.bulk.BulkIngester;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
 import jakarta.annotation.PostConstruct;
@@ -13,8 +14,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @ConditionalOnProperty(name = "austin.business.trace.enabled", value = "true")
@@ -22,12 +23,10 @@ import java.util.concurrent.TimeUnit;
 public class TraceConsumer {
     private ElasticsearchClient elasticsearchClient;
 
-    private BulkIngester<Void> bulkIngester;
-
     @Value("${austin.business.trace.elastic.host}")
     private String elasticHost;
 
-    @Value("${austin.basiness.trace.elastic.index}")
+    @Value("${austin.business.trace.elastic.index}")
     private String elasticIndex;
     @Value("${austin.business.trace.elastic.username}")
     private String elasticUsername;
@@ -37,12 +36,6 @@ public class TraceConsumer {
     @PostConstruct
     public void init() {
         this.elasticsearchClient = createClient();
-
-        bulkIngester = BulkIngester.of(f ->
-                f.client(elasticsearchClient)
-                        .maxOperations(100)
-                        .flushInterval(5, TimeUnit.SECONDS)
-        );
     }
 
     private ElasticsearchClient createClient() {
@@ -54,19 +47,37 @@ public class TraceConsumer {
 
     @KafkaListener(topics = "#{'${austin.business.trace.topic.name}'}", containerFactory = "traceContainerFactory")
     public void consume(List<String> messages) {
+        if (messages == null || messages.isEmpty()) {
+            return;
+        }
+
+        BulkRequest.Builder builder = new BulkRequest.Builder();
         for (String message : messages) {
-            bulkIngester.add(b ->
-                    b.index(idx ->
+            builder.operations(op ->
+                    op.index(idx ->
                             idx.index(elasticIndex)
-                                    .document(BinaryData.of(message.getBytes(), ContentType.APPLICATION_JSON))
-                    )
-            );
+                                    .document(BinaryData.of(message.getBytes(StandardCharsets.UTF_8), ContentType.APPLICATION_JSON))
+                            )
+                    );
+        }
+
+        try {
+            BulkResponse bulkResponse = elasticsearchClient.bulk(builder.build());
+            if (bulkResponse.errors()) {
+                bulkResponse
+                        .items()
+                        .stream()
+                        .filter(it -> it.error() != null)
+                        .forEach(it -> log.error("ES 写入失败: index={}, id={}, error={}", it.index(), it.id(), it.error().reason()));
+            }
+        } catch (Exception e) {
+            log.error("批量写入 ES 发生系统级异常", e);
+            throw new RuntimeException("ES 写入失败，触发 Kafka 消费重试", e); // 抛出异常，阻止 Kafka 提交 Offset
         }
     }
 
     @PreDestroy
     public void destroy() {
-        bulkIngester.close();
         try {
             elasticsearchClient.close();
         } catch (IOException e) {
