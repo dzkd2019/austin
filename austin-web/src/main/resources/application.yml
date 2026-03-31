@@ -123,6 +123,12 @@ austin:
       group:
         name: recallGroupId
     trace:
+      enabled: false
+      elastic:
+        host: http://localhost:9200
+        index: austin_trace_log
+        username: elastic
+        password: password
       topic:
         name: austin_biz_trace
     tagId:
