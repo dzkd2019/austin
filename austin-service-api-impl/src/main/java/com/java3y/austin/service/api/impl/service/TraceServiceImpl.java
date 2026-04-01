@@ -1,21 +1,21 @@
 package com.java3y.austin.service.api.impl.service;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson2.JSON;
-import com.java3y.austin.common.constant.AustinConstant;
-import com.java3y.austin.common.domain.SimpleAnchorInfo;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import com.java3y.austin.common.domain.TraceInfo;
 import com.java3y.austin.common.enums.RespStatusEnum;
 import com.java3y.austin.service.api.domain.TraceResponse;
 import com.java3y.austin.service.api.service.TraceService;
-import com.java3y.austin.support.utils.RedisUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @Author: sky
@@ -27,8 +27,14 @@ import java.util.stream.Collectors;
 @Primary
 public class TraceServiceImpl implements TraceService {
 
-//    @Autowired
-//    private RedisUtils redisUtils;
+    private final ElasticsearchClient elasticsearchClient;
+
+    @Value("${austin.business.trace.elastic.index}")
+    private String index;
+
+    public TraceServiceImpl(ElasticsearchClient elasticsearchClient) {
+        this.elasticsearchClient = elasticsearchClient;
+    }
 
     @Override
     public TraceResponse traceByMessageId(String messageId) {
@@ -45,5 +51,35 @@ public class TraceServiceImpl implements TraceService {
 //        List<SimpleAnchorInfo> sortAnchorList = messageList.stream().map(s -> JSON.parseObject(s, SimpleAnchorInfo.class)).sorted((o1, o2) -> Math.toIntExact(o1.getTimestamp() - o2.getTimestamp())).collect(Collectors.toList());
 
         return new TraceResponse(RespStatusEnum.SUCCESS.getCode(), RespStatusEnum.SUCCESS.getMsg(), List.of());
+    }
+
+    public List<TraceInfo> traceByTraceId(String traceId) {
+        if (CharSequenceUtil.isBlank(traceId)) {
+            return new ArrayList<>();
+        }
+        try {
+            SearchResponse<TraceInfo> response = elasticsearchClient.search(f ->
+                            f
+                                    .index(index)
+                                    .query(q ->
+                                            q.term(t ->
+                                                    t.field("traceId")
+                                                            .value(traceId)
+                                            )
+                                    )
+                                    .sort(s ->
+                                            s.field(fi -> fi.field("timeStamp").order(SortOrder.Desc))
+                                    )
+                                    .collapse(c -> c.field("messageId"))
+                    ,
+                    TraceInfo.class
+            );
+
+            return response.hits().hits().stream()
+                    .map(Hit::source)
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -111,6 +111,11 @@
             </dependency>
             <dependency>
                 <groupId>com.java3y.austin</groupId>
+                <artifactId>austin-trace</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.java3y.austin</groupId>
                 <artifactId>austin-web</artifactId>
                 <version>${revision}</version>
             </dependency>

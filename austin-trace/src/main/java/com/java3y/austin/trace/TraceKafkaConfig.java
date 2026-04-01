@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@ConditionalOnProperty(name = "austin.business.trace.enabled", value = "true")
+@ConditionalOnProperty(name = "austin.business.trace.enabled", havingValue = "true")
 public class TraceKafkaConfig {
     @Bean
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")

@@ -20,11 +20,28 @@
 
         <dependency>
             <groupId>com.java3y.austin</groupId>
+            <artifactId>austin-trace</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.java3y.austin</groupId>
             <artifactId>austin-support</artifactId>
         </dependency>
         <dependency>
             <groupId>com.alibaba.fastjson2</groupId>
             <artifactId>fastjson2</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>3.1.1</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

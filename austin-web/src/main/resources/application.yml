@@ -123,7 +123,7 @@ austin:
       group:
         name: recallGroupId
     trace:
-      enabled: false
+      enabled: true
       elastic:
         host: http://localhost:9200
         index: austin_trace_log
@@ -131,6 +131,8 @@ austin:
         password: password
       topic:
         name: austin_biz_trace
+      group:
+        name: austin_biz_trace_group
     tagId:
       key: kafka_tag_id
       value: com.java3y.austin.3y

@@ -24,8 +24,8 @@ public class LogUtils extends CustomLogListener {
 //    @Autowired
 //    private SendMqService sendMqService;
 
-    @Value("${austin.business.log.topic.name}")
-    private String topicName;
+//    @Value("${austin.business.log.topic.name}")
+//    private String topicName;
 
     /**
      * 方法切面的日志 @OperationLog 所产生
