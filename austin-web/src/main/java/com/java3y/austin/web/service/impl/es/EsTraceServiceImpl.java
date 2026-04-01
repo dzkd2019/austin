@@ -86,7 +86,7 @@ public class EsTraceServiceImpl implements EsTraceService {
                     .filter(Objects::nonNull)
                     .toList();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to search Elasticsearch traces by field: " + field, e);
         }
     }
 
@@ -109,7 +109,7 @@ public class EsTraceServiceImpl implements EsTraceService {
                     .filter(Objects::nonNull)
                     .toList();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to search latest Elasticsearch trace by field: " + field, e);
         }
     }
 
