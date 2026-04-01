@@ -12,25 +12,25 @@ public interface EsTraceService {
     /**
      * 通过 messageId 查询所有链路记录
      */
-    List<TraceInfo> traceByMessageId(String messageId);
+    List<TraceInfo> traceByMessageId(String messageId, Long startTime, Long endTime);
 
     /**
      * 通过 traceId 查询最新一条链路记录
      */
-    List<TraceInfo> traceByTraceId(String traceId);
+    List<TraceInfo> traceByTraceId(String traceId, Long startTime, Long endTime);
 
     /**
      * 通过 bizId 查询最新一条链路记录
      */
-    List<TraceInfo> traceByBizId(String bizId);
+    List<TraceInfo> traceByBizId(String bizId, Long startTime, Long endTime);
 
     /**
      * 通过 templateId 查询最新一条链路记录
      */
-    List<TraceInfo> traceByTemplateId(Long templateId);
+    List<TraceInfo> traceByTemplateId(Long templateId, Long startTime, Long endTime);
 
     /**
      * 通过 receiver 查询最新一条链路记录
      */
-    List<TraceInfo> traceByReceiver(String receiver);
+    List<TraceInfo> traceByReceiver(String receiver, Long startTime, Long endTime);
 }

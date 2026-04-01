@@ -27,31 +27,41 @@ public class EsDataController {
 
     @GetMapping("/message")
     @Operation(summary = "通过messageId查询所有链路记录")
-    public List<TraceInfo> traceByMessageId(@RequestParam("messageId") String messageId) {
-        return esTraceService.traceByMessageId(messageId);
+    public List<TraceInfo> traceByMessageId(@RequestParam("messageId") String messageId,
+                                            @RequestParam(value = "startTime", required = false) Long startTime,
+                                            @RequestParam(value = "endTime", required = false) Long endTime) {
+        return esTraceService.traceByMessageId(messageId, startTime, endTime);
     }
 
     @GetMapping("/traceId")
     @Operation(summary = "通过traceId查询最新一条链路记录")
-    public List<TraceInfo> traceByTraceId(@RequestParam("traceId") String traceId) {
-        return esTraceService.traceByTraceId(traceId);
+    public List<TraceInfo> traceByTraceId(@RequestParam("traceId") String traceId,
+                                          @RequestParam(value = "startTime", required = false) Long startTime,
+                                          @RequestParam(value = "endTime", required = false) Long endTime) {
+        return esTraceService.traceByTraceId(traceId, startTime, endTime);
     }
 
     @GetMapping("/bizId")
     @Operation(summary = "通过bizId查询最新一条链路记录")
-    public List<TraceInfo> traceByBizId(@RequestParam("bizId") String bizId) {
-        return esTraceService.traceByBizId(bizId);
+    public List<TraceInfo> traceByBizId(@RequestParam("bizId") String bizId,
+                                        @RequestParam(value = "startTime", required = false) Long startTime,
+                                        @RequestParam(value = "endTime", required = false) Long endTime) {
+        return esTraceService.traceByBizId(bizId, startTime, endTime);
     }
 
     @GetMapping("/templateId")
     @Operation(summary = "通过templateId查询最新一条链路记录")
-    public List<TraceInfo> traceByTemplateId(@RequestParam("templateId") Long templateId) {
-        return esTraceService.traceByTemplateId(templateId);
+    public List<TraceInfo> traceByTemplateId(@RequestParam("templateId") Long templateId,
+                                             @RequestParam(value = "startTime", required = false) Long startTime,
+                                             @RequestParam(value = "endTime", required = false) Long endTime) {
+        return esTraceService.traceByTemplateId(templateId, startTime, endTime);
     }
 
     @GetMapping("/receiver")
     @Operation(summary = "通过receiver查询最新一条链路记录")
-    public List<TraceInfo> traceByReceiver(@RequestParam("receiver") String receiver) {
-        return esTraceService.traceByReceiver(receiver);
+    public List<TraceInfo> traceByReceiver(@RequestParam("receiver") String receiver,
+                                           @RequestParam(value = "startTime", required = false) Long startTime,
+                                           @RequestParam(value = "endTime", required = false) Long endTime) {
+        return esTraceService.traceByReceiver(receiver, startTime, endTime);
     }
 }
