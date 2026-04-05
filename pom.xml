@@ -120,6 +120,15 @@
                 <version>${revision}</version>
             </dependency>
 
+            <!-- Source: https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core -->
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-coroutines-core</artifactId>
+                <version>1.10.2</version>
+                <type>pom</type>
+                <scope>runtime</scope>
+            </dependency>
+
             <!--mysql驱动包 (updated for MySQL 8/9)-->
             <dependency>
                 <groupId>com.mysql</groupId>
